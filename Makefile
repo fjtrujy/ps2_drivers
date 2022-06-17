@@ -37,6 +37,12 @@ clean:
 	rm -rf ${UNPACKED_DIR}
 	rm -f $(EE_LIB) $(EE_OBJS)
 
+install: all
+	mkdir -p $(DESTDIR)$(PS2SDK)/ports/include/
+	mkdir -p $(DESTDIR)$(PS2SDK)/ports/lib/
+	cp -f include/* $(DESTDIR)$(PS2SDK)/ports/include/
+	cp $(EE_LIB) $(DESTDIR)$(PS2SDK)/ports/lib/
+
 # IRX files
 %_irx.c:
 	$(PS2SDK)/bin/bin2c $(PS2SDK)/iop/irx/$*.irx $@ $*_irx

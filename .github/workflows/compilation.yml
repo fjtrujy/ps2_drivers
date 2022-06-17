@@ -17,10 +17,11 @@ jobs:
         apk update 
         apk add cmake gmp mpc1 mpfr4 make
 
-    - name: Compile project
+    - name: Compile project & Install
       run: |
-        make clean
+        make -j $(getconf _NPROCESSORS_ONLN) clean
         make -j $(getconf _NPROCESSORS_ONLN)
+        make -j $(getconf _NPROCESSORS_ONLN) install
 
     - name: Compile samples
       run: |
