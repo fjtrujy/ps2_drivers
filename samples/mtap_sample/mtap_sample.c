@@ -19,6 +19,7 @@
 #include <malloc.h>
 #include <iopcontrol.h>
 #include <sbv_patches.h>
+#include <stdbool.h>
 
 #include "gs_privileged.h"
 #include "libpad.h"
@@ -160,8 +161,8 @@ int main(int argc, char **argv)
 	s32 ret;
 
 	reset_IOP();
-	printf("libmtap sample");
-    joy_res = init_joystick_driver();
+	printf("\n\nlibmtap sample\n\n");
+    joy_res = init_joystick_driver(true);
 	printf("init_joystick_driver returns:%i\n", joy_res);
 
 	mtapConnected[0] = 0;
@@ -235,5 +236,7 @@ int main(int argc, char **argv)
 
 		wait_vsync();
 	}
+
+	deinit_joystick_driver(true);
     return 0;
 }

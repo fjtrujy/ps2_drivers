@@ -11,6 +11,7 @@
 */
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <ps2_sio2man_driver.h>
 #include <ps2_joystick_driver.h>
@@ -64,9 +65,9 @@ static enum JOYSTICK_INIT_STATUS initLibraries(void) {
     return JOYSTICK_INIT_STATUS_OK;
 }
 
-enum JOYSTICK_INIT_STATUS init_joystick_driver(void) {
+enum JOYSTICK_INIT_STATUS init_joystick_driver(bool init_dependencies) {
     // Requires to have SIO2MAN
-    if (init_sio2man_driver() < 0)
+    if (init_dependencies && init_sio2man_driver() < 0)
         return JOYSTICK_INIT_STATUS_DEPENDENCY_IRX_ERROR;
 
     __joystick_init_status = loadIRXs();
@@ -98,7 +99,11 @@ static void unloadIRXs(void) {
     }
 }
 
-void deinit_joystick_driver(void) {
+void deinit_joystick_driver(bool init_dependencies) {
+    // Requires to have SIO2MAN
+    if (init_dependencies)
+        init_sio2man_driver();
+        
     deinitLibraries();
     unloadIRXs();
 }

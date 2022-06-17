@@ -10,6 +10,8 @@
 # PS2_JOYSTICK_DRIVER
 */
 
+#include <stdbool.h>
+
 #ifndef PS2_JOYSTICK_DRIVER
 #define PS2_JOYSTICK_DRIVER
 
@@ -24,7 +26,8 @@ enum JOYSTICK_INIT_STATUS{
     JOYSTICK_INIT_STATUS_IRX_OK = 1,
 };
 
-enum JOYSTICK_INIT_STATUS init_joystick_driver(void);
-void deinit_joystick_driver(void);
+/* JOYSTICK DRIVER REQUIRES SIO2MAN DRIVER AS DEPENDENCY */
+enum JOYSTICK_INIT_STATUS init_joystick_driver(bool init_dependencies);
+void deinit_joystick_driver(bool init_dependencies);
 
 #endif /* PS2_JOYSTICK_DRIVER */
