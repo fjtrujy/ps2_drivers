@@ -9,6 +9,10 @@ LIBS_NAME = $(LIBS:-l%=lib%.a)
 IRX_FILES += mtapman.irx padman.irx
 EE_OBJS += $(IRX_FILES:.irx=_irx.o)
 
+# Helpers
+EE_INCS += -Iinclude
+EE_OBJS += src/ps2_joystick_driver.o
+
 all: unpack
 all: EE_OBJS += $(shell find ${UNPACKED_FOLDER} -name '*.o')
 all: $(EE_LIB) 
