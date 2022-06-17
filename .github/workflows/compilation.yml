@@ -21,6 +21,12 @@ jobs:
       run: |
         make clean
         make -j $(getconf _NPROCESSORS_ONLN)
+
+    - name: Compile samples
+      run: |
+        cd samples/mtap_sample
+        make -f Makefile.sample clean
+        make -f Makefile.sample -j $(getconf _NPROCESSORS_ONLN)
     
     - name: Get short SHA
       id: slug
@@ -33,3 +39,4 @@ jobs:
         name: libps2_drivers-${{ steps.slug.outputs.sha8 }}
         path: |
           *.a
+          samples/**/*.elf
