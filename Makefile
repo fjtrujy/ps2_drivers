@@ -1,5 +1,4 @@
 EE_LIB = libps2_drivers.a
-EE_OBJS_DIR = obj/
 EE_SRC_DIR = src/
 UNPACKED_DIR = unpacked_lib
 
@@ -15,7 +14,7 @@ EE_OBJS += $(IRX_FILES:.irx=_irx.o)
 # Helpers
 EE_INCS += -Iinclude
 
-JOYSTICK_DRIVER_OBJS = ps2_joystick_internals.o init_joystick_driver.o deinit_joystick_driver.o
+JOYSTICK_DRIVER_OBJS = internals_ps2_joystick_driver.o init_ps2_joystick_driver.o deinit_ps2_joystick_driver.o
 EE_OBJS += $(JOYSTICK_DRIVER_OBJS)
 
 ## ALL ACTIONS
@@ -26,7 +25,6 @@ all: $(EE_LIB)
 
 prepare:
 	mkdir -p ${UNPACKED_DIR};\
-	mkdir -p ${EE_OBJS_DIR};\
 
 unpack:
 	for lib in ${LIBS_NAME}; do \
@@ -34,7 +32,7 @@ unpack:
     done;
 
 clean:
-	rm -rf ${UNPACKED_DIR} ${EE_OBJS_DIR}
+	rm -rf ${UNPACKED_DIR}
 	rm -f $(EE_LIB) $(EE_OBJS)
 
 # IRX files
@@ -44,8 +42,8 @@ clean:
 # EE FUNCTIONS OBJECTS
 EE_C_COMPILE = $(EE_CC) $(EE_CFLAGS)
 
-$(JOYSTICK_DRIVER_OBJS:%=$(EE_OBJS_DIR)%): $(EE_SRC_DIR)ps2_joystick_driver.c
-	$(EE_C_COMPILE) -DF_$(*:$(EE_OBJS_DIR)%=%) $< -c -o $@
+%_ps2_joystick_driver.o:
+	$(EE_C_COMPILE) -DF_$*_ps2_joystick_driver $(EE_SRC_DIR)ps2_joystick_driver.c -c -o $(EE_OBJS_DIR)$@
 
 #Include preferences
 include $(PS2SDK)/samples/Makefile.pref

@@ -27,7 +27,7 @@ extern unsigned int size_mtapman_irx;
 extern unsigned char padman_irx[] __attribute__((aligned(16)));
 extern unsigned int size_padman_irx;
 
-#ifdef F_ps2_joystick_internals
+#ifdef F_internals_ps2_joystick_driver
 enum JOYSTICK_INIT_STATUS __joystick_init_status = JOYSTICK_INIT_STATUS_UNKNOWN;
 int32_t __padman_id = -1;
 int32_t __mtapman_id = -1;
@@ -37,7 +37,7 @@ extern int32_t __padman_id;
 extern int32_t __mtapman_id;
 #endif
 
-#ifdef F_init_joystick_driver
+#ifdef F_init_ps2_joystick_driver
 static enum JOYSTICK_INIT_STATUS loadControllerIRXs(void) {
     /* PADMAN.IRX */
     __padman_id = SifExecModuleBuffer(&padman_irx, size_padman_irx, 0, NULL, NULL);
@@ -74,7 +74,7 @@ enum JOYSTICK_INIT_STATUS init_joystick_driver(void) {
 }
 #endif
 
-#ifdef F_deinit_joystick_driver
+#ifdef F_deinit_ps2_joystick_driver
 static void deinitalizeControllers(void) {
     padEnd();
 }
