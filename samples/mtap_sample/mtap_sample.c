@@ -17,6 +17,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <malloc.h>
+#include <iopcontrol.h>
+#include <sbv_patches.h>
 
 #include "gs_privileged.h"
 #include "libpad.h"
@@ -134,10 +136,10 @@ void find_controllers()
 static void reset_IOP()
 {
    SifInitRpc(0);
-// #if !defined(DEBUG) || defined(BUILD_FOR_PCSX2)
+#if !defined(DEBUG) || defined(BUILD_FOR_PCSX2)
    /* Comment this line if you don't wanna debug the output */
    while(!SifIopReset(NULL, 0)){};
-// #endif
+#endif
 
    while(!SifIopSync()){};
    SifInitRpc(0);

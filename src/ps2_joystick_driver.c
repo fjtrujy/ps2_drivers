@@ -12,6 +12,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <ps2_sio2man_driver.h>
 #include <ps2_joystick_driver.h>
 
 #include <sifrpc.h>
@@ -38,21 +39,21 @@ extern int32_t __mtapman_id;
 #endif
 
 #ifdef F_init_ps2_joystick_driver
-static enum JOYSTICK_INIT_STATUS loadControllerIRXs(void) {
+static enum JOYSTICK_INIT_STATUS loadIRXs(void) {
+    /* MTAPMAN.IRX */
+    __mtapman_id = SifExecModuleBuffer(&mtapman_irx, size_mtapman_irx, 0, NULL, NULL);
+    if (__mtapman_id < 0)
+        return JOYSTICK_INIT_STATUS_MTAP_IRX_ERROR;
+
     /* PADMAN.IRX */
     __padman_id = SifExecModuleBuffer(&padman_irx, size_padman_irx, 0, NULL, NULL);
     if (__padman_id < 0)
         return JOYSTICK_INIT_STATUS_PAD_IRX_ERROR;
     
-    /* MTAPMAN.IRX */
-    __mtapman_id = SifExecModuleBuffer(&mtapman_irx, size_mtapman_irx, 0, NULL, NULL);
-    if (__mtapman_id < 0)
-        return JOYSTICK_INIT_STATUS_MTAP_IRX_ERROR;
-    
     return JOYSTICK_INIT_STATUS_IRX_OK;
 }
 
-static enum JOYSTICK_INIT_STATUS initalizeControllers(void) {
+static enum JOYSTICK_INIT_STATUS initLibraries(void) {
     /* Initializes pad un multitap libraries */
     if (mtapInit() != 1)
         return JOYSTICK_INIT_STATUS_MTAP_ERROR;
@@ -64,37 +65,41 @@ static enum JOYSTICK_INIT_STATUS initalizeControllers(void) {
 }
 
 enum JOYSTICK_INIT_STATUS init_joystick_driver(void) {
-    __joystick_init_status = loadControllerIRXs();
+    // Requires to have SIO2MAN
+    if (init_sio2man_driver() < 0)
+        return JOYSTICK_INIT_STATUS_DEPENDENCY_IRX_ERROR;
+
+    __joystick_init_status = loadIRXs();
     if (__joystick_init_status < 0)
         return __joystick_init_status;
 
-    __joystick_init_status = initalizeControllers();
+    __joystick_init_status = initLibraries();
 
     return __joystick_init_status;
 }
 #endif
 
 #ifdef F_deinit_ps2_joystick_driver
-static void deinitalizeControllers(void) {
+static void deinitLibraries(void) {
     padEnd();
 }
 
-static void unloadControllerIRXs(void) {
+static void unloadIRXs(void) {
     /* MTAPMAN.IRX */
-    if (__mtapman_id < 0) {
+    if (__mtapman_id > 0) {
         SifUnloadModule(__mtapman_id);
         __mtapman_id = -1;
     }
     
     /* MTAPMAN.IRX */
-    if (__padman_id < 0) {
+    if (__padman_id > 0) {
         SifUnloadModule(__padman_id);
         __padman_id = -1;
     }
 }
 
 void deinit_joystick_driver(void) {
-    deinitalizeControllers();
-    unloadControllerIRXs();
+    deinitLibraries();
+    unloadIRXs();
 }
 #endif
