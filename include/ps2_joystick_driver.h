@@ -24,5 +24,6 @@ enum JOYSTICK_INIT_STATUS{
 };
 
 enum JOYSTICK_INIT_STATUS init_joystick_driver(void);
+void deinit_joystick_driver(void);
 
 #endif /* PS2_JOYSTICK_DRIVER */

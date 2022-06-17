@@ -19,36 +19,46 @@
 #include <libmtap.h>
 #include <libpad.h>
 
-/* References to PADMAN.IRX */
-extern unsigned char padman_irx[] __attribute__((aligned(16)));
-extern unsigned int size_padman_irx;
-
 /* References to MTAPMAN.IRX */
 extern unsigned char mtapman_irx[] __attribute__((aligned(16)));
 extern unsigned int size_mtapman_irx;
 
-static enum JOYSTICK_INIT_STATUS __joystick_init_status = JOYSTICK_INIT_STATUS_UNKNOWN;
+/* References to PADMAN.IRX */
+extern unsigned char padman_irx[] __attribute__((aligned(16)));
+extern unsigned int size_padman_irx;
 
+#ifdef F_ps2_joystick_internals
+enum JOYSTICK_INIT_STATUS __joystick_init_status = JOYSTICK_INIT_STATUS_UNKNOWN;
+int32_t __padman_id = -1;
+int32_t __mtapman_id = -1;
+#else
+extern enum JOYSTICK_INIT_STATUS __joystick_init_status;
+extern int32_t __padman_id;
+extern int32_t __mtapman_id;
+#endif
+
+#ifdef F_init_joystick_driver
 static enum JOYSTICK_INIT_STATUS loadControllerIRXs(void) {
-    /* Controllers */
-    if (SifExecModuleBuffer(&mtapman_irx, size_mtapman_irx, 0, NULL, NULL) < 0)
-        return JOYSTICK_INIT_STATUS_MTAP_IRX_ERROR;
-    if (SifExecModuleBuffer(&padman_irx, size_padman_irx, 0, NULL, NULL) < 0)
+    /* PADMAN.IRX */
+    __padman_id = SifExecModuleBuffer(&padman_irx, size_padman_irx, 0, NULL, NULL);
+    if (__padman_id < 0)
         return JOYSTICK_INIT_STATUS_PAD_IRX_ERROR;
+    
+    /* MTAPMAN.IRX */
+    __mtapman_id = SifExecModuleBuffer(&mtapman_irx, size_mtapman_irx, 0, NULL, NULL);
+    if (__mtapman_id < 0)
+        return JOYSTICK_INIT_STATUS_MTAP_IRX_ERROR;
     
     return JOYSTICK_INIT_STATUS_IRX_OK;
 }
 
 static enum JOYSTICK_INIT_STATUS initalizeControllers(void) {
     /* Initializes pad un multitap libraries */
-    if (mtapInit() != 1) {
+    if (mtapInit() != 1)
         return JOYSTICK_INIT_STATUS_MTAP_ERROR;
-    }
    
     if (padInit(0) != 1)
-    {
         return JOYSTICK_INIT_STATUS_PAD_ERROR;
-    }
 
     return JOYSTICK_INIT_STATUS_OK;
 }
@@ -62,3 +72,29 @@ enum JOYSTICK_INIT_STATUS init_joystick_driver(void) {
 
     return __joystick_init_status;
 }
+#endif
+
+#ifdef F_deinit_joystick_driver
+static void deinitalizeControllers(void) {
+    padEnd();
+}
+
+static void unloadControllerIRXs(void) {
+    /* MTAPMAN.IRX */
+    if (__mtapman_id < 0) {
+        SifUnloadModule(__mtapman_id);
+        __mtapman_id = -1;
+    }
+    
+    /* MTAPMAN.IRX */
+    if (__padman_id < 0) {
+        SifUnloadModule(__padman_id);
+        __padman_id = -1;
+    }
+}
+
+void deinit_joystick_driver(void) {
+    deinitalizeControllers();
+    unloadControllerIRXs();
+}
+#endif
