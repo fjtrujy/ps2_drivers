@@ -5,19 +5,22 @@ UNPACKED_DIR = unpacked_lib
 ## EE LIBS
 
 LIBS += -lmtap -lpadx
+LIBS += -laudsrv
 LIBS_NAME = $(LIBS:-l%=lib%.a)
 
 # IRX libs
 IRX_FILES += sio2man.irx
-IRX_FILES += mtapman.irx padman.irx 
+IRX_FILES += mtapman.irx padman.irx
+IRX_FILES += libsd.irx audsrv.irx
 EE_OBJS += $(IRX_FILES:.irx=_irx.o)
 
 # Helpers
 EE_INCS += -Iinclude
 JOYSTICK_DRIVER_OBJS = internals_ps2_joystick_driver.o init_ps2_joystick_driver.o deinit_ps2_joystick_driver.o
 SIO2MAN_DRIVER_OBJS = internals_ps2_sio2man_driver.o init_ps2_sio2man_driver.o deinit_ps2_sio2man_driver.o
+AUDIO_DRIVER_OBJS = internals_ps2_audio_driver.o init_ps2_audio_driver.o deinit_ps2_audio_driver.o
 
-EE_OBJS += $(JOYSTICK_DRIVER_OBJS) $(SIO2MAN_DRIVER_OBJS)
+EE_OBJS += $(SIO2MAN_DRIVER_OBJS) $(JOYSTICK_DRIVER_OBJS) $(AUDIO_DRIVER_OBJS)
 
 ## ALL ACTIONS
 all: prepare
@@ -50,11 +53,14 @@ install: all
 # EE FUNCTIONS OBJECTS
 EE_C_COMPILE = $(EE_CC) $(EE_CFLAGS)
 
+%_ps2_sio2man_driver.o:
+	$(EE_C_COMPILE) -DF_$*_ps2_sio2man_driver $(EE_SRC_DIR)ps2_sio2man_driver.c -c -o $(EE_OBJS_DIR)$@
+
 %_ps2_joystick_driver.o:
 	$(EE_C_COMPILE) -DF_$*_ps2_joystick_driver $(EE_SRC_DIR)ps2_joystick_driver.c -c -o $(EE_OBJS_DIR)$@
 
-%_ps2_sio2man_driver.o:
-	$(EE_C_COMPILE) -DF_$*_ps2_sio2man_driver $(EE_SRC_DIR)ps2_sio2man_driver.c -c -o $(EE_OBJS_DIR)$@
+%_ps2_audio_driver.o:
+	$(EE_C_COMPILE) -DF_$*_ps2_audio_driver $(EE_SRC_DIR)ps2_audio_driver.c -c -o $(EE_OBJS_DIR)$@
 
 #Include preferences
 include $(PS2SDK)/samples/Makefile.pref
