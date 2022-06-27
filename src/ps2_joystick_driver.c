@@ -102,7 +102,7 @@ static void unloadIRXs(void) {
 void deinit_joystick_driver(bool init_dependencies) {
     // Requires to have SIO2MAN
     if (init_dependencies)
-        init_sio2man_driver();
+        deinit_sio2man_driver();
         
     deinitLibraries();
     unloadIRXs();
