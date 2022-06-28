@@ -78,6 +78,33 @@ int main(int argc, char **argv) {
 }
 ```
 
+### ALL DRIVERS EXAMPLE
+This example will prepare, the next drivers:
+- Memory Card 
+- FileXio
+- USB
+- Sound
+- Joystick
+
+`Makefile`
+```make
+LIBS += -lps2_drivers
+```
+
+`main.c`
+```c
+static void prepare_drivers() {
+    init_fileXio_driver();
+    init_memcard_driver(true);
+    init_usb_driver(true);
+    init_joystick_driver(true);
+    init_audio_driver();
+}
+
+int main(int argc, char **argv) {
+    prepare_drivers();
+}
+```
 
 ### CONCLUSION
 I have tried to follow the KISS concept meanwhile I was implementing this library
