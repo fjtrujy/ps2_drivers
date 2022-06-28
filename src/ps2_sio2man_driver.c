@@ -57,7 +57,7 @@ static void unloadIRXs(void) {
     }
 }
 
-void deinit_joystick_driver(void) {
+void deinit_sio2man_driver(void) {
     unloadIRXs();
 }
 #endif
