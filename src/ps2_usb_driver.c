@@ -66,7 +66,7 @@ static enum USB_INIT_STATUS loadIRXs(void) {
         return USB_INIT_STATUS_BDMFS_VFAT_IRX_ERROR;
 
     /* USBMASS_BD.IRX */
-    __usbmass_bd_id = SifExecModuleBuffer(&bdm_irx, size_bdm_irx, 0, NULL, NULL);
+    __usbmass_bd_id = SifExecModuleBuffer(&usbmass_bd_irx, size_usbmass_bd_irx, 0, NULL, NULL);
     if (__usbmass_bd_id < 0)
         return USB_INIT_STATUS_USBMASS_BD_IRX_ERROR;
     
