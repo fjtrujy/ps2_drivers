@@ -1,22 +1,22 @@
 # ps2_drivers
-A library for making easier the usage of the IO drivers (`.IRX` + `EE .a`)
+A library for making it easier to use IO drivers (`.IRX` + `EE .a`)
 
 ## MOTIVATION
-This library will make way easier the load/unload and initialization process of the Drivers that requires `IOP` (using an `IRX` file) and `EE` (static library `.a`).
+This library will make it way easier to load/unload, and initialization the process of Drivers that requires `IOP` (using an `IRX` file) and `EE` (static library `.a`).
 
-As a side project, I was trying to port `SDL2` for `PlayStation 2`, and meanwhile I was working in this I faced that was so difficult to implement `SDL_main`, and that was the trigger to work on this.
+As a side project, I was trying to port `SDL2` for `PlayStation 2`, and meanwhile I was working on this since I found that it was difficult to implement `SDL_main` as was.
 
-Currenty situation implies:
-- First of all the developer need to understand how IOP + EE works, making more difficult to be an atractive platform to new joiners.
-- Makefile is more complex. IRX files need to be either embedded with `bin2s` or `bin2o`
-- A lot of boiler plate is needed, defining several extern libraries
+Without this the currenty situation assumes:
+- The developer need to understand how IOP + EE works, making it a less atractive platform to newcomers.
+- Makefile are more complex. IRX-files need to be either embedded with `bin2s` or `bin2o`.
+- A lot of boiler plate is needed, for defining several extern libraries.
 - It force developers to do copy & paste everytime.
-- Error control too messy.
+- Error handeling is too messy.
 
 With the solution that I propose within this library, the developer, just need to link the library, and init the desired libraries.
 
 ## EXAMPLE
-Let me put an example, where we compare `Before` vs `After`. I'm not going to put the error control in the before version otherwise will be too long :)
+Let me put an example, where we compare `Before` vs `After`. I'm not going to put the error handeling in the before version otherwise will be too long :)
 
 ### BEFORE
 `Makefile`
@@ -107,6 +107,6 @@ int main(int argc, char **argv) {
 ```
 
 ### CONCLUSION
-I have tried to follow the KISS concept meanwhile I was implementing this library
+I tried to follow the KISS concept while implementing this library
 
 ## THANKS
