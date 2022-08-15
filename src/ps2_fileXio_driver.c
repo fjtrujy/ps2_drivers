@@ -19,7 +19,7 @@
 #include <sifrpc.h>
 #include <loadfile.h>
 
-int fileXioInitSkipOverride(void);
+int fileXioInit(void);
 
 /* References to IOMANX.IRX */
 extern unsigned char iomanX_irx[] __attribute__((aligned(16)));
@@ -55,7 +55,7 @@ static enum FILEXIO_INIT_STATUS loadIRXs(void) {
 }
 
 static enum FILEXIO_INIT_STATUS initLibraries(void) {
-    fileXioInitSkipOverride();
+    fileXioInit();
 
     return FILEXIO_INIT_STATUS_OK;
 }
