@@ -22,6 +22,9 @@
 #include <sbv_patches.h>
 #include <stdbool.h>
 
+#include <sys/types.h>
+#include <dirent.h>
+
 #include <ps2_all_drivers.h>
 
 static void reset_IOP() {
@@ -54,28 +57,40 @@ static void deinit_drivers() {
 }
 
 int main(int argc, char **argv) {
-	FILE *fptr;
-    char c;
-
 	reset_IOP();
 	init_drivers();
   
-    // Open file
-    fptr = fopen("openfile_sample.c", "r");
-    if (fptr == NULL)
+	DIR* dp;
+    struct dirent* ep;
+    int max = 10;
+
+    dp = opendir("host:");
+    if (dp != NULL)
     {
-        printf("Cannot open file \n");
-        exit(0);
+        int count = 0;
+        while ((ep = readdir(dp)) != NULL && count != max)
+        {
+            printf(ep->d_name);
+            printf(" ");
+
+            char fname[1024];
+            snprintf(fname, 1024, "%s%s", "host:",ep->d_name);
+            struct stat st;
+            stat(fname, &st);
+            
+            char size[10];
+            itoa(st.st_size, size, 10);
+            printf(size);
+
+            printf(S_ISDIR(st.st_mode) ? " DIR\n" : " FILE\n");
+
+            count++;
+        }
     }
-  
-    // Read contents from file
-    c = fgetc(fptr);
-    while (c != EOF)
+    else
     {
-        printf ("%c", c);
-        c = fgetc(fptr);
+        printf("Couldn't open the directory");
     }
-  
-    fclose(fptr);
+
 	deinit_drivers();
 }
