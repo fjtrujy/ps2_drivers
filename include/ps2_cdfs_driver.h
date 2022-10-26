@@ -7,18 +7,21 @@
 # Licenced under GNU Library General Public License version 2
 # Review ps2sdk README & LICENSE files for further details.
 #
-# PS2_ALL_DRIVERS
+# PS2_MEMCARD_DRIVER
 */
 
-#ifndef PS2_ALL_DRIVERS
-#define PS2_ALL_DRIVERS
+#include <stdbool.h>
 
-#include <ps2_audio_driver.h>
-#include <ps2_cdfs_driver.h>
-#include <ps2_fileXio_driver.h>
-#include <ps2_joystick_driver.h>
-#include <ps2_memcard_driver.h>
-#include <ps2_sio2man_driver.h>
-#include <ps2_usb_driver.h>
+#ifndef PS2_CDFS_DRIVER
+#define PS2_CDFS_DRIVER
 
-#endif /* PS2_ALL_DRIVERS */
+enum CDFS_INIT_STATUS {
+    CDFS_INIT_STATUS_IRX_ERROR = -2,
+    CDFS_INIT_STATUS_UNKNOWN = -1,
+    CDFS_INIT_STATUS_IRX_OK = 0,
+};
+
+enum CDFS_INIT_STATUS init_cdfs_driver();
+void deinit_cdfs_driver();
+
+#endif /* PS2_CDFS_DRIVER */

@@ -13,6 +13,7 @@ IRX_FILES += sio2man.irx
 IRX_FILES += iomanX.irx fileXio.irx
 IRX_FILES += mcman.irx mcserv.irx
 IRX_FILES += usbd.irx bdm.irx bdmfs_vfat.irx usbmass_bd.irx
+IRX_FILES += cdfs.irx
 IRX_FILES += mtapman.irx padman.irx
 IRX_FILES += libsd.irx audsrv.irx
 EE_OBJS += $(IRX_FILES:.irx=_irx.o)
@@ -23,10 +24,12 @@ SIO2MAN_DRIVER_OBJS = internals_ps2_sio2man_driver.o init_ps2_sio2man_driver.o d
 FILEXIO_DRIVER_OBJS = internals_ps2_fileXio_driver.o init_ps2_fileXio_driver.o deinit_ps2_fileXio_driver.o
 MEMCARD_DRIVER_OBJS = internals_ps2_memcard_driver.o init_ps2_memcard_driver.o deinit_ps2_memcard_driver.o
 USB_DRIVER_OBJS = internals_ps2_usb_driver.o init_ps2_usb_driver.o deinit_ps2_usb_driver.o
+CDFS_DRIVER_OBJS = internals_ps2_cdfs_driver.o init_ps2_cdfs_driver.o deinit_ps2_cdfs_driver.o
 JOYSTICK_DRIVER_OBJS = internals_ps2_joystick_driver.o init_ps2_joystick_driver.o deinit_ps2_joystick_driver.o
 AUDIO_DRIVER_OBJS = internals_ps2_audio_driver.o init_ps2_audio_driver.o deinit_ps2_audio_driver.o
 
-EE_OBJS += $(SIO2MAN_DRIVER_OBJS) $(FILEXIO_DRIVER_OBJS) $(MEMCARD_DRIVER_OBJS) $(USB_DRIVER_OBJS) $(JOYSTICK_DRIVER_OBJS) $(AUDIO_DRIVER_OBJS)
+EE_OBJS += $(SIO2MAN_DRIVER_OBJS) $(FILEXIO_DRIVER_OBJS) $(MEMCARD_DRIVER_OBJS) $(USB_DRIVER_OBJS) $(CDFS_DRIVER_OBJS) \
+	$(JOYSTICK_DRIVER_OBJS) $(AUDIO_DRIVER_OBJS)
 
 ## ALL ACTIONS
 all: prepare
@@ -70,6 +73,9 @@ EE_C_COMPILE = $(EE_CC) $(EE_CFLAGS)
 
 %_ps2_usb_driver.o:
 	$(EE_C_COMPILE) -DF_$*_ps2_usb_driver $(EE_SRC_DIR)ps2_usb_driver.c -c -o $(EE_OBJS_DIR)$@
+
+%_ps2_cdfs_driver.o:
+	$(EE_C_COMPILE) -DF_$*_ps2_cdfs_driver $(EE_SRC_DIR)ps2_cdfs_driver.c -c -o $(EE_OBJS_DIR)$@
 
 %_ps2_joystick_driver.o:
 	$(EE_C_COMPILE) -DF_$*_ps2_joystick_driver $(EE_SRC_DIR)ps2_joystick_driver.c -c -o $(EE_OBJS_DIR)$@

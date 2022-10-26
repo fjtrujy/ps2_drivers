@@ -7,7 +7,7 @@
 # Licenced under GNU Library General Public License version 2
 # Review ps2sdk README & LICENSE files for further details.
 #
-# PS2_JOYSTICK_DRIVER
+# PS2_MEMCARD_DRIVER
 */
 
 #include <stdint.h>
