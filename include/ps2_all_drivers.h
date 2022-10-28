@@ -16,6 +16,7 @@
 #include <ps2_audio_driver.h>
 #include <ps2_cdfs_driver.h>
 #include <ps2_fileXio_driver.h>
+#include <ps2_hdd_driver.h>
 #include <ps2_joystick_driver.h>
 #include <ps2_poweroff_driver.h>
 #include <ps2_memcard_driver.h>
