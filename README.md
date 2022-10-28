@@ -87,6 +87,7 @@ This example will prepare, the next drivers:
 - Sound
 - Joystick
 - Poweroff
+- HDD
 
 `Makefile`
 ```make
@@ -103,6 +104,7 @@ static void prepare_drivers() {
     init_joystick_driver(true);
     init_audio_driver();
     init_poweroff_driver();
+    init_hdd_driver();
 }
 
 int main(int argc, char **argv) {

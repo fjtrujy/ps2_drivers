@@ -44,6 +44,7 @@ static void init_drivers() {
 	init_joystick_driver(true);
 	init_audio_driver();
 	init_poweroff_driver();
+	init_hdd_driver();
 }
 
 static void deinit_drivers() {
@@ -54,6 +55,7 @@ static void deinit_drivers() {
 	deinit_cdfs_driver();
 	deinit_memcard_driver(true);
 	deinit_fileXio_driver();
+	deinit_hdd_driver();
 }
 
 int main(int argc, char **argv) {
