@@ -83,8 +83,10 @@ This example will prepare, the next drivers:
 - Memory Card 
 - FileXio
 - USB
+- CDFS
 - Sound
 - Joystick
+- Poweroff
 
 `Makefile`
 ```make
@@ -97,8 +99,10 @@ static void prepare_drivers() {
     init_fileXio_driver();
     init_memcard_driver(true);
     init_usb_driver(true);
+    init_cdfs_driver();
     init_joystick_driver(true);
     init_audio_driver();
+    init_poweroff_driver();
 }
 
 int main(int argc, char **argv) {

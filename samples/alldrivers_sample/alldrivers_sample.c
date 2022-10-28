@@ -40,14 +40,18 @@ static void init_drivers() {
 	init_fileXio_driver();
 	init_memcard_driver(true);
 	init_usb_driver(true);
+	init_cdfs_driver();
 	init_joystick_driver(true);
 	init_audio_driver();
+	init_poweroff_driver();
 }
 
 static void deinit_drivers() {
+	deinit_poweroff_driver();
 	deinit_audio_driver();
 	deinit_joystick_driver(false);
 	deinit_usb_driver(false);
+	deinit_cdfs_driver();
 	deinit_memcard_driver(true);
 	deinit_fileXio_driver();
 }
