@@ -8,7 +8,7 @@
 
 EE_BIN = hdd_sample.elf
 EE_OBJS = hdd_sample.o
-EE_LIBS = -lps2_drivers -lpatches
+EE_LIBS = -lps2_drivers -lpatches -ldebug
 
 EE_CFLAGS = -O0 -g
 

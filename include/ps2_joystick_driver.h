@@ -28,6 +28,6 @@ enum JOYSTICK_INIT_STATUS {
 
 /* JOYSTICK DRIVER REQUIRES SIO2MAN DRIVER AS DEPENDENCY */
 enum JOYSTICK_INIT_STATUS init_joystick_driver(bool init_dependencies);
-void deinit_joystick_driver(bool init_dependencies);
+void deinit_joystick_driver(bool deinit_dependencies);
 
 #endif /* PS2_JOYSTICK_DRIVER */

@@ -26,6 +26,6 @@ enum MEMCARD_INIT_STATUS {
 
 /* MEMCARD DRIVER REQUIRES SIO2MAN DRIVER AS DEPENDENCY */
 enum MEMCARD_INIT_STATUS init_memcard_driver(bool init_dependencies);
-void deinit_memcard_driver(bool init_dependencies);
+void deinit_memcard_driver(bool deinit_dependencies);
 
 #endif /* PS2_MEMCARD_DRIVER */

@@ -99,12 +99,12 @@ static void unloadIRXs(void) {
     }
 }
 
-void deinit_joystick_driver(bool init_dependencies) {
-    // Requires to have SIO2MAN
-    if (init_dependencies)
-        deinit_sio2man_driver();
-        
+void deinit_joystick_driver(bool deinit_dependencies) {        
     deinitLibraries();
     unloadIRXs();
+
+    // Requires to have SIO2MAN
+    if (deinit_dependencies)
+        deinit_sio2man_driver();
 }
 #endif

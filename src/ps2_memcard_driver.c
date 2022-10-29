@@ -76,11 +76,11 @@ static void unloadIRXs(void) {
     }
 }
 
-void deinit_memcard_driver(bool init_dependencies) {
-    // Requires to have SIO2MAN
-    if (init_dependencies)
-        deinit_sio2man_driver();
-    
+void deinit_memcard_driver(bool deinit_dependencies) {
     unloadIRXs();
+
+    // Requires to have SIO2MAN
+    if (deinit_dependencies)
+        deinit_sio2man_driver();
 }
 #endif

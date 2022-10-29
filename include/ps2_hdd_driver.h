@@ -25,7 +25,18 @@ enum HDD_INIT_STATUS {
     HDD_INIT_STATUS_IRX_OK = 0,
 };
 
-enum HDD_INIT_STATUS init_hdd_driver();
-void deinit_hdd_driver();
+enum HDD_MOUNT_STATUS {
+    HDD_MOUNT_STATUS_ERROR = -4,
+    HDD_MOUNT_STATUS_INFO_ERROR = -3,
+    HDD_MOUNT_STATUS_WRONG_CWD = -2,
+    HDD_MOUNT_STATUS_UKNOWN = -1,
+    HDD_MOUNT_STATUS_OK = 0,
+};
+
+/* MEMCARD DRIVER REQUIRES FILEXIO DRIVER AS DEPENDENCY */
+enum HDD_INIT_STATUS init_hdd_driver(bool init_dependencies);
+void deinit_hdd_driver(bool deinit_dependencies);
+enum HDD_MOUNT_STATUS mount_current_hdd_partition();
+void umount_current_hdd_partition();
 
 #endif /* PS2_HDD_DRIVER */

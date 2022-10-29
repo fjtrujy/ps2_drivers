@@ -9,9 +9,13 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
 #include <stdbool.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <dirent.h>
 #include <unistd.h>
 
 #include <ps2_poweroff_driver.h>
@@ -20,6 +24,7 @@
 #include <sifrpc.h>
 #include <iopcontrol.h>
 #include <sbv_patches.h>
+#include <debug.h>
 
 static void reset_IOP() {
 	SifInitRpc(0);
@@ -35,20 +40,59 @@ static void reset_IOP() {
 }
 
 static void init_drivers() {
-	init_poweroff_driver();
-	int ret = init_hdd_driver();
-	printf("\n\n\nINIT HDD DRIVER RES=%i\n\n\n", ret);
+	init_hdd_driver(true);
 }
 
 static void deinit_drivers() {
-	deinit_poweroff_driver();
+	deinit_hdd_driver(true);
+}
+
+static void print_current_folder() {
+	char cwd[FILENAME_MAX];
+	DIR* dp;
+    struct dirent* ep;
+    int max = 10;
+
+    getcwd(cwd, sizeof(cwd));
+	scr_printf("\n\nTrying to open %s\n\n", cwd);
+
+    dp = opendir(cwd);
+    if (dp != NULL) {
+		int count = 0;
+        while ((ep = readdir(dp)) != NULL && count != max) {
+            scr_printf(ep->d_name);
+            scr_printf(" ");
+
+            char fname[1024];
+            snprintf(fname, 1024, "%s%s", cwd,ep->d_name);
+            struct stat st;
+            stat(fname, &st);
+            
+            char size[10];
+            itoa(st.st_size, size, 10);
+            scr_printf(size);
+
+            scr_printf(S_ISDIR(st.st_mode) ? " DIR\n" : " FILE\n");
+
+            count++;
+        }
+		closedir(dp);
+	} else {
+		scr_printf("Couldn't open the directory");
+	}
 }
 
 int main(int argc, char **argv) {
 	reset_IOP();
-	init_drivers();
-	printf("HDD example!\n");
+	init_scr();
 
+	init_drivers();
+
+	scr_printf("\n\n\nHDD example!\n\n\n");
+	mount_current_hdd_partition();
+	print_current_folder();
+
+	umount_current_hdd_partition();
 	deinit_drivers();
-	poweroffShutdown();
+	sleep(5);
 }
