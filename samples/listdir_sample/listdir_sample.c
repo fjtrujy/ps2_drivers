@@ -39,12 +39,54 @@ static void reset_IOP() {
 	sbv_patch_disable_prefix_check();
 }
 
-static void init_drivers() {
-	init_hdd_driver(true);
+static bool waitUntilDeviceIsReady(char *path)
+{
+    struct stat buffer;
+    int ret = -1;
+    int retries = 50;
+
+    while(ret != 0 && retries > 0) {
+        ret = stat(path, &buffer);
+        /* Wait untill the device is ready */
+        nopdelay();
+
+        retries--;
+    }
+
+    return ret == 0;
 }
 
-static void deinit_drivers() {
-	deinit_hdd_driver(true);
+static void deinit_drivers(bool deinit_powerOff) {
+	deinit_hdd_driver(false);
+	deinit_usb_driver();
+	deinit_memcard_driver(true);
+	deinit_fileXio_driver();
+	
+	if (deinit_powerOff)
+		deinit_poweroff_driver();
+}
+
+static void prepare_for_exit(bool deinit_powerOff) {
+	umount_current_hdd_partition();
+
+	deinit_drivers(deinit_powerOff);
+}
+
+static void poweroffHandler(void *arg)
+{
+   prepare_for_exit(false);
+   poweroffShutdown();
+}
+
+static void init_drivers() {
+	init_poweroff_driver();
+	init_fileXio_driver();
+	init_memcard_driver(true);
+	init_usb_driver();
+	init_hdd_driver(false);
+
+	poweroffSetCallback(&poweroffHandler, NULL);
+	mount_current_hdd_partition();
 }
 
 static void print_current_folder() {
@@ -94,17 +136,27 @@ void create_log_file() {
 }
 
 int main(int argc, char **argv) {
+	char cwd[FILENAME_MAX];
+	bool ready;
+
 	reset_IOP();
 	init_scr();
+	scr_printf("\n\n\n LIST DIR example!\n\n\n");
 
 	init_drivers();
 
-	scr_printf("\n\n\n LIST DIR example!\n\n\n");
-	mount_current_hdd_partition();
+	getcwd(cwd, sizeof(cwd));
+	ready = waitUntilDeviceIsReady(cwd);
+	scr_printf("     Path %s is ready=%i!\n", cwd, ready);
+	if (!ready) {
+		prepare_for_exit(true);
+		sleep(10);
+		return -1;
+	}
+
 	print_current_folder();
 	create_log_file();
 
-	umount_current_hdd_partition();
-	deinit_drivers();
+	prepare_for_exit(true);
 	sleep(10);
 }
