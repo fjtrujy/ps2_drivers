@@ -50,7 +50,7 @@ enum SIO2MAN_INIT_STATUS init_sio2man_driver(void) {
 
 #ifdef F_deinit_ps2_sio2man_driver
 static void unloadIRXs(void) {
-    /* MTAPMAN.IRX */
+    /* SIO2MAN.IRX */
     if (__sio2man_id > 0) {
         SifUnloadModule(__sio2man_id);
         __sio2man_id = -1;

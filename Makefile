@@ -13,7 +13,7 @@ LIBS_NAME = $(LIBS:-l%=lib%.a)
 IRX_FILES += sio2man.irx
 IRX_FILES += iomanX.irx fileXio.irx
 IRX_FILES += mcman.irx mcserv.irx
-IRX_FILES += usbd.irx bdm.irx bdmfs_vfat.irx usbmass_bd.irx
+IRX_FILES += bdm.irx bdmfs_fatfs.irx usbd.irx usbmass_bd.irx
 IRX_FILES += cdfs.irx
 IRX_FILES += ps2dev9.irx ps2atad.irx ps2hdd.irx ps2fs.irx
 IRX_FILES += mtapman.irx padman.irx
