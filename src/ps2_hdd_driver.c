@@ -51,6 +51,17 @@ int32_t __ps2hdd_id = -1;
 int32_t __ps2fs_id = -1;
 char __mountString[10];
 enum HDD_MOUNT_STATUS __mount_status = HDD_MOUNT_STATUS_UKNOWN;
+
+static inline bool prefix(const char *pre, const char *str) {
+    return strncmp(pre, str, strlen(pre)) == 0;
+}
+
+bool __cwd_is_hdd() {
+    char cwd[FILENAME_MAX];
+    getcwd(cwd, sizeof(cwd));
+
+    return prefix("hdd:", cwd) || prefix("hdd0:", cwd);
+}
 #else
 extern enum HDD_INIT_STATUS __hdd_init_status;
 extern int32_t __ps2dev9_id;
@@ -59,7 +70,7 @@ extern int32_t __ps2hdd_id;
 extern int32_t __ps2fs_id;
 extern char __mountString[];
 extern enum HDD_MOUNT_STATUS __mount_status;
-
+bool __cwd_is_hdd();
 #endif
 
 #ifdef F_init_ps2_hdd_driver
@@ -102,6 +113,11 @@ static enum HDD_INIT_STATUS loadIRXs(void) {
 }
 
 enum HDD_INIT_STATUS init_hdd_driver(bool init_dependencies) {
+    if(!__cwd_is_hdd()){
+        __hdd_init_status = HDD_INIT_WRONG_CWD;
+        return __hdd_init_status;
+    }
+
     // Requires to have FILEXIO
     if (init_dependencies)
         init_fileXio_driver();
@@ -148,10 +164,6 @@ void deinit_hdd_driver(bool deinit_dependencies) {
 #endif
 
 #ifdef F_mount_current_partition_ps2_hdd_driver
-static bool prefix(const char *pre, const char *str) {
-    return strncmp(pre, str, strlen(pre)) == 0;
-}
-
 static char** str_split(char* a_str, const char a_delim)
 {
     char** result    = 0;
@@ -250,11 +262,13 @@ enum HDD_MOUNT_STATUS mount_current_hdd_partition() {
     char new_cwd[FILENAME_MAX];
     char mountPoint[50];
 
-    getcwd(cwd, sizeof(cwd));
+    if (__hdd_init_status != HDD_INIT_STATUS_IRX_OK)
+        return HDD_MOUNT_INIT_STATUS_NOT_READY;
 
-    if (!prefix("hdd:", cwd) && !prefix("hdd0:", cwd))
+    if (!__cwd_is_hdd())
         return HDD_MOUNT_STATUS_WRONG_CWD;
     
+    getcwd(cwd, sizeof(cwd));
     if (!getMountInfo(cwd, __mountString, mountPoint, new_cwd))
         return HDD_MOUNT_STATUS_INFO_ERROR;
 
