@@ -18,8 +18,8 @@
 #include <dirent.h>
 #include <unistd.h>
 
-#include <ps2_poweroff_driver.h>
-#include <ps2_hdd_driver.h>
+#include <kernel.h>
+#include <ps2_all_drivers.h>
 #include <libpwroff.h>
 #include <sifrpc.h>
 #include <iopcontrol.h>
@@ -99,12 +99,12 @@ int main(int argc, char **argv) {
 
 	init_drivers();
 
-	scr_printf("\n\n\nHDD example!\n\n\n");
+	scr_printf("\n\n\n LIST DIR example!\n\n\n");
 	mount_current_hdd_partition();
 	print_current_folder();
 	create_log_file();
 
 	umount_current_hdd_partition();
 	deinit_drivers();
-	sleep(5);
+	sleep(10);
 }
