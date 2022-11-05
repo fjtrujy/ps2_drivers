@@ -112,8 +112,8 @@ static enum HDD_INIT_STATUS loadIRXs(void) {
     return HDD_INIT_STATUS_IRX_OK;
 }
 
-enum HDD_INIT_STATUS init_hdd_driver(bool init_dependencies) {
-    if(!__cwd_is_hdd()){
+enum HDD_INIT_STATUS init_hdd_driver(bool init_dependencies, bool only_if_booted_from_hdd) {
+    if(only_if_booted_from_hdd && !__cwd_is_hdd()){
         __hdd_init_status = HDD_INIT_WRONG_CWD;
         return __hdd_init_status;
     }
@@ -160,6 +160,19 @@ void deinit_hdd_driver(bool deinit_dependencies) {
     // Requires to have FILEXIO
     if (deinit_dependencies)
         deinit_fileXio_driver();
+}
+#endif
+
+#ifdef F_mount_hdd_partition_ps2_hdd_driver
+enum HDD_MOUNT_STATUS mount_hdd_partition(const char* mountpoint, const char* blockdev) {
+    if (__hdd_init_status != HDD_INIT_STATUS_IRX_OK)
+        return HDD_MOUNT_INIT_STATUS_NOT_READY;
+
+    if (fileXioMount(mountpoint, blockdev, FIO_MT_RDWR) < 0) {
+        return HDD_MOUNT_STATUS_ERROR;
+    }
+
+    return HDD_MOUNT_STATUS_OK;
 }
 #endif
 
@@ -285,18 +298,25 @@ enum HDD_MOUNT_STATUS mount_current_hdd_partition() {
 }
 #endif
 
-#ifdef F_umount_current_partition_ps2_hdd_driver
-void umount_current_hdd_partition() {
-   if (__mount_status == HDD_MOUNT_STATUS_OK) {
-      fileXioUmount(__mountString);
-      fileXioDevctl(__mountString, PDIOC_CLOSEALL, NULL, 0, NULL, 0);
+#ifdef F_umount_hdd_partition_ps2_hdd_driver
+void umount_hdd_partition(const char* mountpoint) {
+    if (__mount_status == HDD_MOUNT_STATUS_OK) {
+      fileXioUmount(mountpoint);
+      fileXioDevctl(mountpoint, PDIOC_CLOSEALL, NULL, 0, NULL, 0);
       fileXioDevctl("hdd0:", HDIOC_IDLEIMM, NULL, 0, NULL, 0);
 
       __mount_status = HDD_MOUNT_STATUS_UKNOWN;
-      memset(__mountString, 0, 10);
    }
 
    if (__ps2fs_id > 0)
       fileXioDevctl("dev9x:", DDIOC_OFF, NULL, 0, NULL, 0);
+}
+#else
+void umount_hdd_partition(const char* mountpoint);
+#endif
+
+#ifdef F_umount_current_partition_ps2_hdd_driver
+void umount_current_hdd_partition() {
+    umount_hdd_partition(__mountString);
 }
 #endif
