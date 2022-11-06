@@ -26,6 +26,15 @@
 #include <sbv_patches.h>
 #include <debug.h>
 
+// **************  ATTENTION **************
+// ****************************************
+// ****************************************
+// THIS EXAMPLE JUST HAVE THE HDD DRIVER, 
+// SO IT WON'T WORK IN USB/MC...
+// ****************************************
+// ****************************************
+// **************  ATTENTION **************
+
 static void reset_IOP() {
 	SifInitRpc(0);
 	#if !defined(DEBUG) || defined(BUILD_FOR_PCSX2)
@@ -40,7 +49,7 @@ static void reset_IOP() {
 }
 
 static void init_drivers() {
-	init_hdd_driver(true);
+	init_hdd_driver(true, true);
 }
 
 static void deinit_drivers() {

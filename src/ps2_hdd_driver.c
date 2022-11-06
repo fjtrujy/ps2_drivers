@@ -306,6 +306,7 @@ void umount_hdd_partition(const char* mountpoint) {
       fileXioDevctl("hdd0:", HDIOC_IDLEIMM, NULL, 0, NULL, 0);
 
       __mount_status = HDD_MOUNT_STATUS_UKNOWN;
+       memset(__mountString, 0, 10);
    }
 
    if (__ps2fs_id > 0)
