@@ -44,7 +44,7 @@ static void init_drivers() {
 	init_joystick_driver(true);
 	init_audio_driver();
 	init_poweroff_driver();
-	init_hdd_driver(true);
+	init_hdd_driver(true, true);
 }
 
 static void deinit_drivers() {
