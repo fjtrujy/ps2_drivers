@@ -44,6 +44,7 @@ static void init_drivers() {
 	init_joystick_driver(true);
 	init_audio_driver();
 	init_poweroff_driver();
+	init_hdd_driver(true, true);
 }
 
 static void deinit_drivers() {
@@ -53,6 +54,7 @@ static void deinit_drivers() {
 	deinit_usb_driver(false);
 	deinit_cdfs_driver();
 	deinit_memcard_driver(true);
+	deinit_hdd_driver(false);
 	deinit_fileXio_driver();
 }
 

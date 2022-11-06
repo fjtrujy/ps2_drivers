@@ -43,7 +43,7 @@ static enum MEMCARD_INIT_STATUS loadIRXs(void) {
     if (__mcman_id < 0)
         return MEMCARD_INIT_STATUS_MCMAN_IRX_ERROR;
 
-    /* PADMAN.IRX */
+    /* MCSERV.IRX */
     __mcserv_id = SifExecModuleBuffer(&mcserv_irx, size_mcserv_irx, 0, NULL, NULL);
     if (__mcserv_id < 0)
         return MEMCARD_INIT_STATUS_MCSERV_IRX_ERROR;
@@ -69,18 +69,18 @@ static void unloadIRXs(void) {
         __mcman_id = -1;
     }
     
-    /* PADMAN.IRX */
+    /* MCSERV.IRX */
     if (__mcserv_id > 0) {
         SifUnloadModule(__mcserv_id);
         __mcserv_id = -1;
     }
 }
 
-void deinit_memcard_driver(bool init_dependencies) {
-    // Requires to have SIO2MAN
-    if (init_dependencies)
-        deinit_sio2man_driver();
-    
+void deinit_memcard_driver(bool deinit_dependencies) {
     unloadIRXs();
+
+    // Requires to have SIO2MAN
+    if (deinit_dependencies)
+        deinit_sio2man_driver();
 }
 #endif

@@ -18,17 +18,17 @@
 #include <sifrpc.h>
 #include <loadfile.h>
 
-/* References to USBD.IRX */
-extern unsigned char usbd_irx[] __attribute__((aligned(16)));
-extern unsigned int size_usbd_irx;
-
 /* References to BDM.IRX */
 extern unsigned char bdm_irx[] __attribute__((aligned(16)));
 extern unsigned int size_bdm_irx;
 
-/* References to BDMFS_VFAT.IRX */
-extern unsigned char bdmfs_vfat_irx[] __attribute__((aligned(16)));
-extern unsigned int size_bdmfs_vfat_irx;
+/* References to BDMFS_FATFS.IRX */
+extern unsigned char bdmfs_fatfs_irx[] __attribute__((aligned(16)));
+extern unsigned int size_bdmfs_fatfs_irx;
+
+/* References to USBD.IRX */
+extern unsigned char usbd_irx[] __attribute__((aligned(16)));
+extern unsigned int size_usbd_irx;
 
 /* References to USBMASS_BD.IRX */
 extern unsigned char usbmass_bd_irx[] __attribute__((aligned(16)));
@@ -38,32 +38,32 @@ extern unsigned int size_usbmass_bd_irx;
 enum USB_INIT_STATUS __usb_init_status = USB_INIT_STATUS_UNKNOWN;
 int32_t __usbd_id = -1;
 int32_t __bdm_id = -1;
-int32_t __bdmfs_vfat_id = -1;
+int32_t __bdmfs_fatfs_id = -1;
 int32_t __usbmass_bd_id = -1;
 #else
 extern enum USB_INIT_STATUS __usb_init_status;
 extern int32_t __usbd_id;
 extern int32_t __bdm_id;
-extern int32_t __bdmfs_vfat_id;
+extern int32_t __bdmfs_fatfs_id;
 extern int32_t __usbmass_bd_id;
 #endif
 
 #ifdef F_init_ps2_usb_driver
 static enum USB_INIT_STATUS loadIRXs(void) {
-    /* USBD.IRX */
-    __usbd_id = SifExecModuleBuffer(&usbd_irx, size_usbd_irx, 0, NULL, NULL);
-    if (__usbd_id < 0)
-        return USB_INIT_STATUS_USBD_IRX_ERROR;
-
     /* BDM.IRX */
     __bdm_id = SifExecModuleBuffer(&bdm_irx, size_bdm_irx, 0, NULL, NULL);
     if (__bdm_id < 0)
         return USB_INIT_STATUS_BDM_IRX_ERROR;
     
-    /* BDMFS_VFAT.IRX */
-    __bdmfs_vfat_id = SifExecModuleBuffer(&bdmfs_vfat_irx, size_bdmfs_vfat_irx, 0, NULL, NULL);
-    if (__bdmfs_vfat_id < 0)
-        return USB_INIT_STATUS_BDMFS_VFAT_IRX_ERROR;
+    /* BDMFS_FATFS.IRX */
+    __bdmfs_fatfs_id = SifExecModuleBuffer(&bdmfs_fatfs_irx, size_bdmfs_fatfs_irx, 0, NULL, NULL);
+    if (__bdmfs_fatfs_id < 0)
+        return USB_INIT_STATUS_BDMFS_FATFS_IRX_ERROR;
+
+    /* USBD.IRX */
+    __usbd_id = SifExecModuleBuffer(&usbd_irx, size_usbd_irx, 0, NULL, NULL);
+    if (__usbd_id < 0)
+        return USB_INIT_STATUS_USBD_IRX_ERROR;
 
     /* USBMASS_BD.IRX */
     __usbmass_bd_id = SifExecModuleBuffer(&usbmass_bd_irx, size_usbmass_bd_irx, 0, NULL, NULL);
@@ -88,22 +88,22 @@ static void unloadIRXs(void) {
         __usbmass_bd_id = -1;
     }
 
-    /* BDMFS_VFAT.IRX */
-    if (__bdmfs_vfat_id > 0) {
-        SifUnloadModule(__bdmfs_vfat_id);
-        __bdmfs_vfat_id = -1;
+    /* USBD.IRX */
+    if (__usbd_id > 0) {
+        SifUnloadModule(__usbd_id);
+        __usbd_id = -1;
+    }
+
+    /* BDMFS_FATFS.IRX */
+    if (__bdmfs_fatfs_id > 0) {
+        SifUnloadModule(__bdmfs_fatfs_id);
+        __bdmfs_fatfs_id = -1;
     }
 
     /* BDM.IRX */
     if (__bdm_id > 0) {
         SifUnloadModule(__bdm_id);
         __bdm_id = -1;
-    }
-
-    /* USBD.IRX */
-    if (__usbd_id > 0) {
-        SifUnloadModule(__usbd_id);
-        __usbd_id = -1;
     }
 }
 
