@@ -10,10 +10,10 @@
 # PS2_JOYSTICK_DRIVER
 */
 
-#include <stdbool.h>
-
 #ifndef PS2_JOYSTICK_DRIVER
 #define PS2_JOYSTICK_DRIVER
+
+#include <stdbool.h>
 
 enum JOYSTICK_INIT_STATUS {
     JOYSTICK_INIT_STATUS_DEPENDENCY_IRX_ERROR = -6,

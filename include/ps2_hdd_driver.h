@@ -10,10 +10,10 @@
 # PS2_HDD_DRIVER
 */
 
-#include <stdbool.h>
-
 #ifndef PS2_HDD_DRIVER
 #define PS2_HDD_DRIVER
+
+#include <stdbool.h>
 
 enum HDD_INIT_STATUS {
     HDD_INIT_STATUS_HDD_NOT_READY_ERROR = -7,

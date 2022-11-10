@@ -10,8 +10,6 @@
 # PS2_CDFS_DRIVER
 */
 
-#include <stdbool.h>
-
 #ifndef PS2_CDFS_DRIVER
 #define PS2_CDFS_DRIVER
 

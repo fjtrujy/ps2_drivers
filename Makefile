@@ -29,13 +29,16 @@ MEMCARD_DRIVER_OBJS = internals_ps2_memcard_driver.o init_ps2_memcard_driver.o d
 USB_DRIVER_OBJS = internals_ps2_usb_driver.o init_ps2_usb_driver.o deinit_ps2_usb_driver.o
 CDFS_DRIVER_OBJS = internals_ps2_cdfs_driver.o init_ps2_cdfs_driver.o deinit_ps2_cdfs_driver.o
 HDD_DRIVER_OBJS = internals_ps2_hdd_driver.o init_ps2_hdd_driver.o deinit_ps2_hdd_driver.o \
-	mount_hdd_partition_ps2_hdd_driver.o mount_current_partition_ps2_hdd_driver.o umount_hdd_partition_ps2_hdd_driver.o umount_current_partition_ps2_hdd_driver.o
+	mount_hdd_partition_ps2_hdd_driver.o mount_current_partition_ps2_hdd_driver.o \
+	umount_hdd_partition_ps2_hdd_driver.o umount_current_partition_ps2_hdd_driver.o
+FILESYSTEM_DRIVER_OBJS = waitUntilDeviceIsReady_ps2_filesystem_driver.o rootDevicePath_ps2_filesystem_driver.o getBootDeviceID_ps2_filesystem_driver.o \
+	__internal_deinit_ps2_filesystem_driver.o deinit_ps2_filesystem_driver.o init_ps2_filesystem_driver.o
 JOYSTICK_DRIVER_OBJS = internals_ps2_joystick_driver.o init_ps2_joystick_driver.o deinit_ps2_joystick_driver.o
 AUDIO_DRIVER_OBJS = internals_ps2_audio_driver.o init_ps2_audio_driver.o deinit_ps2_audio_driver.o
 POWEROFF_DRIVER_OBJS = internals_ps2_poweroff_driver.o init_ps2_poweroff_driver.o deinit_ps2_poweroff_driver.o
 
 EE_OBJS += $(SIO2MAN_DRIVER_OBJS) $(FILEXIO_DRIVER_OBJS) $(MEMCARD_DRIVER_OBJS) $(USB_DRIVER_OBJS) $(CDFS_DRIVER_OBJS) $(HDD_DRIVER_OBJS) \
-	$(JOYSTICK_DRIVER_OBJS) $(AUDIO_DRIVER_OBJS) $(POWEROFF_DRIVER_OBJS)
+	$(FILESYSTEM_DRIVER_OBJS) $(JOYSTICK_DRIVER_OBJS) $(AUDIO_DRIVER_OBJS) $(POWEROFF_DRIVER_OBJS)
 
 ## ALL ACTIONS
 all: prepare
@@ -85,6 +88,9 @@ EE_C_COMPILE = $(EE_CC) $(EE_CFLAGS)
 
 %_ps2_hdd_driver.o:
 	$(EE_C_COMPILE) -DF_$*_ps2_hdd_driver $(EE_SRC_DIR)ps2_hdd_driver.c -c -o $(EE_OBJS_DIR)$@
+
+%_ps2_filesystem_driver.o:
+	$(EE_C_COMPILE) -DF_$*_ps2_filesystem_driver $(EE_SRC_DIR)ps2_filesystem_driver.c -c -o $(EE_OBJS_DIR)$@
 
 %_ps2_joystick_driver.o:
 	$(EE_C_COMPILE) -DF_$*_ps2_joystick_driver $(EE_SRC_DIR)ps2_joystick_driver.c -c -o $(EE_OBJS_DIR)$@

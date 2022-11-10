@@ -10,10 +10,10 @@
 # PS2_MEMCARD_DRIVER
 */
 
-#include <stdbool.h>
-
 #ifndef PS2_MEMCARD_DRIVER
 #define PS2_MEMCARD_DRIVER
+
+#include <stdbool.h>
 
 enum MEMCARD_INIT_STATUS {
     MEMCARD_INIT_STATUS_DEPENDENCY_IRX_ERROR = -4,
