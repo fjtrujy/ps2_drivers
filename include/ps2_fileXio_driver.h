@@ -10,8 +10,6 @@
 # PS2_FILEXIO_DRIVER
 */
 
-#include <stdbool.h>
-
 #ifndef PS2_FILEXIO_DRIVER
 #define PS2_FILEXIO_DRIVER
 
