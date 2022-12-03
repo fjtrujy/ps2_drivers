@@ -95,25 +95,6 @@ static void poweroffHandler(void *arg) {
     poweroffShutdown();
 }
 
-/* When booting from a USB device, it is not directly ready
- * so we try to open the folder again until it succeeds.
- */
-static bool waitUntilDeviceIsReady(char *path) {
-    struct stat buffer;
-    int ret = -1;
-    int retries = 50;
-
-    while(ret != 0 && retries > 0) {
-        ret = stat(path, &buffer);
-        /* Wait untill the device is ready */
-        nopdelay();
-
-        retries--;
-    }
-
-    return ret == 0;
-}
-
 void init_ps2_filesystem_driver() {
     char cwd[FILENAME_MAX];
 
@@ -129,6 +110,27 @@ void init_ps2_filesystem_driver() {
 
     getcwd(cwd, sizeof(cwd));
     waitUntilDeviceIsReady(cwd);
+}
+#endif
+
+#if F_waitUntilDeviceIsReady_ps2_filesystem_driver
+/* When booting from a USB device, it is not directly ready
+ * so we try to open the folder again until it succeeds.
+ */
+bool waitUntilDeviceIsReady(char *path) {
+    struct stat buffer;
+    int ret = -1;
+    int retries = 50;
+
+    while(ret != 0 && retries > 0) {
+        ret = stat(path, &buffer);
+        /* Wait untill the device is ready */
+        nopdelay();
+
+        retries--;
+    }
+
+    return ret == 0;
 }
 #endif
 

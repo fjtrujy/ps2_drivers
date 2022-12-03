@@ -14,13 +14,7 @@
 #define PS2_ALL_DRIVERS
 
 #include <ps2_audio_driver.h>
-#include <ps2_cdfs_driver.h>
-#include <ps2_fileXio_driver.h>
-#include <ps2_hdd_driver.h>
 #include <ps2_joystick_driver.h>
-#include <ps2_poweroff_driver.h>
-#include <ps2_memcard_driver.h>
-#include <ps2_sio2man_driver.h>
-#include <ps2_usb_driver.h>
+#include <ps2_filesystem_driver.h>
 
 #endif /* PS2_ALL_DRIVERS */
