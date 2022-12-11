@@ -49,6 +49,7 @@ enum BootDeviceIDs {
 
 void init_ps2_filesystem_driver();
 void deinit_ps2_filesystem_driver();
+bool waitUntilDeviceIsReady(char *path);
 char *rootDevicePath(enum BootDeviceIDs device_id);
 enum BootDeviceIDs getBootDeviceID(char *path);
 

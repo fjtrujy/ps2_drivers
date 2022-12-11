@@ -42,23 +42,6 @@ static void reset_IOP() {
 	sbv_patch_disable_prefix_check();
 }
 
-static bool waitUntilDeviceIsReady(const char *path)
-{
-    struct stat buffer;
-    int ret = -1;
-    int retries = 50;
-
-    while(ret != 0 && retries > 0) {
-        ret = stat(path, &buffer);
-        /* Wait untill the device is ready */
-        nopdelay();
-
-        retries--;
-    }
-
-    return ret == 0;
-}
-
 #if !defined(ENABLED_HDD_IF_BOOT_FROM_HDD)
 static void mount_default_partition() {
 	int res = mount_hdd_partition("pfs:", "hdd0:__common");
