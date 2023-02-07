@@ -120,7 +120,7 @@ void init_ps2_filesystem_driver() {
 bool waitUntilDeviceIsReady(char *path) {
     struct stat buffer;
     int ret = -1;
-    int retries = 50;
+    int retries = 500;
 
     while(ret != 0 && retries > 0) {
         ret = stat(path, &buffer);
