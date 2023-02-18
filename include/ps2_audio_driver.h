@@ -13,6 +13,10 @@
 #ifndef PS2_AUDIO_DRIVER
 #define PS2_AUDIO_DRIVER
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum AUDIO_INIT_STATUS {
     AUDIO_INIT_STATUS_AUDSRV_IRX_ERROR = -4,
     AUDIO_INIT_STATUS_LIBSD_IRX_ERROR = -3,
@@ -24,5 +28,9 @@ enum AUDIO_INIT_STATUS {
 
 enum AUDIO_INIT_STATUS init_audio_driver(void);
 void deinit_audio_driver(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PS2_AUDIO_DRIVER */

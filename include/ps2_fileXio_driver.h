@@ -13,6 +13,10 @@
 #ifndef PS2_FILEXIO_DRIVER
 #define PS2_FILEXIO_DRIVER
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum FILEXIO_INIT_STATUS {
     FILEXIO_INIT_STATUS_DEPENDENCY_IRX_ERROR = -4,
     FILEXIO_INIT_STATUS_FILEXIO_IRX_ERROR = -3,
@@ -25,5 +29,9 @@ enum FILEXIO_INIT_STATUS {
 /* FILEXIO DRIVER REQUIRES SIO2MAN DRIVER AS DEPENDENCY */
 enum FILEXIO_INIT_STATUS init_fileXio_driver();
 void deinit_fileXio_driver();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PS2_FILEXIO_DRIVER */

@@ -13,6 +13,10 @@
 #ifndef PS2_SIO2MAN_DRIVER
 #define PS2_SIO2MAN_DRIVER
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum SIO2MAN_INIT_STATUS {
     SIO2MAN_INIT_STATUS_IRX_ERROR = -2,
     SIO2MAN_INIT_STATUS_UNKNOWN = -1,
@@ -21,5 +25,9 @@ enum SIO2MAN_INIT_STATUS {
 
 enum SIO2MAN_INIT_STATUS init_sio2man_driver(void);
 void deinit_sio2man_driver(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PS2_SIO2MAN_DRIVER */

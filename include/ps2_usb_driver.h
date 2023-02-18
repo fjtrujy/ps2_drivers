@@ -13,6 +13,10 @@
 #ifndef PS2_USB_DRIVER
 #define PS2_USB_DRIVER
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum USB_INIT_STATUS {
     USB_INIT_STATUS_DEPENDENCY_IRX_ERROR = -6,
     USB_INIT_STATUS_USBMASS_BD_IRX_ERROR = -5,
@@ -27,5 +31,9 @@ enum USB_INIT_STATUS {
 /* USB DRIVER REQUIRES SIO2MAN DRIVER AS DEPENDENCY */
 enum USB_INIT_STATUS init_usb_driver();
 void deinit_usb_driver();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PS2_USB_DRIVER */

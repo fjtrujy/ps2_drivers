@@ -15,6 +15,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum HDD_INIT_STATUS {
     HDD_INIT_STATUS_HDD_NOT_READY_ERROR = -7,
     HDD_INIT_STATUS_PS2FS_IRX_ERROR = -6,
@@ -42,5 +46,9 @@ enum HDD_MOUNT_STATUS mount_current_hdd_partition();
 enum HDD_MOUNT_STATUS mount_hdd_partition(const char* mountpoint, const char* blockdev);
 void umount_current_hdd_partition();
 void umount_hdd_partition(const char* mountpoint);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PS2_HDD_DRIVER */

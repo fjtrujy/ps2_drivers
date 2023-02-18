@@ -15,6 +15,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum JOYSTICK_INIT_STATUS {
     JOYSTICK_INIT_STATUS_DEPENDENCY_IRX_ERROR = -6,
     JOYSTICK_INIT_STATUS_PAD_IRX_ERROR = -5,
@@ -29,5 +33,9 @@ enum JOYSTICK_INIT_STATUS {
 /* JOYSTICK DRIVER REQUIRES SIO2MAN DRIVER AS DEPENDENCY */
 enum JOYSTICK_INIT_STATUS init_joystick_driver(bool init_dependencies);
 void deinit_joystick_driver(bool deinit_dependencies);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PS2_JOYSTICK_DRIVER */
