@@ -13,6 +13,10 @@
 #ifndef PS2_POWEROFF_DRIVER
 #define PS2_POWEROFF_DRIVER
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum POWEROFF_INIT_STATUS {
     POWEROFF_INIT_STATUS_IRX_ERROR = -3,
     POWEROFF_INIT_STATUS_EERPC_ERROR = -2,
@@ -23,5 +27,9 @@ enum POWEROFF_INIT_STATUS {
 
 enum POWEROFF_INIT_STATUS init_poweroff_driver(void);
 void deinit_poweroff_driver(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PS2_POWEROFF_DRIVER */

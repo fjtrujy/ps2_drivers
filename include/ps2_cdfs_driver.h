@@ -13,6 +13,10 @@
 #ifndef PS2_CDFS_DRIVER
 #define PS2_CDFS_DRIVER
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum CDFS_INIT_STATUS {
     CDFS_INIT_STATUS_IRX_ERROR = -2,
     CDFS_INIT_STATUS_UNKNOWN = -1,
@@ -21,5 +25,9 @@ enum CDFS_INIT_STATUS {
 
 enum CDFS_INIT_STATUS init_cdfs_driver();
 void deinit_cdfs_driver();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PS2_CDFS_DRIVER */

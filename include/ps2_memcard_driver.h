@@ -15,6 +15,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum MEMCARD_INIT_STATUS {
     MEMCARD_INIT_STATUS_DEPENDENCY_IRX_ERROR = -4,
     MEMCARD_INIT_STATUS_MCSERV_IRX_ERROR = -3,
@@ -27,5 +31,9 @@ enum MEMCARD_INIT_STATUS {
 /* MEMCARD DRIVER REQUIRES SIO2MAN DRIVER AS DEPENDENCY */
 enum MEMCARD_INIT_STATUS init_memcard_driver(bool init_dependencies);
 void deinit_memcard_driver(bool deinit_dependencies);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PS2_MEMCARD_DRIVER */

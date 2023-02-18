@@ -23,6 +23,10 @@
 #include <ps2_cdfs_driver.h>
 #include <ps2_hdd_driver.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum BootDeviceIDs {
    BOOT_DEVICE_UNKNOWN = -1,
    BOOT_DEVICE_MC0 = 0,
@@ -52,5 +56,9 @@ void deinit_ps2_filesystem_driver();
 bool waitUntilDeviceIsReady(char *path);
 char *rootDevicePath(enum BootDeviceIDs device_id);
 enum BootDeviceIDs getBootDeviceID(char *path);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PS2_FILESYSTEM_DRIVER */
