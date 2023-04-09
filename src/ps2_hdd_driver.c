@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <ps2_hdd_driver.h>
 #include <ps2_fileXio_driver.h>
+#include <ps2_dev9_driver.h>
 
 #include <sifrpc.h>
 #include <loadfile.h>
@@ -26,10 +27,6 @@
 #include <fileXio_rpc.h>
 #include <hdd-ioctl.h>
 #include <io_common.h>
-
-/* References to PS2DEV9.IRX */
-extern unsigned char ps2dev9_irx[] __attribute__((aligned(16)));
-extern unsigned int size_ps2dev9_irx;
 
 /* References to PS2ATAD.IRX */
 extern unsigned char ps2atad_irx[] __attribute__((aligned(16)));
@@ -45,7 +42,6 @@ extern unsigned int size_ps2fs_irx;
 
 #ifdef F_internals_ps2_hdd_driver
 enum HDD_INIT_STATUS __hdd_init_status = HDD_INIT_STATUS_UNKNOWN;
-int32_t __ps2dev9_id = -1;
 int32_t __ps2atad_id = -1;
 int32_t __ps2hdd_id = -1;
 int32_t __ps2fs_id = -1;
@@ -64,7 +60,6 @@ bool __cwd_is_hdd() {
 }
 #else
 extern enum HDD_INIT_STATUS __hdd_init_status;
-extern int32_t __ps2dev9_id;
 extern int32_t __ps2atad_id;
 extern int32_t __ps2hdd_id;
 extern int32_t __ps2fs_id;
@@ -84,11 +79,6 @@ static int hddCheck(void) {
 
 static enum HDD_INIT_STATUS loadIRXs(void) {
     char hddarg[] = "-o" "\0" "4" "\0" "-n" "\0" "20";
-
-    /* PS2DEV9.IRX */
-    __ps2dev9_id = SifExecModuleBuffer(&ps2dev9_irx, size_ps2dev9_irx, 0, NULL, NULL);
-    if (__ps2dev9_id < 0)
-        return HDD_INIT_STATUS_PS2DEV9_IRX_ERROR;
     
     /* PS2ATAD.IRX */
     __ps2atad_id = SifExecModuleBuffer(&ps2atad_irx, size_ps2atad_irx, 0, NULL, NULL);
@@ -113,14 +103,28 @@ static enum HDD_INIT_STATUS loadIRXs(void) {
 }
 
 enum HDD_INIT_STATUS init_hdd_driver(bool init_dependencies, bool only_if_booted_from_hdd) {
+    int ret;
+
     if(only_if_booted_from_hdd && !__cwd_is_hdd()){
         __hdd_init_status = HDD_INIT_WRONG_CWD;
         return __hdd_init_status;
     }
 
-    // Requires to have FILEXIO
-    if (init_dependencies)
-        init_fileXio_driver();
+    // Requires to have FILEXIO and DEV9 drivers loaded
+    if (init_dependencies) {
+        ret = init_fileXio_driver();
+
+        if (ret != FILEXIO_INIT_STATUS_IRX_OK) {
+            __hdd_init_status = HDD_INIT_STATUS_DEPENDENCY_IRX_ERROR;
+            return __hdd_init_status;
+        }
+        
+        ret = init_dev9_driver();
+        if (ret != DEV9_INIT_STATUS_OK) {
+            __hdd_init_status = HDD_INIT_STATUS_DEPENDENCY_IRX_ERROR;
+            return __hdd_init_status;
+        }
+    }
 
     __hdd_init_status = loadIRXs();
     return __hdd_init_status;
@@ -146,20 +150,16 @@ static void unloadIRXs(void) {
         SifUnloadModule(__ps2atad_id);
         __ps2atad_id = -1;
     }
-
-    /* PS2DEV9.IRX */
-    if (__ps2dev9_id > 0) {
-        SifUnloadModule(__ps2dev9_id);
-        __ps2dev9_id = -1;
-    }
 }
 
 void deinit_hdd_driver(bool deinit_dependencies) {
     unloadIRXs();
 
-    // Requires to have FILEXIO
-    if (deinit_dependencies)
+    // Requires to have FILEXIO and DEV9 drivers loaded
+    if (deinit_dependencies) {
+        deinit_dev9_driver();
         deinit_fileXio_driver();
+    }
 }
 #endif
 
