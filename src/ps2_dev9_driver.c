@@ -36,7 +36,7 @@ static enum DEV9_INIT_STATUS loadIRXs(void) {
     if (__ps2dev9_id < 0)
         return DEV9_INIT_STATUS_IRX_ERROR;
     
-    return DEV9_INIT_STATUS_IRX_OK;
+    return DEV9_INIT_STATUS_OK;
 }
 
 enum DEV9_INIT_STATUS init_dev9_driver() {

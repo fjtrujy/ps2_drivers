@@ -36,7 +36,7 @@ static enum USBD_INIT_STATUS loadIRXs(void) {
     if (__usbd_id < 0)
         return USBD_INIT_STATUS_IRX_ERROR;
     
-    return USBD_INIT_STATUS_IRX_OK;
+    return USBD_INIT_STATUS_OK;
 }
 
 enum USBD_INIT_STATUS init_usbd_driver() {

@@ -37,13 +37,11 @@ extern unsigned int size_usbmass_bd_irx;
 
 #ifdef F_internals_ps2_usb_driver
 enum USB_INIT_STATUS __usb_init_status = USB_INIT_STATUS_UNKNOWN;
-int32_t __usbd_id = -1;
 int32_t __bdm_id = -1;
 int32_t __bdmfs_fatfs_id = -1;
 int32_t __usbmass_bd_id = -1;
 #else
 extern enum USB_INIT_STATUS __usb_init_status;
-extern int32_t __usbd_id;
 extern int32_t __bdm_id;
 extern int32_t __bdmfs_fatfs_id;
 extern int32_t __usbmass_bd_id;
