@@ -20,6 +20,7 @@
 #include <loadfile.h>
 
 int fileXioInit(void);
+void fileXioExit(void);
 
 /* References to IOMANX.IRX */
 extern unsigned char iomanX_irx[] __attribute__((aligned(16)));
@@ -87,6 +88,7 @@ static void unloadIRXs(void) {
 }
 
 void deinit_fileXio_driver() {    
+    fileXioExit();
     unloadIRXs();
 }
 #endif
