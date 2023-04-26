@@ -14,6 +14,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <ps2_usb_driver.h>
+#include <ps2_usbd_driver.h>
 
 #include <sifrpc.h>
 #include <loadfile.h>
@@ -36,13 +37,11 @@ extern unsigned int size_usbmass_bd_irx;
 
 #ifdef F_internals_ps2_usb_driver
 enum USB_INIT_STATUS __usb_init_status = USB_INIT_STATUS_UNKNOWN;
-int32_t __usbd_id = -1;
 int32_t __bdm_id = -1;
 int32_t __bdmfs_fatfs_id = -1;
 int32_t __usbmass_bd_id = -1;
 #else
 extern enum USB_INIT_STATUS __usb_init_status;
-extern int32_t __usbd_id;
 extern int32_t __bdm_id;
 extern int32_t __bdmfs_fatfs_id;
 extern int32_t __usbmass_bd_id;
@@ -61,9 +60,7 @@ static enum USB_INIT_STATUS loadIRXs(void) {
         return USB_INIT_STATUS_BDMFS_FATFS_IRX_ERROR;
 
     /* USBD.IRX */
-    __usbd_id = SifExecModuleBuffer(&usbd_irx, size_usbd_irx, 0, NULL, NULL);
-    if (__usbd_id < 0)
-        return USB_INIT_STATUS_USBD_IRX_ERROR;
+    init_usbd_driver();
 
     /* USBMASS_BD.IRX */
     __usbmass_bd_id = SifExecModuleBuffer(&usbmass_bd_irx, size_usbmass_bd_irx, 0, NULL, NULL);
@@ -89,10 +86,7 @@ static void unloadIRXs(void) {
     }
 
     /* USBD.IRX */
-    if (__usbd_id > 0) {
-        SifUnloadModule(__usbd_id);
-        __usbd_id = -1;
-    }
+    deinit_usbd_driver();
 
     /* BDMFS_FATFS.IRX */
     if (__bdmfs_fatfs_id > 0) {
