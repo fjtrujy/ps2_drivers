@@ -39,7 +39,7 @@ static enum MOUSE_INIT_STATUS loadIRXs(bool init_dependencies) {
             return MOUSE_INIT_STATUS_DEPENDENCY_ERROR;
     }
 
-    /* MOUSE.IRX */
+    /* PS2MOUSE.IRX */
     __mouse_id = SifExecModuleBuffer(&ps2mouse_irx, size_ps2mouse_irx, 0, NULL, NULL);
     if (__mouse_id < 0)
         return MOUSE_INIT_STATUS_IRX_ERROR;
@@ -70,7 +70,7 @@ enum MOUSE_INIT_STATUS init_mouse_driver(bool init_dependencies) {
 
 #ifdef F_deinit_ps2_mouse_driver
 static void unloadIRXs(bool deinit_dependencies) {
-    /* MOUSE.IRX */
+    /* PS2MOUSE.IRX */
     if (__mouse_id > 0) {
         SifUnloadModule(__mouse_id);
         __mouse_id = -1;
