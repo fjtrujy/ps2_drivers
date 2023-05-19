@@ -7,6 +7,7 @@ LIBS += -lfileXio
 LIBS += -lmtap -lpadx
 LIBS += -laudsrv
 LIBS += -lpoweroff
+LIBS += -lmouse -lkbd -lps2cam
 LIBS_NAME = $(LIBS:-l%=lib%.a)
 
 # IRX libs
@@ -19,6 +20,7 @@ IRX_FILES += ps2dev9.irx ps2atad.irx ps2hdd.irx ps2fs.irx
 IRX_FILES += mtapman.irx padman.irx
 IRX_FILES += libsd.irx audsrv.irx
 IRX_FILES += poweroff.irx
+IRX_FILES += ps2mouse.irx ps2kbd.irx ps2cam.irx
 EE_OBJS += $(IRX_FILES:.irx=_irx.o)
 
 # Helpers
@@ -38,9 +40,13 @@ FILESYSTEM_DRIVER_OBJS = waitUntilDeviceIsReady_ps2_filesystem_driver.o rootDevi
 JOYSTICK_DRIVER_OBJS = internals_ps2_joystick_driver.o init_ps2_joystick_driver.o deinit_ps2_joystick_driver.o
 AUDIO_DRIVER_OBJS = internals_ps2_audio_driver.o init_ps2_audio_driver.o deinit_ps2_audio_driver.o
 POWEROFF_DRIVER_OBJS = internals_ps2_poweroff_driver.o init_ps2_poweroff_driver.o deinit_ps2_poweroff_driver.o
+MOUSE_DRIVER_OBJS = internals_ps2_mouse_driver.o init_ps2_mouse_driver.o deinit_ps2_mouse_driver.o
+KEYBOARD_DRIVER_OBJS = internals_ps2_keyboard_driver.o init_ps2_keyboard_driver.o deinit_ps2_keyboard_driver.o
+CAMERA_DRIVER_OBJS = internals_ps2_camera_driver.o init_ps2_camera_driver.o deinit_ps2_camera_driver.o
 
 EE_OBJS += $(SIO2MAN_DRIVER_OBJS) $(FILEXIO_DRIVER_OBJS) $(MEMCARD_DRIVER_OBJS) $(USBD_DRIVER_OBJS) $(USB_DRIVER_OBJS) $(CDFS_DRIVER_OBJS) \
-	$(DEV9_DRIVER_OBJS) $(HDD_DRIVER_OBJS) $(FILESYSTEM_DRIVER_OBJS) $(JOYSTICK_DRIVER_OBJS) $(AUDIO_DRIVER_OBJS) $(POWEROFF_DRIVER_OBJS)
+	$(DEV9_DRIVER_OBJS) $(HDD_DRIVER_OBJS) $(FILESYSTEM_DRIVER_OBJS) $(JOYSTICK_DRIVER_OBJS) $(AUDIO_DRIVER_OBJS) $(POWEROFF_DRIVER_OBJS) \
+	$(MOUSE_DRIVER_OBJS) $(KEYBOARD_DRIVER_OBJS) $(CAMERA_DRIVER_OBJS)
 
 ## ALL ACTIONS
 all: prepare
@@ -108,6 +114,15 @@ EE_C_COMPILE = $(EE_CC) $(EE_CFLAGS)
 
 %_ps2_poweroff_driver.o:
 	$(EE_C_COMPILE) -DF_$*_ps2_poweroff_driver $(EE_SRC_DIR)ps2_poweroff_driver.c -c -o $(EE_OBJS_DIR)$@
+
+%_ps2_mouse_driver.o:
+	$(EE_C_COMPILE) -DF_$*_ps2_mouse_driver $(EE_SRC_DIR)ps2_mouse_driver.c -c -o $(EE_OBJS_DIR)$@
+
+%_ps2_keyboard_driver.o:
+	$(EE_C_COMPILE) -DF_$*_ps2_keyboard_driver $(EE_SRC_DIR)ps2_keyboard_driver.c -c -o $(EE_OBJS_DIR)$@
+
+%_ps2_camera_driver.o:
+	$(EE_C_COMPILE) -DF_$*_ps2_camera_driver $(EE_SRC_DIR)ps2_camera_driver.c -c -o $(EE_OBJS_DIR)$@
 
 #Include preferences
 include $(PS2SDK)/samples/Makefile.pref
