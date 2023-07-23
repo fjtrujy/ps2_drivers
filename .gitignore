@@ -52,3 +52,4 @@ dkms.conf
 
 .*
 !.github
+!.clang-format
