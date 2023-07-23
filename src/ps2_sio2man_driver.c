@@ -38,7 +38,7 @@ static enum SIO2MAN_INIT_STATUS loadIRXs(void) {
     __sio2man_id = SifExecModuleBuffer(&sio2man_irx, size_sio2man_irx, 0, NULL, NULL);
     if (__sio2man_id < 0)
         return SIO2MAN_INIT_STATUS_IRX_ERROR;
-    
+
     return SIO2MAN_INIT_STATUS_OK;
 }
 

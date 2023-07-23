@@ -35,7 +35,7 @@ static enum USBD_INIT_STATUS loadIRXs(void) {
     __usbd_id = SifExecModuleBuffer(&usbd_irx, size_usbd_irx, 0, NULL, NULL);
     if (__usbd_id < 0)
         return USBD_INIT_STATUS_IRX_ERROR;
-    
+
     return USBD_INIT_STATUS_OK;
 }
 
@@ -54,7 +54,7 @@ static void unloadIRXs(void) {
     }
 }
 
-void deinit_usbd_driver() {        
+void deinit_usbd_driver() {
     unloadIRXs();
 }
 #endif

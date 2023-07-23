@@ -47,7 +47,7 @@ static enum AUDIO_INIT_STATUS loadIRXs(void) {
     __audsrv_id = SifExecModuleBuffer(&audsrv_irx, size_audsrv_irx, 0, NULL, NULL);
     if (__audsrv_id < 0)
         return AUDIO_INIT_STATUS_AUDSRV_IRX_ERROR;
-    
+
     return AUDIO_INIT_STATUS_IRX_OK;
 }
 
@@ -81,7 +81,7 @@ static void unloadIRXs(void) {
         SifUnloadModule(__audsrv_id);
         __audsrv_id = -1;
     }
-    
+
     /* LIBSD.IRX */
     if (__libsd_id > 0) {
         SifUnloadModule(__libsd_id);
@@ -89,7 +89,7 @@ static void unloadIRXs(void) {
     }
 }
 
-void deinit_audio_driver() {        
+void deinit_audio_driver() {
     deinitLibraries();
     unloadIRXs();
 }

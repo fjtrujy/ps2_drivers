@@ -52,7 +52,7 @@ EE_OBJS += $(SIO2MAN_DRIVER_OBJS) $(FILEXIO_DRIVER_OBJS) $(MEMCARD_DRIVER_OBJS) 
 all: prepare
 all: unpack
 all: EE_OBJS += $(shell find ${UNPACKED_DIR} -name '*.o')
-all: $(EE_LIB) 
+all: $(EE_LIB)
 
 prepare:
 	mkdir -p ${UNPACKED_DIR};\

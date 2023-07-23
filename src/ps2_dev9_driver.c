@@ -35,7 +35,7 @@ static enum DEV9_INIT_STATUS loadIRXs(void) {
     __ps2dev9_id = SifExecModuleBuffer(&ps2dev9_irx, size_ps2dev9_irx, 0, NULL, NULL);
     if (__ps2dev9_id < 0)
         return DEV9_INIT_STATUS_IRX_ERROR;
-    
+
     return DEV9_INIT_STATUS_OK;
 }
 
@@ -54,7 +54,7 @@ static void unloadIRXs(void) {
     }
 }
 
-void deinit_dev9_driver() {        
+void deinit_dev9_driver() {
     unloadIRXs();
 }
 #endif

@@ -50,7 +50,7 @@ static enum JOYSTICK_INIT_STATUS loadIRXs(void) {
     __padman_id = SifExecModuleBuffer(&padman_irx, size_padman_irx, 0, NULL, NULL);
     if (__padman_id < 0)
         return JOYSTICK_INIT_STATUS_PAD_IRX_ERROR;
-    
+
     return JOYSTICK_INIT_STATUS_IRX_OK;
 }
 
@@ -58,7 +58,7 @@ static enum JOYSTICK_INIT_STATUS initLibraries(void) {
     /* Initializes pad un multitap libraries */
     if (mtapInit() != 1)
         return JOYSTICK_INIT_STATUS_MTAP_ERROR;
-   
+
     if (padInit(0) != 1)
         return JOYSTICK_INIT_STATUS_PAD_ERROR;
 
@@ -91,7 +91,7 @@ static void unloadIRXs(void) {
         SifUnloadModule(__mtapman_id);
         __mtapman_id = -1;
     }
-    
+
     /* MTAPMAN.IRX */
     if (__padman_id > 0) {
         SifUnloadModule(__padman_id);
@@ -99,7 +99,7 @@ static void unloadIRXs(void) {
     }
 }
 
-void deinit_joystick_driver(bool deinit_dependencies) {        
+void deinit_joystick_driver(bool deinit_dependencies) {
     deinitLibraries();
     unloadIRXs();
 

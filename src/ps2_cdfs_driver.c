@@ -35,7 +35,7 @@ static enum CDFS_INIT_STATUS loadIRXs(void) {
     __cdfs_id = SifExecModuleBuffer(&cdfs_irx, size_cdfs_irx, 0, NULL, NULL);
     if (__cdfs_id < 0)
         return CDFS_INIT_STATUS_IRX_ERROR;
-    
+
     return CDFS_INIT_STATUS_IRX_OK;
 }
 

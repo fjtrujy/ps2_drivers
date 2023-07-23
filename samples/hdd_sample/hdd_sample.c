@@ -29,7 +29,7 @@
 // **************  ATTENTION **************
 // ****************************************
 // ****************************************
-// THIS EXAMPLE JUST HAVE THE HDD DRIVER, 
+// THIS EXAMPLE JUST HAVE THE HDD DRIVER,
 // SO IT WON'T WORK IN USB/MC...
 // ****************************************
 // ****************************************
@@ -76,7 +76,7 @@ static void print_current_folder() {
             snprintf(fname, 1024, "%s%s", cwd,ep->d_name);
             struct stat st;
             stat(fname, &st);
-            
+
             char size[10];
             itoa(st.st_size, size, 10);
             scr_printf(size);

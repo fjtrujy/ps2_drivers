@@ -58,7 +58,7 @@ static void deinit_drivers(bool deinit_powerOff) {
 	deinit_usb_driver();
 	deinit_memcard_driver(true);
 	deinit_fileXio_driver();
-	
+
 	if (deinit_powerOff)
 		deinit_poweroff_driver();
 }
@@ -113,7 +113,7 @@ static void print_folder(const char* path) {
             snprintf(fname, 1024, "%s%s", path, ep->d_name);
             struct stat st;
             stat(fname, &st);
-            
+
             char size[10];
             itoa(st.st_size, size, 10);
             scr_printf(size);

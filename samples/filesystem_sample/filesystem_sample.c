@@ -47,7 +47,7 @@ static void deinit_drivers() {
 void write_to_file(const char* path) {
 	FILE *pFile;
 	pFile = fopen (path, "a");
-	
+
 	if (pFile) {
 		fprintf(pFile, "fjtrujy rocks!\n");
 		fclose (pFile);
@@ -59,7 +59,7 @@ void write_to_file(const char* path) {
 int main(int argc, char **argv) {
 	reset_IOP();
 	init_drivers();
-	
+
 	write_to_file("dummy.txt");
 
 	deinit_drivers();

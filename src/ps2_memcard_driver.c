@@ -47,7 +47,7 @@ static enum MEMCARD_INIT_STATUS loadIRXs(void) {
     __mcserv_id = SifExecModuleBuffer(&mcserv_irx, size_mcserv_irx, 0, NULL, NULL);
     if (__mcserv_id < 0)
         return MEMCARD_INIT_STATUS_MCSERV_IRX_ERROR;
-    
+
     return MEMCARD_INIT_STATUS_IRX_OK;
 }
 
@@ -68,7 +68,7 @@ static void unloadIRXs(void) {
         SifUnloadModule(__mcman_id);
         __mcman_id = -1;
     }
-    
+
     /* MCSERV.IRX */
     if (__mcserv_id > 0) {
         SifUnloadModule(__mcserv_id);

@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
 
 ### ALL DRIVERS EXAMPLE
 This example will prepare, the next drivers:
-- Memory Card 
+- Memory Card
 - FileXio
 - USB
 - CDFS

@@ -51,7 +51,7 @@ static enum FILEXIO_INIT_STATUS loadIRXs(void) {
     __fileXio_id = SifExecModuleBuffer(&fileXio_irx, size_fileXio_irx, 0, NULL, NULL);
     if (__fileXio_id < 0)
         return FILEXIO_INIT_STATUS_FILEXIO_IRX_ERROR;
-    
+
     return FILEXIO_INIT_STATUS_IRX_OK;
 }
 
@@ -79,7 +79,7 @@ static void unloadIRXs(void) {
         SifUnloadModule(__fileXio_id);
         __fileXio_id = -1;
     }
-    
+
     /* IOMANX.IRX */
     if (__iomanX_id > 0) {
         SifUnloadModule(__iomanX_id);
@@ -87,7 +87,7 @@ static void unloadIRXs(void) {
     }
 }
 
-void deinit_fileXio_driver() {    
+void deinit_fileXio_driver() {
     fileXioExit();
     unloadIRXs();
 }

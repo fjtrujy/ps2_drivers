@@ -45,7 +45,7 @@ int main(int argc, char **argv)
 	printf("\n\nwav sample\n\n");
     audio_res = init_audio_driver();
 	printf("init_audio_driver returns:%i\n", audio_res);
-	
+
 
 	format.bits = 16;
 	format.freq = 22050;

@@ -79,7 +79,7 @@ static int hddCheck(void) {
 
 static enum HDD_INIT_STATUS loadIRXs(void) {
     char hddarg[] = "-o" "\0" "4" "\0" "-n" "\0" "20";
-    
+
     /* PS2ATAD.IRX */
     __ps2atad_id = SifExecModuleBuffer(&ps2atad_irx, size_ps2atad_irx, 0, NULL, NULL);
     if (__ps2atad_id < 0)
@@ -93,12 +93,12 @@ static enum HDD_INIT_STATUS loadIRXs(void) {
     /* Check if HDD is formatted and ready to be used */
     if (hddCheck() < 0)
         return HDD_INIT_STATUS_HDD_NOT_READY_ERROR;
-    
+
     /* PS2FS.IRX */
     __ps2fs_id = SifExecModuleBuffer(&ps2fs_irx, size_ps2fs_irx, 0, NULL, NULL);
     if (__ps2fs_id < 0)
         return HDD_INIT_STATUS_PS2FS_IRX_ERROR;
-    
+
     return HDD_INIT_STATUS_IRX_OK;
 }
 
@@ -118,7 +118,7 @@ enum HDD_INIT_STATUS init_hdd_driver(bool init_dependencies, bool only_if_booted
             __hdd_init_status = HDD_INIT_STATUS_DEPENDENCY_IRX_ERROR;
             return __hdd_init_status;
         }
-        
+
         ret = init_dev9_driver();
         if (ret != DEV9_INIT_STATUS_OK) {
             __hdd_init_status = HDD_INIT_STATUS_DEPENDENCY_IRX_ERROR;
@@ -243,12 +243,12 @@ static bool getMountInfo(char *path, char *mountString, char *mountPoint, char *
 
     if (!tokens)
         return false;
-    
+
     for (i = 0; *(tokens + i); i++) {
         if (i < expected_items) {
             items[i] = *(tokens + i);
         } else {
-            free(*(tokens + i));    
+            free(*(tokens + i));
         }
     }
 
@@ -258,7 +258,7 @@ static bool getMountInfo(char *path, char *mountString, char *mountPoint, char *
     sprintf(mountPoint, "%s:%s", items[0], items[1]);
     sprintf(mountString, "%s:", items[2]);
     sprintf(newCWD, "%s%s", mountString, i > 3 ? items[3] : "");
-    
+
     free(items[0]);
     free(items[1]);
     free(items[2]);
@@ -280,7 +280,7 @@ enum HDD_MOUNT_STATUS mount_current_hdd_partition() {
 
     if (!__cwd_is_hdd())
         return HDD_MOUNT_STATUS_WRONG_CWD;
-    
+
     getcwd(cwd, sizeof(cwd));
     if (!getMountInfo(cwd, __mountString, mountPoint, new_cwd))
         return HDD_MOUNT_STATUS_INFO_ERROR;
