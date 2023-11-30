@@ -43,7 +43,7 @@ static enum KEYBOARD_INIT_STATUS loadIRXs(bool init_dependencies) {
     __keyboard_id = SifExecModuleBuffer(&ps2kbd_irx, size_ps2kbd_irx, 0, NULL, NULL);
     if (__keyboard_id < 0)
         return KEYBOARD_INIT_STATUS_IRX_ERROR;
-    
+
     return KEYBOARD_INIT_STATUS_IRX_OK;
 }
 
@@ -79,7 +79,7 @@ static void unloadIRXs(bool deinit_dependencies) {
     }
 }
 
-void deinit_keyboard_driver(bool deinit_dependencies) {   
+void deinit_keyboard_driver(bool deinit_dependencies) {
     PS2KbdClose();
 
     unloadIRXs(deinit_dependencies);

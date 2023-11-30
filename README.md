@@ -1,25 +1,31 @@
 # ps2_drivers
+
 A library for making it easier to use IO drivers (`.IRX` + `EE .a`)
 
 ## MOTIVATION
-This library will make it way easier to load/unload, and initialization the process of Drivers that requires `IOP` (using an `IRX` file) and `EE` (static library `.a`).
 
-As a side project, I was trying to port `SDL2` for `PlayStation 2`, and meanwhile I was working on this since I found that it was difficult to implement `SDL_main` as was.
+This library will make it way easier to load/unload and initialize the process of Drivers that requires `IOP` (using an `IRX` file) and `EE` (static library `.a`).
 
-Without this the currenty situation assumes:
-- The developer need to understand how IOP + EE works, making it a less atractive platform to newcomers.
-- Makefile are more complex. IRX-files need to be either embedded with `bin2s` or `bin2o`.
-- A lot of boiler plate is needed, for defining several extern libraries.
-- It force developers to do copy & paste everytime.
-- Error handeling is too messy.
+As a side project, I was trying to port `SDL2` for `PlayStation 2`, and meanwhile, I was working on this since I found that it was difficult to implement `SDL_main` as was.
 
-With the solution that I propose within this library, the developer, just need to link the library, and init the desired libraries.
+Without this, the current situation assumes:
+
+- The developer needs to understand how IOP + EE works, making it a less attractive platform to newcomers.
+- Makefiles are more complex. IRX files need to be either embedded with `bin2s` or `bin2o`.
+- A lot of boilerplate is needed, for defining several extern libraries.
+- It forces developers to copy & paste every time.
+- Error handling is too messy.
+
+With the solution that I propose within this library, the developer just needs to link the library and initiate the desired libraries.
 
 ## EXAMPLE
-Let me put an example, where we compare `Before` vs `After`. I'm not going to put the error handeling in the before version otherwise will be too long :)
+
+Let me put an example, where we compare `Before` vs `After`. I'm not going to put the error handling in the before version otherwise will be too long :)
 
 ### BEFORE
+
 `Makefile`
+
 ```make
 
 IRX_FILES += sio2man.irx
@@ -35,6 +41,7 @@ LIBS += -lmtap -lpadx
 ```
 
 `main.c`
+
 ```c
 
 extern unsigned char sio2man_irx[] __attribute__((aligned(16)));
@@ -65,12 +72,15 @@ int main(int argc, char **argv) {
 ```
 
 ### AFTER
+
 `Makefile`
+
 ```make
 LIBS += -lps2_drivers
 ```
 
 `main.c`
+
 ```c
 int main(int argc, char **argv) {
     .......
@@ -79,8 +89,10 @@ int main(int argc, char **argv) {
 ```
 
 ### ALL DRIVERS EXAMPLE
+
 This example will prepare, the next drivers:
-- Memory Card 
+
+- Memory Card
 - FileXio
 - USB
 - CDFS
@@ -90,11 +102,13 @@ This example will prepare, the next drivers:
 - HDD
 
 `Makefile`
+
 ```make
 LIBS += -lps2_drivers
 ```
 
 `main.c`
+
 ```c
 static void prepare_drivers() {
     init_fileXio_driver();
@@ -113,6 +127,7 @@ int main(int argc, char **argv) {
 ```
 
 ### CONCLUSION
+
 I tried to follow the KISS concept while implementing this library
 
 ## THANKS

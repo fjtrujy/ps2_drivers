@@ -43,9 +43,9 @@ enum HDD_MOUNT_STATUS {
 enum HDD_INIT_STATUS init_hdd_driver(bool init_dependencies, bool only_if_booted_from_hdd);
 void deinit_hdd_driver(bool deinit_dependencies);
 enum HDD_MOUNT_STATUS mount_current_hdd_partition();
-enum HDD_MOUNT_STATUS mount_hdd_partition(const char* mountpoint, const char* blockdev);
+enum HDD_MOUNT_STATUS mount_hdd_partition(const char *mountpoint, const char *blockdev);
 void umount_current_hdd_partition();
-void umount_hdd_partition(const char* mountpoint);
+void umount_hdd_partition(const char *mountpoint);
 
 #ifdef __cplusplus
 }

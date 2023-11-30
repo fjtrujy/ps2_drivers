@@ -78,8 +78,14 @@ static int hddCheck(void) {
 }
 
 static enum HDD_INIT_STATUS loadIRXs(void) {
-    char hddarg[] = "-o" "\0" "4" "\0" "-n" "\0" "20";
-    
+    char hddarg[] = "-o"
+                    "\0"
+                    "4"
+                    "\0"
+                    "-n"
+                    "\0"
+                    "20";
+
     /* PS2ATAD.IRX */
     __ps2atad_id = SifExecModuleBuffer(&ps2atad_irx, size_ps2atad_irx, 0, NULL, NULL);
     if (__ps2atad_id < 0)
@@ -93,19 +99,19 @@ static enum HDD_INIT_STATUS loadIRXs(void) {
     /* Check if HDD is formatted and ready to be used */
     if (hddCheck() < 0)
         return HDD_INIT_STATUS_HDD_NOT_READY_ERROR;
-    
+
     /* PS2FS.IRX */
     __ps2fs_id = SifExecModuleBuffer(&ps2fs_irx, size_ps2fs_irx, 0, NULL, NULL);
     if (__ps2fs_id < 0)
         return HDD_INIT_STATUS_PS2FS_IRX_ERROR;
-    
+
     return HDD_INIT_STATUS_IRX_OK;
 }
 
 enum HDD_INIT_STATUS init_hdd_driver(bool init_dependencies, bool only_if_booted_from_hdd) {
     int ret;
 
-    if(only_if_booted_from_hdd && !__cwd_is_hdd()){
+    if (only_if_booted_from_hdd && !__cwd_is_hdd()) {
         __hdd_init_status = HDD_INIT_WRONG_CWD;
         return __hdd_init_status;
     }
@@ -118,7 +124,7 @@ enum HDD_INIT_STATUS init_hdd_driver(bool init_dependencies, bool only_if_booted
             __hdd_init_status = HDD_INIT_STATUS_DEPENDENCY_IRX_ERROR;
             return __hdd_init_status;
         }
-        
+
         ret = init_dev9_driver();
         if (ret != DEV9_INIT_STATUS_OK) {
             __hdd_init_status = HDD_INIT_STATUS_DEPENDENCY_IRX_ERROR;
@@ -164,7 +170,7 @@ void deinit_hdd_driver(bool deinit_dependencies) {
 #endif
 
 #ifdef F_mount_hdd_partition_ps2_hdd_driver
-enum HDD_MOUNT_STATUS mount_hdd_partition(const char* mountpoint, const char* blockdev) {
+enum HDD_MOUNT_STATUS mount_hdd_partition(const char *mountpoint, const char *blockdev) {
     if (__hdd_init_status != HDD_INIT_STATUS_IRX_OK)
         return HDD_MOUNT_INIT_STATUS_NOT_READY;
 
@@ -177,21 +183,18 @@ enum HDD_MOUNT_STATUS mount_hdd_partition(const char* mountpoint, const char* bl
 #endif
 
 #ifdef F_mount_current_partition_ps2_hdd_driver
-static char** str_split(char* a_str, const char a_delim)
-{
-    char** result    = 0;
-    size_t count     = 0;
-    char* tmp        = a_str;
-    char* last_comma = 0;
+static char **str_split(char *a_str, const char a_delim) {
+    char **result = 0;
+    size_t count = 0;
+    char *tmp = a_str;
+    char *last_comma = 0;
     char delim[2];
     delim[0] = a_delim;
     delim[1] = 0;
 
     /* Count how many elements will be extracted. */
-    while (*tmp)
-    {
-        if (a_delim == *tmp)
-        {
+    while (*tmp) {
+        if (a_delim == *tmp) {
             count++;
             last_comma = tmp;
         }
@@ -205,15 +208,13 @@ static char** str_split(char* a_str, const char a_delim)
        knows where the list of returned strings ends. */
     count++;
 
-    result = malloc(sizeof(char*) * count);
+    result = malloc(sizeof(char *) * count);
 
-    if (result)
-    {
-        size_t idx  = 0;
-        char* token = strtok(a_str, delim);
+    if (result) {
+        size_t idx = 0;
+        char *token = strtok(a_str, delim);
 
-        while (token)
-        {
+        while (token) {
             assert(idx < count);
             *(result + idx++) = strdup(token);
             token = strtok(0, delim);
@@ -233,32 +234,31 @@ static char** str_split(char* a_str, const char a_delim)
  * mountPoint = "hdd0:__common"
  * newCWD = pfs:/retroarch/
  * return true
-*/
-static bool getMountInfo(char *path, char *mountString, char *mountPoint, char *newCWD)
-{
+ */
+static bool getMountInfo(char *path, char *mountString, char *mountPoint, char *newCWD) {
     int expected_items = 4;
     int i = 0;
     char *items[expected_items];
-    char** tokens = str_split(path, ':');
+    char **tokens = str_split(path, ':');
 
     if (!tokens)
         return false;
-    
+
     for (i = 0; *(tokens + i); i++) {
         if (i < expected_items) {
             items[i] = *(tokens + i);
         } else {
-            free(*(tokens + i));    
+            free(*(tokens + i));
         }
     }
 
-    if (i < 3 )
+    if (i < 3)
         return false;
 
     sprintf(mountPoint, "%s:%s", items[0], items[1]);
     sprintf(mountString, "%s:", items[2]);
     sprintf(newCWD, "%s%s", mountString, i > 3 ? items[3] : "");
-    
+
     free(items[0]);
     free(items[1]);
     free(items[2]);
@@ -280,7 +280,7 @@ enum HDD_MOUNT_STATUS mount_current_hdd_partition() {
 
     if (!__cwd_is_hdd())
         return HDD_MOUNT_STATUS_WRONG_CWD;
-    
+
     getcwd(cwd, sizeof(cwd));
     if (!getMountInfo(cwd, __mountString, mountPoint, new_cwd))
         return HDD_MOUNT_STATUS_INFO_ERROR;
@@ -299,21 +299,21 @@ enum HDD_MOUNT_STATUS mount_current_hdd_partition() {
 #endif
 
 #ifdef F_umount_hdd_partition_ps2_hdd_driver
-void umount_hdd_partition(const char* mountpoint) {
+void umount_hdd_partition(const char *mountpoint) {
     if (__mount_status == HDD_MOUNT_STATUS_OK) {
-      fileXioUmount(mountpoint);
-      fileXioDevctl(mountpoint, PDIOC_CLOSEALL, NULL, 0, NULL, 0);
-      fileXioDevctl("hdd0:", HDIOC_IDLEIMM, NULL, 0, NULL, 0);
+        fileXioUmount(mountpoint);
+        fileXioDevctl(mountpoint, PDIOC_CLOSEALL, NULL, 0, NULL, 0);
+        fileXioDevctl("hdd0:", HDIOC_IDLEIMM, NULL, 0, NULL, 0);
 
-      __mount_status = HDD_MOUNT_STATUS_UKNOWN;
-       memset(__mountString, 0, 10);
-   }
+        __mount_status = HDD_MOUNT_STATUS_UKNOWN;
+        memset(__mountString, 0, 10);
+    }
 
-   if (__ps2fs_id > 0)
-      fileXioDevctl("dev9x:", DDIOC_OFF, NULL, 0, NULL, 0);
+    if (__ps2fs_id > 0)
+        fileXioDevctl("dev9x:", DDIOC_OFF, NULL, 0, NULL, 0);
 }
 #else
-void umount_hdd_partition(const char* mountpoint);
+void umount_hdd_partition(const char *mountpoint);
 #endif
 
 #ifdef F_umount_current_partition_ps2_hdd_driver

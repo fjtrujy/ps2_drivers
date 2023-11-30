@@ -26,15 +26,15 @@
 
 #define DEVICE_SLASH "/"
 
-#define DEVICE_MC0 "mc0:"
-#define DEVICE_MC1 "mc1:"
+#define DEVICE_MC0   "mc0:"
+#define DEVICE_MC1   "mc1:"
 #define DEVICE_CDROM "cdrom0:"
-#define DEVICE_CDFS "cdfs:"
-#define DEVICE_MASS "mass:"
+#define DEVICE_CDFS  "cdfs:"
+#define DEVICE_MASS  "mass:"
 #define DEVICE_MASS0 "mass0:"
-#define DEVICE_HDD "hdd:"
-#define DEVICE_HDD0 "hdd0:"
-#define DEVICE_HOST "host:"
+#define DEVICE_HDD   "hdd:"
+#define DEVICE_HDD0  "hdd0:"
+#define DEVICE_HOST  "host:"
 #define DEVICE_HOST0 "host0:"
 #define DEVICE_HOST1 "host1:"
 #define DEVICE_HOST2 "host2:"
@@ -46,15 +46,15 @@
 #define DEVICE_HOST8 "host8:"
 #define DEVICE_HOST9 "host9:"
 
-#define DEVICE_MC0_PATH DEVICE_MC0 DEVICE_SLASH
-#define DEVICE_MC1_PATH DEVICE_MC1 DEVICE_SLASH
-#define DEVICE_CDFS_PATH DEVICE_CDFS DEVICE_SLASH
+#define DEVICE_MC0_PATH   DEVICE_MC0 DEVICE_SLASH
+#define DEVICE_MC1_PATH   DEVICE_MC1 DEVICE_SLASH
+#define DEVICE_CDFS_PATH  DEVICE_CDFS DEVICE_SLASH
 #define DEVICE_CDROM_PATH DEVICE_CDROM DEVICE_SLASH
-#define DEVICE_MASS_PATH DEVICE_MASS DEVICE_SLASH
+#define DEVICE_MASS_PATH  DEVICE_MASS DEVICE_SLASH
 #define DEVICE_MASS0_PATH DEVICE_MASS0 DEVICE_SLASH
-#define DEVICE_HDD_PATH DEVICE_HDD DEVICE_SLASH
-#define DEVICE_HDD0_PATH DEVICE_HDD0 DEVICE_SLASH
-#define DEVICE_HOST_PATH DEVICE_HOST DEVICE_SLASH
+#define DEVICE_HDD_PATH   DEVICE_HDD DEVICE_SLASH
+#define DEVICE_HDD0_PATH  DEVICE_HDD0 DEVICE_SLASH
+#define DEVICE_HOST_PATH  DEVICE_HOST DEVICE_SLASH
 #define DEVICE_HOST0_PATH DEVICE_HOST0 DEVICE_SLASH
 #define DEVICE_HOST1_PATH DEVICE_HOST1 DEVICE_SLASH
 #define DEVICE_HOST2_PATH DEVICE_HOST2 DEVICE_SLASH
@@ -122,7 +122,7 @@ bool waitUntilDeviceIsReady(char *path) {
     int ret = -1;
     int retries = 500;
 
-    while(ret != 0 && retries > 0) {
+    while (ret != 0 && retries > 0) {
         ret = stat(path, &buffer);
         /* Wait untill the device is ready */
         nopdelay();
@@ -177,7 +177,7 @@ char *rootDevicePath(enum BootDeviceIDs device_id) {
             return DEVICE_HOST9_PATH;
         default:
             return "";
-   }
+    }
 }
 #endif
 

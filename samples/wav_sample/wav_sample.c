@@ -24,84 +24,77 @@
 #include <audsrv.h>
 #include <ps2_audio_driver.h>
 
-static void prepare_IOP()
-{
-   SifInitRpc(0);
-   sbv_patch_enable_lmb();
-   sbv_patch_disable_prefix_check();
+static void prepare_IOP() {
+    SifInitRpc(0);
+    sbv_patch_enable_lmb();
+    sbv_patch_disable_prefix_check();
 }
 
-int main(int argc, char **argv)
-{
-	int ret;
-	int played;
-	int err;
-	char chunk[2048];
-	FILE *wav;
-	struct audsrv_fmt_t format;
-	enum AUDIO_INIT_STATUS audio_res;
+int main(int argc, char **argv) {
+    int ret;
+    int played;
+    int err;
+    char chunk[2048];
+    FILE *wav;
+    struct audsrv_fmt_t format;
+    enum AUDIO_INIT_STATUS audio_res;
 
-	prepare_IOP();
-	printf("\n\nwav sample\n\n");
+    prepare_IOP();
+    printf("\n\nwav sample\n\n");
     audio_res = init_audio_driver();
-	printf("init_audio_driver returns:%i\n", audio_res);
-	
+    printf("init_audio_driver returns:%i\n", audio_res);
 
-	format.bits = 16;
-	format.freq = 22050;
-	format.channels = 2;
-	err = audsrv_set_format(&format);
-	printf("set format returned %d\n", err);
-	printf("audsrv returned error string: %s\n", audsrv_get_error_string());
 
-	audsrv_set_volume(MAX_VOLUME);
+    format.bits = 16;
+    format.freq = 22050;
+    format.channels = 2;
+    err = audsrv_set_format(&format);
+    printf("set format returned %d\n", err);
+    printf("audsrv returned error string: %s\n", audsrv_get_error_string());
 
-	wav = fopen("host:song_22k.wav", "rb");
-	if (wav == NULL)
-	{
-		printf("failed to open wav file\n");
-		audsrv_quit();
-		return 1;
-	}
+    audsrv_set_volume(MAX_VOLUME);
 
-	fseek(wav, 0x30, SEEK_SET);
+    wav = fopen("host:song_22k.wav", "rb");
+    if (wav == NULL) {
+        printf("failed to open wav file\n");
+        audsrv_quit();
+        return 1;
+    }
 
-	printf("starting play loop\n");
-	played = 0;
-	while (1)
-	{
-		ret = fread(chunk, 1, sizeof(chunk), wav);
-		if (ret > 0)
-		{
-			audsrv_wait_audio(ret);
-			audsrv_play_audio(chunk, ret);
-		}
+    fseek(wav, 0x30, SEEK_SET);
 
-		if (ret < sizeof(chunk))
-		{
-			/* no more data */
-			fseek(wav, 0x30, SEEK_SET);
-			// printf("No more data\n!");
-			// break;
-		}
+    printf("starting play loop\n");
+    played = 0;
+    while (1) {
+        ret = fread(chunk, 1, sizeof(chunk), wav);
+        if (ret > 0) {
+            audsrv_wait_audio(ret);
+            audsrv_play_audio(chunk, ret);
+        }
 
-		played++;
-		if (played % 8 == 0)
-		{
-			printf(".");
-		}
+        if (ret < sizeof(chunk)) {
+            /* no more data */
+            fseek(wav, 0x30, SEEK_SET);
+            // printf("No more data\n!");
+            // break;
+        }
 
-		if (played == 512) {
-			printf("Played already 512 times, quiting\n!");
-			break;
-		}
-	}
+        played++;
+        if (played % 8 == 0) {
+            printf(".");
+        }
 
-	fclose(wav);
+        if (played == 512) {
+            printf("Played already 512 times, quiting\n!");
+            break;
+        }
+    }
 
-	printf("sample: stopping audsrv\n");
-	audsrv_quit();
+    fclose(wav);
 
-	printf("sample: ended\n");
-	return 0;
+    printf("sample: stopping audsrv\n");
+    audsrv_quit();
+
+    printf("sample: ended\n");
+    return 0;
 }

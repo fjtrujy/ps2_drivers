@@ -43,7 +43,7 @@ static enum CAMERA_INIT_STATUS loadIRXs(bool init_dependencies) {
     __camera_id = SifExecModuleBuffer(&ps2cam_irx, size_ps2cam_irx, 0, NULL, NULL);
     if (__camera_id < 0)
         return CAMERA_INIT_STATUS_IRX_ERROR;
-    
+
     return CAMERA_INIT_STATUS_IRX_OK;
 }
 
@@ -79,7 +79,7 @@ static void unloadIRXs(bool deinit_dependencies) {
     }
 }
 
-void deinit_camera_driver(bool deinit_dependencies) {   
+void deinit_camera_driver(bool deinit_dependencies) {
     unloadIRXs(deinit_dependencies);
 }
 #endif

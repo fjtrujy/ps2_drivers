@@ -36,7 +36,7 @@ static enum POWEROFF_INIT_STATUS loadIRXs(void) {
     __poweroff_id = SifExecModuleBuffer(&poweroff_irx, size_poweroff_irx, 0, NULL, NULL);
     if (__poweroff_id < 0)
         return POWEROFF_INIT_STATUS_IRX_ERROR;
-    
+
     return POWEROFF_INIT_STATUS_IRX_OK;
 }
 
@@ -68,7 +68,7 @@ static void unloadIRXs(void) {
     }
 }
 
-void deinit_poweroff_driver() {        
+void deinit_poweroff_driver() {
     unloadIRXs();
 }
 #endif

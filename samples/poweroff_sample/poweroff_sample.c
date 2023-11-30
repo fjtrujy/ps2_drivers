@@ -21,37 +21,37 @@
 #include <sbv_patches.h>
 
 static void reset_IOP() {
-	SifInitRpc(0);
-	#if !defined(DEBUG) || defined(BUILD_FOR_PCSX2)
-	/* Comment this line if you don't wanna debug the output */
-	while(!SifIopReset(NULL, 0)){};
-	#endif
+    SifInitRpc(0);
+#if !defined(DEBUG) || defined(BUILD_FOR_PCSX2)
+    /* Comment this line if you don't wanna debug the output */
+    while (!SifIopReset(NULL, 0)) {};
+#endif
 
-	while(!SifIopSync()){};
-	SifInitRpc(0);
-	sbv_patch_enable_lmb();
-	sbv_patch_disable_prefix_check();
+    while (!SifIopSync()) {};
+    SifInitRpc(0);
+    sbv_patch_enable_lmb();
+    sbv_patch_disable_prefix_check();
 }
 
 static void init_drivers() {
-	init_poweroff_driver();
+    init_poweroff_driver();
 }
 
 static void deinit_drivers() {
-	deinit_poweroff_driver();
+    deinit_poweroff_driver();
 }
 
 int main(int argc, char **argv) {
-	int seconds = 5;
-	reset_IOP();
-	init_drivers();
-	printf("Power off example!\n");
-	while (seconds > 0) {
-		printf("Shutting down in %i\n", seconds);
-		sleep(1);
-		seconds--;
-	}
+    int seconds = 5;
+    reset_IOP();
+    init_drivers();
+    printf("Power off example!\n");
+    while (seconds > 0) {
+        printf("Shutting down in %i\n", seconds);
+        sleep(1);
+        seconds--;
+    }
 
-	deinit_drivers();
-	poweroffShutdown();
+    deinit_drivers();
+    poweroffShutdown();
 }
