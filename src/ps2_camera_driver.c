@@ -18,17 +18,17 @@
 #include <sifrpc.h>
 #include <loadfile.h>
 #include <ps2cam_rpc.h>
+#include <irx_common_macros.h>
 
 /* References to PSCAM.IRX */
-extern unsigned char ps2cam_irx[] __attribute__((aligned(16)));
-extern unsigned int size_ps2cam_irx;
+EXTERN_IRX(ps2cam_irx);
 
 #ifdef F_internals_ps2_camera_driver
 enum CAMERA_INIT_STATUS __camera_init_status = CAMERA_INIT_STATUS_UNKNOWN;
-int32_t __camera_id = -1;
+DECL_IRX_VARS(camera);
 #else
 extern enum CAMERA_INIT_STATUS __camera_init_status;
-extern int32_t __camera_id;
+EXTERN_IRX_VARS(camera);
 #endif
 
 #ifdef F_init_ps2_camera_driver
@@ -40,8 +40,8 @@ static enum CAMERA_INIT_STATUS loadIRXs(bool init_dependencies) {
     }
 
     /* PSCAM.IRX */
-    __camera_id = SifExecModuleBuffer(&ps2cam_irx, size_ps2cam_irx, 0, NULL, NULL);
-    if (__camera_id < 0)
+    __camera_id = SifExecModuleBuffer(&ps2cam_irx, size_ps2cam_irx, 0, NULL, &__camera_ret);
+    if (CHECK_IRX_ERR(camera))
         return CAMERA_INIT_STATUS_IRX_ERROR;
 
     return CAMERA_INIT_STATUS_IRX_OK;
@@ -69,9 +69,9 @@ enum CAMERA_INIT_STATUS init_camera_driver(bool init_dependencies) {
 #ifdef F_deinit_ps2_camera_driver
 static void unloadIRXs(bool deinit_dependencies) {
     /* PSCAM.IRX */
-    if (__camera_id > 0) {
+    if (CHECK_IRX_UNLOAD(camera)) {
         SifUnloadModule(__camera_id);
-        __camera_id = -1;
+        RESET_IRX_VARS(camera);
     }
 
     if (deinit_dependencies) {

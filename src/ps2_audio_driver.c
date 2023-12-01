@@ -13,39 +13,35 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <ps2_audio_driver.h>
+#include <irx_common_macros.h>
 
 #include <sifrpc.h>
 #include <loadfile.h>
 #include <audsrv.h>
 
-/* References to LIBSD.IRX */
-extern unsigned char libsd_irx[] __attribute__((aligned(16)));
-extern unsigned int size_libsd_irx;
-
-/* References to AUDSRV.IRX */
-extern unsigned char audsrv_irx[] __attribute__((aligned(16)));
-extern unsigned int size_audsrv_irx;
+EXTERN_IRX(libsd_irx);
+EXTERN_IRX(audsrv_irx);
 
 #ifdef F_internals_ps2_audio_driver
 enum AUDIO_INIT_STATUS __audio_init_status = AUDIO_INIT_STATUS_UNKNOWN;
-int32_t __libsd_id = -1;
-int32_t __audsrv_id = -1;
+DECL_IRX_VARS(libsd);
+DECL_IRX_VARS(audsrv);
 #else
 extern enum AUDIO_INIT_STATUS __audio_init_status;
-extern int32_t __libsd_id;
-extern int32_t __audsrv_id;
+EXTERN_IRX_VARS(libsd);
+EXTERN_IRX_VARS(audsrv);
 #endif
 
 #ifdef F_init_ps2_audio_driver
 static enum AUDIO_INIT_STATUS loadIRXs(void) {
     /* LIBSD.IRX */
-    __libsd_id = SifExecModuleBuffer(&libsd_irx, size_libsd_irx, 0, NULL, NULL);
-    if (__libsd_id < 0)
+    __libsd_id = SifExecModuleBuffer(&libsd_irx, size_libsd_irx, 0, NULL, &__libsd_ret);
+    if (CHECK_IRX_ERR(libsd))
         return AUDIO_INIT_STATUS_LIBSD_IRX_ERROR;
 
     /* AUDSRV.IRX */
-    __audsrv_id = SifExecModuleBuffer(&audsrv_irx, size_audsrv_irx, 0, NULL, NULL);
-    if (__audsrv_id < 0)
+    __audsrv_id = SifExecModuleBuffer(&audsrv_irx, size_audsrv_irx, 0, NULL, &__audsrv_ret);
+    if (CHECK_IRX_ERR(audsrv))
         return AUDIO_INIT_STATUS_AUDSRV_IRX_ERROR;
 
     return AUDIO_INIT_STATUS_IRX_OK;
@@ -77,15 +73,15 @@ static void deinitLibraries(void) {
 
 static void unloadIRXs(void) {
     /* AUDSRV.IRX */
-    if (__audsrv_id > 0) {
+    if (CHECK_IRX_UNLOAD(audsrv)) {
         SifUnloadModule(__audsrv_id);
-        __audsrv_id = -1;
+        RESET_IRX_VARS(audsrv);
     }
 
     /* LIBSD.IRX */
-    if (__libsd_id > 0) {
+    if (CHECK_IRX_UNLOAD(libsd)) {
         SifUnloadModule(__libsd_id);
-        __libsd_id = -1;
+        RESET_IRX_VARS(libsd);
     }
 }
 

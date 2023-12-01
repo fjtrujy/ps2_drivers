@@ -15,6 +15,7 @@
 #include <stddef.h>
 #include <ps2_sio2man_driver.h>
 #include <ps2_fileXio_driver.h>
+#include <irx_common_macros.h>
 
 #include <sifrpc.h>
 #include <loadfile.h>
@@ -22,34 +23,29 @@
 int fileXioInit(void);
 void fileXioExit(void);
 
-/* References to IOMANX.IRX */
-extern unsigned char iomanX_irx[] __attribute__((aligned(16)));
-extern unsigned int size_iomanX_irx;
-
-/* References to FILEXIO.IRX */
-extern unsigned char fileXio_irx[] __attribute__((aligned(16)));
-extern unsigned int size_fileXio_irx;
+EXTERN_IRX(iomanX_irx);
+EXTERN_IRX(fileXio_irx);
 
 #ifdef F_internals_ps2_fileXio_driver
 enum FILEXIO_INIT_STATUS __fileXio_init_status = FILEXIO_INIT_STATUS_UNKNOWN;
-int32_t __iomanX_id = -1;
-int32_t __fileXio_id = -1;
+DECL_IRX_VARS(iomanX);
+DECL_IRX_VARS(fileXio);
 #else
 extern enum FILEXIO_INIT_STATUS __fileXio_init_status;
-extern int32_t __iomanX_id;
-extern int32_t __fileXio_id;
+EXTERN_IRX_VARS(iomanX);
+EXTERN_IRX_VARS(fileXio);
 #endif
 
 #ifdef F_init_ps2_fileXio_driver
 static enum FILEXIO_INIT_STATUS loadIRXs(void) {
     /* IOMANX.IRX */
-    __iomanX_id = SifExecModuleBuffer(&iomanX_irx, size_iomanX_irx, 0, NULL, NULL);
-    if (__iomanX_id < 0)
+    __iomanX_id = SifExecModuleBuffer(&iomanX_irx, size_iomanX_irx, 0, NULL, &__iomanX_ret);
+    if (CHECK_IRX_ERR(iomanX))
         return FILEXIO_INIT_STATUS_IOMANX_IRX_ERROR;
 
     /* FILEXIO.IRX */
-    __fileXio_id = SifExecModuleBuffer(&fileXio_irx, size_fileXio_irx, 0, NULL, NULL);
-    if (__fileXio_id < 0)
+    __fileXio_id = SifExecModuleBuffer(&fileXio_irx, size_fileXio_irx, 0, NULL, &__fileXio_ret);
+    if (CHECK_IRX_ERR(fileXio))
         return FILEXIO_INIT_STATUS_FILEXIO_IRX_ERROR;
 
     return FILEXIO_INIT_STATUS_IRX_OK;
@@ -75,15 +71,15 @@ enum FILEXIO_INIT_STATUS init_fileXio_driver() {
 #ifdef F_deinit_ps2_fileXio_driver
 static void unloadIRXs(void) {
     /* FILEXIO.IRX */
-    if (__fileXio_id > 0) {
+    if (CHECK_IRX_UNLOAD(fileXio)) {
         SifUnloadModule(__fileXio_id);
-        __fileXio_id = -1;
+        RESET_IRX_VARS(fileXio);
     }
 
     /* IOMANX.IRX */
-    if (__iomanX_id > 0) {
+    if (CHECK_IRX_UNLOAD(iomanX)) {
         SifUnloadModule(__iomanX_id);
-        __iomanX_id = -1;
+        RESET_IRX_VARS(iomanX);
     }
 }
 

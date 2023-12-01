@@ -14,21 +14,21 @@
 #include <stddef.h>
 #include <ps2_mouse_driver.h>
 #include <ps2_usbd_driver.h>
+#include <irx_common_macros.h>
 
 #include <sifrpc.h>
 #include <loadfile.h>
 #include <libmouse.h>
 
 /* References to PS2MOUSE.IRX */
-extern unsigned char ps2mouse_irx[] __attribute__((aligned(16)));
-extern unsigned int size_ps2mouse_irx;
+EXTERN_IRX(ps2mouse_irx);
 
 #ifdef F_internals_ps2_mouse_driver
 enum MOUSE_INIT_STATUS __mouse_init_status = MOUSE_INIT_STATUS_UNKNOWN;
-int32_t __mouse_id = -1;
+DECL_IRX_VARS(mouse);
 #else
 extern enum MOUSE_INIT_STATUS __mouse_init_status;
-extern int32_t __mouse_id;
+EXTERN_IRX_VARS(mouse);
 #endif
 
 #ifdef F_init_ps2_mouse_driver
@@ -40,8 +40,8 @@ static enum MOUSE_INIT_STATUS loadIRXs(bool init_dependencies) {
     }
 
     /* PS2MOUSE.IRX */
-    __mouse_id = SifExecModuleBuffer(&ps2mouse_irx, size_ps2mouse_irx, 0, NULL, NULL);
-    if (__mouse_id < 0)
+    __mouse_id = SifExecModuleBuffer(&ps2mouse_irx, size_ps2mouse_irx, 0, NULL, &__mouse_ret);
+    if (CHECK_IRX_ERR(mouse))
         return MOUSE_INIT_STATUS_IRX_ERROR;
 
     return MOUSE_INIT_STATUS_IRX_OK;
@@ -71,9 +71,9 @@ enum MOUSE_INIT_STATUS init_mouse_driver(bool init_dependencies) {
 #ifdef F_deinit_ps2_mouse_driver
 static void unloadIRXs(bool deinit_dependencies) {
     /* PS2MOUSE.IRX */
-    if (__mouse_id > 0) {
+    if (CHECK_IRX_UNLOAD(mouse)) {
         SifUnloadModule(__mouse_id);
-        __mouse_id = -1;
+        RESET_IRX_VARS(mouse);
     }
 
     if (deinit_dependencies) {

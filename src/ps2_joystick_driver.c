@@ -15,40 +15,37 @@
 #include <stddef.h>
 #include <ps2_sio2man_driver.h>
 #include <ps2_joystick_driver.h>
+#include <irx_common_macros.h>
 
 #include <sifrpc.h>
 #include <loadfile.h>
 #include <libmtap.h>
 #include <libpad.h>
 
-/* References to MTAPMAN.IRX */
-extern unsigned char mtapman_irx[] __attribute__((aligned(16)));
-extern unsigned int size_mtapman_irx;
+EXTERN_IRX(mtapman_irx);
+EXTERN_IRX(padman_irx);
 
-/* References to PADMAN.IRX */
-extern unsigned char padman_irx[] __attribute__((aligned(16)));
-extern unsigned int size_padman_irx;
 
 #ifdef F_internals_ps2_joystick_driver
 enum JOYSTICK_INIT_STATUS __joystick_init_status = JOYSTICK_INIT_STATUS_UNKNOWN;
-int32_t __padman_id = -1;
-int32_t __mtapman_id = -1;
+DECL_IRX_VARS(mtapman);
+DECL_IRX_VARS(padman);
 #else
 extern enum JOYSTICK_INIT_STATUS __joystick_init_status;
-extern int32_t __padman_id;
-extern int32_t __mtapman_id;
+EXTERN_IRX_VARS(mtapman);
+EXTERN_IRX_VARS(padman);
 #endif
 
 #ifdef F_init_ps2_joystick_driver
 static enum JOYSTICK_INIT_STATUS loadIRXs(void) {
     /* MTAPMAN.IRX */
-    __mtapman_id = SifExecModuleBuffer(&mtapman_irx, size_mtapman_irx, 0, NULL, NULL);
-    if (__mtapman_id < 0)
+    __mtapman_id = SifExecModuleBuffer(&mtapman_irx, size_mtapman_irx, 0, NULL, &__mtapman_ret);
+    if (CHECK_IRX_ERR(mtapman))
         return JOYSTICK_INIT_STATUS_MTAP_IRX_ERROR;
 
     /* PADMAN.IRX */
-    __padman_id = SifExecModuleBuffer(&padman_irx, size_padman_irx, 0, NULL, NULL);
-    if (__padman_id < 0)
+    __padman_id = SifExecModuleBuffer(&padman_irx, size_padman_irx, 0, NULL, &__padman_ret);
+    if (CHECK_IRX_ERR(padman))
         return JOYSTICK_INIT_STATUS_PAD_IRX_ERROR;
 
     return JOYSTICK_INIT_STATUS_IRX_OK;
@@ -87,15 +84,15 @@ static void deinitLibraries(void) {
 
 static void unloadIRXs(void) {
     /* MTAPMAN.IRX */
-    if (__mtapman_id > 0) {
+    if (CHECK_IRX_UNLOAD(mtapman)) {
         SifUnloadModule(__mtapman_id);
-        __mtapman_id = -1;
+        RESET_IRX_VARS(mtapman);
     }
 
     /* MTAPMAN.IRX */
-    if (__padman_id > 0) {
+    if (CHECK_IRX_UNLOAD(padman)) {
         SifUnloadModule(__padman_id);
-        __padman_id = -1;
+        RESET_IRX_VARS(padman);
     }
 }
 

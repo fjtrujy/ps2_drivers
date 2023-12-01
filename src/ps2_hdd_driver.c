@@ -20,6 +20,7 @@
 #include <ps2_hdd_driver.h>
 #include <ps2_fileXio_driver.h>
 #include <ps2_dev9_driver.h>
+#include <irx_common_macros.h>
 
 #include <sifrpc.h>
 #include <loadfile.h>
@@ -28,23 +29,15 @@
 #include <hdd-ioctl.h>
 #include <io_common.h>
 
-/* References to PS2ATAD.IRX */
-extern unsigned char ps2atad_irx[] __attribute__((aligned(16)));
-extern unsigned int size_ps2atad_irx;
-
-/* References to PS2HDD.IRX */
-extern unsigned char ps2hdd_irx[] __attribute__((aligned(16)));
-extern unsigned int size_ps2hdd_irx;
-
-/* References to PS2FS.IRX */
-extern unsigned char ps2fs_irx[] __attribute__((aligned(16)));
-extern unsigned int size_ps2fs_irx;
+EXTERN_IRX(ps2atad_irx);
+EXTERN_IRX(ps2hdd_irx);
+EXTERN_IRX(ps2fs_irx);
 
 #ifdef F_internals_ps2_hdd_driver
 enum HDD_INIT_STATUS __hdd_init_status = HDD_INIT_STATUS_UNKNOWN;
-int32_t __ps2atad_id = -1;
-int32_t __ps2hdd_id = -1;
-int32_t __ps2fs_id = -1;
+DECL_IRX_VARS(ps2atad);
+DECL_IRX_VARS(ps2hdd);
+DECL_IRX_VARS(ps2fs);
 char __mountString[10];
 enum HDD_MOUNT_STATUS __mount_status = HDD_MOUNT_STATUS_UKNOWN;
 
@@ -60,9 +53,9 @@ bool __cwd_is_hdd() {
 }
 #else
 extern enum HDD_INIT_STATUS __hdd_init_status;
-extern int32_t __ps2atad_id;
-extern int32_t __ps2hdd_id;
-extern int32_t __ps2fs_id;
+EXTERN_IRX_VARS(ps2atad);
+EXTERN_IRX_VARS(ps2hdd);
+EXTERN_IRX_VARS(ps2fs);
 extern char __mountString[];
 extern enum HDD_MOUNT_STATUS __mount_status;
 bool __cwd_is_hdd();
@@ -87,13 +80,13 @@ static enum HDD_INIT_STATUS loadIRXs(void) {
                     "20";
 
     /* PS2ATAD.IRX */
-    __ps2atad_id = SifExecModuleBuffer(&ps2atad_irx, size_ps2atad_irx, 0, NULL, NULL);
-    if (__ps2atad_id < 0)
+    __ps2atad_id = SifExecModuleBuffer(&ps2atad_irx, size_ps2atad_irx, 0, NULL, &__ps2atad_ret);
+    if (CHECK_IRX_ERR(ps2atad))
         return HDD_INIT_STATUS_PS2ATAD_IRX_ERROR;
 
     /* PS2HDD.IRX */
-    __ps2hdd_id = SifExecModuleBuffer(&ps2hdd_irx, size_ps2hdd_irx, sizeof(hddarg), hddarg, NULL);
-    if (__ps2hdd_id < 0)
+    __ps2hdd_id = SifExecModuleBuffer(&ps2hdd_irx, size_ps2hdd_irx, sizeof(hddarg), hddarg, &__ps2hdd_ret);
+    if (CHECK_IRX_ERR(ps2hdd))
         return HDD_INIT_STATUS_PS2HDD_IRX_ERROR;
 
     /* Check if HDD is formatted and ready to be used */
@@ -101,8 +94,8 @@ static enum HDD_INIT_STATUS loadIRXs(void) {
         return HDD_INIT_STATUS_HDD_NOT_READY_ERROR;
 
     /* PS2FS.IRX */
-    __ps2fs_id = SifExecModuleBuffer(&ps2fs_irx, size_ps2fs_irx, 0, NULL, NULL);
-    if (__ps2fs_id < 0)
+    __ps2fs_id = SifExecModuleBuffer(&ps2fs_irx, size_ps2fs_irx, 0, NULL, &__ps2fs_ret);
+    if (CHECK_IRX_ERR(ps2fs))
         return HDD_INIT_STATUS_PS2FS_IRX_ERROR;
 
     return HDD_INIT_STATUS_IRX_OK;
@@ -140,20 +133,22 @@ enum HDD_INIT_STATUS init_hdd_driver(bool init_dependencies, bool only_if_booted
 #ifdef F_deinit_ps2_hdd_driver
 static void unloadIRXs(void) {
     /* PS2FS.IRX */
-    if (__ps2fs_id > 0) {
+    if (CHECK_IRX_UNLOAD(ps2fs)) {
         SifUnloadModule(__ps2fs_id);
+        RESET_IRX_VARS(ps2fs);
         __ps2fs_id = -1;
     }
 
     /* PS2HDD.IRX */
-    if (__ps2hdd_id > 0) {
+    if (CHECK_IRX_UNLOAD(ps2hdd)) {
         SifUnloadModule(__ps2hdd_id);
-        __ps2hdd_id = -1;
+        RESET_IRX_VARS(ps2hdd);
     }
 
     /* PS2ATAD.IRX */
-    if (__ps2atad_id > 0) {
+    if (CHECK_IRX_UNLOAD(ps2atad)) {
         SifUnloadModule(__ps2atad_id);
+        RESET_IRX_VARS(ps2atad);
         __ps2atad_id = -1;
     }
 }

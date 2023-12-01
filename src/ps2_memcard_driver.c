@@ -14,38 +14,37 @@
 #include <stddef.h>
 #include <ps2_memcard_driver.h>
 #include <ps2_sio2man_driver.h>
+#include <irx_common_macros.h>
 
 #include <sifrpc.h>
 #include <loadfile.h>
 
-/* References to MCMAN.IRX */
-extern unsigned char mcman_irx[] __attribute__((aligned(16)));
-extern unsigned int size_mcman_irx;
+EXTERN_IRX(mcman_irx);
+EXTERN_IRX(mcserv_irx);
 
-/* References to MCSERV.IRX */
-extern unsigned char mcserv_irx[] __attribute__((aligned(16)));
-extern unsigned int size_mcserv_irx;
 
 #ifdef F_internals_ps2_memcard_driver
 enum MEMCARD_INIT_STATUS __memcard_init_status = MEMCARD_INIT_STATUS_UNKNOWN;
+DECL_IRX_VARS(mcman);
+DECL_IRX_VARS(mcserv);
 int32_t __mcman_id = -1;
 int32_t __mcserv_id = -1;
 #else
 extern enum MEMCARD_INIT_STATUS __memcard_init_status;
-extern int32_t __mcman_id;
-extern int32_t __mcserv_id;
+EXTERN_IRX_VARS(mcman);
+EXTERN_IRX_VARS(mcserv);
 #endif
 
 #ifdef F_init_ps2_memcard_driver
 static enum MEMCARD_INIT_STATUS loadIRXs(void) {
     /* MCMAN.IRX */
-    __mcman_id = SifExecModuleBuffer(&mcman_irx, size_mcman_irx, 0, NULL, NULL);
-    if (__mcman_id < 0)
+    __mcman_id = SifExecModuleBuffer(&mcman_irx, size_mcman_irx, 0, NULL, &__mcman_ret);
+    if (CHECK_IRX_ERR(mcman))
         return MEMCARD_INIT_STATUS_MCMAN_IRX_ERROR;
 
     /* MCSERV.IRX */
-    __mcserv_id = SifExecModuleBuffer(&mcserv_irx, size_mcserv_irx, 0, NULL, NULL);
-    if (__mcserv_id < 0)
+    __mcserv_id = SifExecModuleBuffer(&mcserv_irx, size_mcserv_irx, 0, NULL, &__mcserv_ret);
+    if (CHECK_IRX_ERR(mcserv))
         return MEMCARD_INIT_STATUS_MCSERV_IRX_ERROR;
 
     return MEMCARD_INIT_STATUS_IRX_OK;
@@ -64,15 +63,15 @@ enum MEMCARD_INIT_STATUS init_memcard_driver(bool init_dependencies) {
 #ifdef F_deinit_ps2_memcard_driver
 static void unloadIRXs(void) {
     /* MCMAN.IRX */
-    if (__mcman_id > 0) {
+    if (CHECK_IRX_UNLOAD(mcman)) {
         SifUnloadModule(__mcman_id);
-        __mcman_id = -1;
+        RESET_IRX_VARS(mcman);
     }
 
     /* MCSERV.IRX */
-    if (__mcserv_id > 0) {
+    if (CHECK_IRX_UNLOAD(mcserv)) {
         SifUnloadModule(__mcserv_id);
-        __mcserv_id = -1;
+        RESET_IRX_VARS(mcserv);
     }
 }
 

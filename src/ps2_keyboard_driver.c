@@ -14,21 +14,20 @@
 #include <stddef.h>
 #include <ps2_keyboard_driver.h>
 #include <ps2_usbd_driver.h>
+#include <irx_common_macros.h>
 
 #include <sifrpc.h>
 #include <loadfile.h>
 #include <libkbd.h>
 
-/* References to PS2KBD.IRX */
-extern unsigned char ps2kbd_irx[] __attribute__((aligned(16)));
-extern unsigned int size_ps2kbd_irx;
+EXTERN_IRX(ps2kbd_irx);
 
 #ifdef F_internals_ps2_keyboard_driver
 enum KEYBOARD_INIT_STATUS __keyboard_init_status = KEYBOARD_INIT_STATUS_UNKNOWN;
-int32_t __keyboard_id = -1;
+DECL_IRX_VARS(keyboard);
 #else
 extern enum KEYBOARD_INIT_STATUS __keyboard_init_status;
-extern int32_t __keyboard_id;
+EXTERN_IRX_VARS(keyboard);
 #endif
 
 #ifdef F_init_ps2_keyboard_driver
@@ -40,8 +39,8 @@ static enum KEYBOARD_INIT_STATUS loadIRXs(bool init_dependencies) {
     }
 
     /* PS2KBD.IRX */
-    __keyboard_id = SifExecModuleBuffer(&ps2kbd_irx, size_ps2kbd_irx, 0, NULL, NULL);
-    if (__keyboard_id < 0)
+    __keyboard_id = SifExecModuleBuffer(&ps2kbd_irx, size_ps2kbd_irx, 0, NULL, &__keyboard_ret);
+    if (CHECK_IRX_ERR(keyboard))
         return KEYBOARD_INIT_STATUS_IRX_ERROR;
 
     return KEYBOARD_INIT_STATUS_IRX_OK;
@@ -69,9 +68,9 @@ enum KEYBOARD_INIT_STATUS init_keyboard_driver(bool init_dependencies) {
 #ifdef F_deinit_ps2_keyboard_driver
 static void unloadIRXs(bool deinit_dependencies) {
     /* PS2KBD.IRX */
-    if (__keyboard_id > 0) {
+    if (CHECK_IRX_UNLOAD(keyboard)) {
         SifUnloadModule(__keyboard_id);
-        __keyboard_id = -1;
+        RESET_IRX_VARS(keyboard);
     }
 
     if (deinit_dependencies) {

@@ -13,28 +13,26 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <ps2_poweroff_driver.h>
+#include <irx_common_macros.h>
 
 #include <sifrpc.h>
 #include <loadfile.h>
 #include <libpwroff.h>
 
-/* References to POWEROFF.IRX */
-extern unsigned char poweroff_irx[] __attribute__((aligned(16)));
-extern unsigned int size_poweroff_irx;
-
+EXTERN_IRX(poweroff_irx);
 #ifdef F_internals_ps2_poweroff_driver
 enum POWEROFF_INIT_STATUS __poweroff_init_status = POWEROFF_INIT_STATUS_UNKNOWN;
-int32_t __poweroff_id = -1;
+DECL_IRX_VARS(poweroff);
 #else
 extern enum POWEROFF_INIT_STATUS __poweroff_init_status;
-extern int32_t __poweroff_id;
+EXTERN_IRX_VARS(poweroff);
 #endif
 
 #ifdef F_init_ps2_poweroff_driver
 static enum POWEROFF_INIT_STATUS loadIRXs(void) {
     /* POWEROFF.IRX */
-    __poweroff_id = SifExecModuleBuffer(&poweroff_irx, size_poweroff_irx, 0, NULL, NULL);
-    if (__poweroff_id < 0)
+    __poweroff_id = SifExecModuleBuffer(&poweroff_irx, size_poweroff_irx, 0, NULL, &__poweroff_ret);
+    if (CHECK_IRX_ERR(poweroff))
         return POWEROFF_INIT_STATUS_IRX_ERROR;
 
     return POWEROFF_INIT_STATUS_IRX_OK;
@@ -62,9 +60,9 @@ enum POWEROFF_INIT_STATUS init_poweroff_driver() {
 #ifdef F_deinit_ps2_poweroff_driver
 static void unloadIRXs(void) {
     /* POWEROFF.IRX */
-    if (__poweroff_id > 0) {
+    if (CHECK_IRX_UNLOAD(poweroff)) {
         SifUnloadModule(__poweroff_id);
-        __poweroff_id = -1;
+        RESET_IRX_VARS(poweroff);
     }
 }
 
