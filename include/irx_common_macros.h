@@ -19,7 +19,7 @@
 #define CHECK_IRX_ERR(irx) (__##irx##_id < 0 || __##irx##_ret == 1)
 
 /// check if this irx module is successfully loaded and supports unloading
-#define CHECK_IRX_UNLOAD(irx) (__##irx##_id >= 0 || __##irx##_ret == 2)
+#define CHECK_IRX_UNLOAD(irx) (__##irx##_id >= 0 && __##irx##_ret == 2)
 /// extern an embedded irx file buffer and size
 #define EXTERN_IRX(_IRX) \
 extern unsigned char _IRX[] __attribute__((aligned(16))); \
