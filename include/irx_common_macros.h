@@ -4,12 +4,12 @@
 /// declare IRX ID and return value variables
 #define DECL_IRX_VARS(irx) \
     int32_t __##irx##_id = -1; \
-    int32_t __##irx##_ret = -1
+    int __##irx##_ret = -1
 
 /// extern IRX ID and return value variables
 #define EXTERN_IRX_VARS(irx) \
     extern int32_t __##irx##_id; \
-    extern int32_t __##irx##_ret
+    extern int __##irx##_ret
 
 #define RESET_IRX_VARS(irx) \
     __##irx##_id = -1; \
