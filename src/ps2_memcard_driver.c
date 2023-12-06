@@ -27,8 +27,6 @@ EXTERN_IRX(mcserv_irx);
 enum MEMCARD_INIT_STATUS __memcard_init_status = MEMCARD_INIT_STATUS_UNKNOWN;
 DECL_IRX_VARS(mcman);
 DECL_IRX_VARS(mcserv);
-int32_t __mcman_id = -1;
-int32_t __mcserv_id = -1;
 #else
 extern enum MEMCARD_INIT_STATUS __memcard_init_status;
 EXTERN_IRX_VARS(mcman);
