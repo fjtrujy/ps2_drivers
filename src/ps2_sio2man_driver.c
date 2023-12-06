@@ -13,20 +13,18 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <ps2_sio2man_driver.h>
+#include <irx_common_macros.h>
 
 #include <sifrpc.h>
 #include <loadfile.h>
 
-/* References to SIO2MAN.IRX */
-extern unsigned char sio2man_irx[] __attribute__((aligned(16)));
-extern unsigned int size_sio2man_irx;
-
+EXTERN_IRX(sio2man_irx);
 #ifdef F_internals_ps2_sio2man_driver
 enum SIO2MAN_INIT_STATUS __sio2man_init_status = SIO2MAN_INIT_STATUS_UNKNOWN;
-int32_t __sio2man_id = -1;
+DECL_IRX_VARS(sio2man);
 #else
 extern enum SIO2MAN_INIT_STATUS __sio2man_init_status;
-extern int32_t __sio2man_id;
+EXTERN_IRX_VARS(sio2man);
 #endif
 
 #ifdef F_init_ps2_sio2man_driver
@@ -35,8 +33,8 @@ static enum SIO2MAN_INIT_STATUS loadIRXs(void) {
     if (__sio2man_id > 0)
         return SIO2MAN_INIT_STATUS_OK;
 
-    __sio2man_id = SifExecModuleBuffer(&sio2man_irx, size_sio2man_irx, 0, NULL, NULL);
-    if (__sio2man_id < 0)
+    __sio2man_id = SifExecModuleBuffer(&sio2man_irx, size_sio2man_irx, 0, NULL, &__sio2man_ret);
+    if (CHECK_IRX_ERR(sio2man))
         return SIO2MAN_INIT_STATUS_IRX_ERROR;
 
     return SIO2MAN_INIT_STATUS_OK;
@@ -51,9 +49,9 @@ enum SIO2MAN_INIT_STATUS init_sio2man_driver(void) {
 #ifdef F_deinit_ps2_sio2man_driver
 static void unloadIRXs(void) {
     /* SIO2MAN.IRX */
-    if (__sio2man_id > 0) {
+    if (CHECK_IRX_UNLOAD(sio2man)) {
         SifUnloadModule(__sio2man_id);
-        __sio2man_id = -1;
+        RESET_IRX_VARS(sio2man);
     }
 }
 
