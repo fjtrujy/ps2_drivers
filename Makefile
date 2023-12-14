@@ -8,7 +8,7 @@ LIBS += -lmtap -lpadx
 LIBS += -laudsrv
 LIBS += -lpoweroff
 LIBS += -lmouse -lkbd -lps2cam
-LIBS += -lnetman
+LIBS += -lnetman -lps2ip
 LIBS_NAME = $(LIBS:-l%=lib%.a)
 
 # IRX libs
@@ -47,10 +47,11 @@ KEYBOARD_DRIVER_OBJS = internals_ps2_keyboard_driver.o init_ps2_keyboard_driver.
 CAMERA_DRIVER_OBJS = internals_ps2_camera_driver.o init_ps2_camera_driver.o deinit_ps2_camera_driver.o
 NETMAN_DRIVER_OBJS = internals_ps2_netman_driver.o init_ps2_netman_driver.o deinit_ps2_netman_driver.o
 SMAP_DRIVER_OBJS = internals_ps2_smap_driver.o init_ps2_smap_driver.o deinit_ps2_smap_driver.o
+EEIP_DRIVER_OBJS = internals_ps2_eeip_driver.o init_ps2_eeip_driver.o deinit_ps2_eeip_driver.o
 
 EE_OBJS += $(SIO2MAN_DRIVER_OBJS) $(FILEXIO_DRIVER_OBJS) $(MEMCARD_DRIVER_OBJS) $(USBD_DRIVER_OBJS) $(USB_DRIVER_OBJS) $(CDFS_DRIVER_OBJS) \
 	$(DEV9_DRIVER_OBJS) $(HDD_DRIVER_OBJS) $(FILESYSTEM_DRIVER_OBJS) $(JOYSTICK_DRIVER_OBJS) $(AUDIO_DRIVER_OBJS) $(POWEROFF_DRIVER_OBJS) \
-	$(MOUSE_DRIVER_OBJS) $(KEYBOARD_DRIVER_OBJS) $(CAMERA_DRIVER_OBJS) $(NETMAN_DRIVER_OBJS) $(SMAP_DRIVER_OBJS)
+	$(MOUSE_DRIVER_OBJS) $(KEYBOARD_DRIVER_OBJS) $(CAMERA_DRIVER_OBJS) $(NETMAN_DRIVER_OBJS) $(SMAP_DRIVER_OBJS) $(EEIP_DRIVER_OBJS)
 
 # Let's fail if warnings are found
 EE_CFLAGS += -Werror
@@ -136,6 +137,9 @@ EE_C_COMPILE = $(EE_CC) $(EE_CFLAGS)
 
 %_ps2_smap_driver.o:
 	$(EE_C_COMPILE) -DF_$*_ps2_smap_driver $(EE_SRC_DIR)ps2_smap_driver.c -c -o $(EE_OBJS_DIR)$@
+
+%_ps2_eeip_driver.o:
+	$(EE_C_COMPILE) -DF_$*_ps2_eeip_driver $(EE_SRC_DIR)ps2_eeip_driver.c -c -o $(EE_OBJS_DIR)$@
 
 #Include preferences
 include $(PS2SDK)/samples/Makefile.pref
