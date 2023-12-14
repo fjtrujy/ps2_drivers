@@ -113,7 +113,7 @@ enum HDD_INIT_STATUS init_hdd_driver(bool init_dependencies, bool only_if_booted
     if (init_dependencies) {
         ret = init_fileXio_driver();
 
-        if (ret != FILEXIO_INIT_STATUS_IRX_OK) {
+        if (ret != FILEXIO_INIT_STATUS_OK) {
             __hdd_init_status = HDD_INIT_STATUS_DEPENDENCY_IRX_ERROR;
             return __hdd_init_status;
         }
