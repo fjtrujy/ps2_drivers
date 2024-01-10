@@ -8,7 +8,7 @@ LIBS += -lmtap -lpadx
 LIBS += -laudsrv
 LIBS += -lpoweroff
 LIBS += -lmouse -lkbd -lps2cam
-LIBS += -lnetman -lps2ip
+LIBS += -lnetman -lps2ip -lps2ips
 LIBS_NAME = $(LIBS:-l%=lib%.a)
 
 # IRX libs
@@ -22,7 +22,7 @@ IRX_FILES += mtapman.irx padman.irx
 IRX_FILES += libsd.irx audsrv.irx
 IRX_FILES += poweroff.irx
 IRX_FILES += ps2mouse.irx ps2kbd.irx ps2cam.irx
-IRX_FILES += netman.irx smap.irx
+IRX_FILES += netman.irx smap.irx ps2ips.irx ps2ip_nm.irx
 EE_OBJS += $(IRX_FILES:.irx=_irx.o)
 
 # Helpers
@@ -83,6 +83,10 @@ install: all
 # IRX files
 %_irx.c:
 	$(PS2SDK)/bin/bin2c $(PS2SDK)/iop/irx/$*.irx $@ $*_irx
+
+# ps2ip-nm.irx is a special case because "-" is not allowed in C identifiers
+ps2ip_nm_irx.c:
+	$(PS2SDK)/bin/bin2c $(PS2SDK)/iop/irx/ps2ip-nm.irx $@ ps2ip_nm_irx 
 
 # EE FUNCTIONS OBJECTS
 EE_C_COMPILE = $(EE_CC) $(EE_CFLAGS)
