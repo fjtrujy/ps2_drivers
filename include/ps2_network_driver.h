@@ -40,6 +40,16 @@ static inline void deinit_network_EE_driver(bool deinit_dependencies)
     return deinit_eeip_driver(deinit_dependencies);
 }
 
+static inline EEIP_INIT_STATUS init_network_IOP_driver(bool init_dependencies)
+{
+    return init_eeip_driver(init_dependencies);
+}
+
+static inline void deinit_network_IOP_driver(bool deinit_dependencies)
+{
+    return deinit_eeip_driver(deinit_dependencies);
+}
+
 #ifdef __cplusplus
 }
 #endif
