@@ -8,6 +8,7 @@ LIBS += -lmtap -lpadx
 LIBS += -laudsrv
 LIBS += -lpoweroff
 LIBS += -lmouse -lkbd -lps2cam
+LIBS += -lnetman -lps2ip -lps2ips
 LIBS_NAME = $(LIBS:-l%=lib%.a)
 
 # IRX libs
@@ -21,6 +22,7 @@ IRX_FILES += mtapman.irx padman.irx
 IRX_FILES += libsd.irx audsrv.irx
 IRX_FILES += poweroff.irx
 IRX_FILES += ps2mouse.irx ps2kbd.irx ps2cam.irx
+IRX_FILES += netman.irx smap.irx ps2ips.irx ps2ip_nm.irx
 EE_OBJS += $(IRX_FILES:.irx=_irx.o)
 
 # Helpers
@@ -43,10 +45,17 @@ POWEROFF_DRIVER_OBJS = internals_ps2_poweroff_driver.o init_ps2_poweroff_driver.
 MOUSE_DRIVER_OBJS = internals_ps2_mouse_driver.o init_ps2_mouse_driver.o deinit_ps2_mouse_driver.o
 KEYBOARD_DRIVER_OBJS = internals_ps2_keyboard_driver.o init_ps2_keyboard_driver.o deinit_ps2_keyboard_driver.o
 CAMERA_DRIVER_OBJS = internals_ps2_camera_driver.o init_ps2_camera_driver.o deinit_ps2_camera_driver.o
+NETMAN_DRIVER_OBJS = internals_ps2_netman_driver.o init_ps2_netman_driver.o deinit_ps2_netman_driver.o
+SMAP_DRIVER_OBJS = internals_ps2_smap_driver.o init_ps2_smap_driver.o deinit_ps2_smap_driver.o
+EEIP_DRIVER_OBJS = internals_ps2_eeip_driver.o init_ps2_eeip_driver.o deinit_ps2_eeip_driver.o
+IOPIP_DRIVER_OBJS = internals_ps2_iopip_driver.o init_ps2_iopip_driver.o deinit_ps2_iopip_driver.o
 
 EE_OBJS += $(SIO2MAN_DRIVER_OBJS) $(FILEXIO_DRIVER_OBJS) $(MEMCARD_DRIVER_OBJS) $(USBD_DRIVER_OBJS) $(USB_DRIVER_OBJS) $(CDFS_DRIVER_OBJS) \
 	$(DEV9_DRIVER_OBJS) $(HDD_DRIVER_OBJS) $(FILESYSTEM_DRIVER_OBJS) $(JOYSTICK_DRIVER_OBJS) $(AUDIO_DRIVER_OBJS) $(POWEROFF_DRIVER_OBJS) \
-	$(MOUSE_DRIVER_OBJS) $(KEYBOARD_DRIVER_OBJS) $(CAMERA_DRIVER_OBJS)
+	$(MOUSE_DRIVER_OBJS) $(KEYBOARD_DRIVER_OBJS) $(CAMERA_DRIVER_OBJS) $(NETMAN_DRIVER_OBJS) $(SMAP_DRIVER_OBJS) $(EEIP_DRIVER_OBJS) $(IOPIP_DRIVER_OBJS)
+
+# Let's fail if warnings are found
+EE_CFLAGS += -Werror
 
 ## ALL ACTIONS
 all: prepare
@@ -75,6 +84,10 @@ install: all
 # IRX files
 %_irx.c:
 	$(PS2SDK)/bin/bin2c $(PS2SDK)/iop/irx/$*.irx $@ $*_irx
+
+# ps2ip-nm.irx is a special case because "-" is not allowed in C identifiers
+ps2ip_nm_irx.c:
+	$(PS2SDK)/bin/bin2c $(PS2SDK)/iop/irx/ps2ip-nm.irx $@ ps2ip_nm_irx 
 
 # EE FUNCTIONS OBJECTS
 EE_C_COMPILE = $(EE_CC) $(EE_CFLAGS)
@@ -123,6 +136,18 @@ EE_C_COMPILE = $(EE_CC) $(EE_CFLAGS)
 
 %_ps2_camera_driver.o:
 	$(EE_C_COMPILE) -DF_$*_ps2_camera_driver $(EE_SRC_DIR)ps2_camera_driver.c -c -o $(EE_OBJS_DIR)$@
+
+%_ps2_netman_driver.o:
+	$(EE_C_COMPILE) -DF_$*_ps2_netman_driver $(EE_SRC_DIR)ps2_netman_driver.c -c -o $(EE_OBJS_DIR)$@
+
+%_ps2_smap_driver.o:
+	$(EE_C_COMPILE) -DF_$*_ps2_smap_driver $(EE_SRC_DIR)ps2_smap_driver.c -c -o $(EE_OBJS_DIR)$@
+
+%_ps2_eeip_driver.o:
+	$(EE_C_COMPILE) -DF_$*_ps2_eeip_driver $(EE_SRC_DIR)ps2_eeip_driver.c -c -o $(EE_OBJS_DIR)$@
+
+%_ps2_iopip_driver.o:
+	$(EE_C_COMPILE) -DF_$*_ps2_iopip_driver $(EE_SRC_DIR)ps2_iopip_driver.c -c -o $(EE_OBJS_DIR)$@
 
 #Include preferences
 include $(PS2SDK)/samples/Makefile.pref

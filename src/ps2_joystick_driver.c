@@ -64,7 +64,7 @@ static enum JOYSTICK_INIT_STATUS initLibraries(void) {
 
 enum JOYSTICK_INIT_STATUS init_joystick_driver(bool init_dependencies) {
     // Requires to have SIO2MAN
-    if (init_dependencies && init_sio2man_driver() < 0)
+    if (init_dependencies && init_sio2man_driver() != SIO2MAN_INIT_STATUS_OK)
         return JOYSTICK_INIT_STATUS_DEPENDENCY_IRX_ERROR;
 
     __joystick_init_status = loadIRXs();
