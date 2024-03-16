@@ -12,6 +12,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <ps2_dev9_driver.h>
 #include <ps2_netman_driver.h>
 #include <ps2_smap_driver.h>
 #include <ps2_eeip_driver.h>
@@ -34,6 +35,10 @@ static enum EEIP_INIT_STATUS loadIRXs(void) {
 enum EEIP_INIT_STATUS init_eeip_driver(bool init_dependencies) {
     
     if (init_dependencies) {
+        // Requires to have DEV9
+        if (init_dev9_driver() != DEV9_INIT_STATUS_OK)
+            return EEIP_INIT_STATUS_DEPENDENCY_IRX_ERROR;
+        
         // Requires to have NETMAN
         if (init_netman_driver() != NETMAN_INIT_STATUS_OK)
             return EEIP_INIT_STATUS_DEPENDENCY_IRX_ERROR;
@@ -62,6 +67,8 @@ void deinit_eeip_driver(bool deinit_dependencies) {
         deinit_smap_driver();
         // Requires to have NETMAN
         deinit_netman_driver();
+        // Requires to have DEV9
+        deinit_dev9_driver();
     }
 }
 #endif
