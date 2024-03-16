@@ -41,8 +41,12 @@ static enum NETMAN_INIT_STATUS loadIRXs(void) {
     return NETMAN_INIT_STATUS_IRX_OK;
 }
 
-static enum NETMAN_INIT_STATUS initLibraries(void) {
+static inline enum NETMAN_INIT_STATUS initLibraries(void) {
+#if !defined(NETWORK_IOP)
     return NetManInit() ? NETMAN_INIT_STATUS_EE_ERROR : NETMAN_INIT_STATUS_OK;
+#else
+    return NETMAN_INIT_STATUS_OK;
+#endif
 }
 
 enum NETMAN_INIT_STATUS init_netman_driver(void) {
@@ -66,7 +70,9 @@ static void unloadIRXs(void) {
 }
 
 void deinit_netman_driver(void) {
+#if !defined(NETWORK_IOP)
     NetManDeinit();
+#endif
     unloadIRXs();
 }
 #endif

@@ -7,7 +7,7 @@
 # Licenced under GNU Library General Public License version 2
 # Review ps2sdk README & LICENSE files for further details.
 #
-# PS2_EEIP_DRIVER
+# PS2_NETWORK_DRIVER
 */
 
 #ifndef PS2_NETWORK_DRIVER
@@ -41,18 +41,18 @@ static inline void deinit_network_EE_driver(bool deinit_dependencies)
     deinit_eeip_driver(deinit_dependencies);
 }
 
-static inline enum IOPIP_INIT_STATUS init_network_IOP_driver(bool init_dependencies)
+static inline enum IOPIP_INIT_STATUS init_network_IOP_driver(bool init_dependencies, struct ip4_addr *IP, struct ip4_addr *NM, struct ip4_addr *GW)
 {
-    return init_iopip_driver(init_dependencies);
+    return init_iopip_driver(init_dependencies, IP, NM, GW);
 }
 
 static inline void deinit_network_IOP_driver(bool deinit_dependencies)
 {
-    init_iopip_driver(deinit_dependencies);
+    deinit_iopip_driver(deinit_dependencies);
 }
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PS2_EEIP_DRIVER */
+#endif /* PS2_NETWORK_DRIVER */

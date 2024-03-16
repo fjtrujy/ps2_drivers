@@ -14,6 +14,7 @@
 #define PS2_IOPIP_DRIVER
 
 #include <stdbool.h>
+#include <sys/socket.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,7 +29,7 @@ enum IOPIP_INIT_STATUS {
     IOPIP_INIT_STATUS_OK = 0,
 };
 
-enum IOPIP_INIT_STATUS init_iopip_driver(bool init_dependencies);
+enum IOPIP_INIT_STATUS init_iopip_driver(bool init_dependencies, struct ip4_addr *IP, struct ip4_addr *NM, struct ip4_addr *GW);
 void deinit_iopip_driver(bool deinit_dependencies);
 
 #ifdef __cplusplus

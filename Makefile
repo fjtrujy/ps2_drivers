@@ -1,6 +1,14 @@
-EE_LIB = libps2_drivers.a
 EE_SRC_DIR = src/
 UNPACKED_DIR = unpacked_lib
+
+NETWORK_IOP ?= 0 # Use NETWORK_IOP=1 to use IOP network drivers
+
+ifeq ($(NETWORK_IOP),1)
+	EE_CFLAGS += -DNETWORK_IOP
+	EE_LIB = libps2_drivers_netIOP.a
+else
+	EE_LIB = libps2_drivers.a
+endif
 
 ## EE LIBS
 LIBS += -lfileXio
@@ -8,7 +16,13 @@ LIBS += -lmtap -lpadx
 LIBS += -laudsrv
 LIBS += -lpoweroff
 LIBS += -lmouse -lkbd -lps2cam
-LIBS += -lnetman -lps2ip
+
+ifeq ($(NETWORK_IOP),1)
+	LIBS += -lps2ips
+else
+	LIBS += -lps2ip -lnetman
+endif
+
 LIBS_NAME = $(LIBS:-l%=lib%.a)
 
 # IRX libs
@@ -22,6 +36,11 @@ IRX_FILES += mtapman.irx padman.irx
 IRX_FILES += libsd.irx audsrv.irx
 IRX_FILES += poweroff.irx
 IRX_FILES += ps2mouse.irx ps2kbd.irx ps2cam.irx
+
+ifeq ($(NETWORK_IOP),1)
+	IRX_FILES += ps2ips.irx ps2ip_nm.irx
+endif
+
 IRX_FILES += netman.irx smap.irx
 EE_OBJS += $(IRX_FILES:.irx=_irx.o)
 
@@ -47,8 +66,11 @@ KEYBOARD_DRIVER_OBJS = internals_ps2_keyboard_driver.o init_ps2_keyboard_driver.
 CAMERA_DRIVER_OBJS = internals_ps2_camera_driver.o init_ps2_camera_driver.o deinit_ps2_camera_driver.o
 NETMAN_DRIVER_OBJS = internals_ps2_netman_driver.o init_ps2_netman_driver.o deinit_ps2_netman_driver.o
 SMAP_DRIVER_OBJS = internals_ps2_smap_driver.o init_ps2_smap_driver.o deinit_ps2_smap_driver.o
-EEIP_DRIVER_OBJS = internals_ps2_eeip_driver.o init_ps2_eeip_driver.o deinit_ps2_eeip_driver.o
-IOPIP_DRIVER_OBJS = internals_ps2_iopip_driver.o init_ps2_iopip_driver.o deinit_ps2_iopip_driver.o
+ifeq ($(NETWORK_IOP),1)
+	IOPIP_DRIVER_OBJS = internals_ps2_iopip_driver.o init_ps2_iopip_driver.o deinit_ps2_iopip_driver.o
+else
+	EEIP_DRIVER_OBJS = internals_ps2_eeip_driver.o init_ps2_eeip_driver.o deinit_ps2_eeip_driver.o config_network_ps2_eeip_driver.o config_network_custom_ps2_eeip_driver.o
+endif
 
 EE_OBJS += $(SIO2MAN_DRIVER_OBJS) $(FILEXIO_DRIVER_OBJS) $(MEMCARD_DRIVER_OBJS) $(USBD_DRIVER_OBJS) $(USB_DRIVER_OBJS) $(CDFS_DRIVER_OBJS) \
 	$(DEV9_DRIVER_OBJS) $(HDD_DRIVER_OBJS) $(FILESYSTEM_DRIVER_OBJS) $(JOYSTICK_DRIVER_OBJS) $(AUDIO_DRIVER_OBJS) $(POWEROFF_DRIVER_OBJS) \

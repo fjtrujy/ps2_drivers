@@ -12,6 +12,12 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdio.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#include <ps2_dev9_driver.h>
 #include <ps2_netman_driver.h>
 #include <ps2_smap_driver.h>
 #include <ps2_iopip_driver.h>
@@ -35,10 +41,16 @@ EXTERN_IRX_VARS(ps2ips);
 #endif
 
 #ifdef F_init_ps2_iopip_driver
-static enum IOPIP_INIT_STATUS loadIRXs(void) {
+static enum IOPIP_INIT_STATUS loadIRXs(struct ip4_addr *IP, struct ip4_addr *NM, struct ip4_addr *GW) {
     /* PS2IP_NM.IRX */
     if (CHECK_IRX_LOAD(ps2ip_nm)) {
-        __ps2ip_nm_id = SifExecModuleBuffer(&ps2ip_nm_irx, size_ps2ip_nm_irx, 0, NULL, &__ps2ip_nm_ret);
+        int argc = 4;
+        char argv[4][16];
+        sprintf(argv[0], "ps2ip_nm");
+        sprintf(argv[1], "%s", inet_ntoa(*IP));
+        sprintf(argv[2], "%s", inet_ntoa(*NM));
+        sprintf(argv[3], "%s", inet_ntoa(*GW));
+        __ps2ip_nm_id = SifExecModuleBuffer(&ps2ip_nm_irx, size_ps2ip_nm_irx, argc, (const char *)&argv, &__ps2ip_nm_ret);
         if (CHECK_IRX_ERR(ps2ip_nm))
             return IOPIP_INIT_STATUS_PS2IP_NM_IRX_ERROR;
     }
@@ -61,19 +73,29 @@ static enum IOPIP_INIT_STATUS initLibraries(void) {
     return IOPIP_INIT_STATUS_OK;
 }
 
-enum IOPIP_INIT_STATUS init_iopip_driver(bool init_dependencies) {
+enum IOPIP_INIT_STATUS init_iopip_driver(bool init_dependencies, struct ip4_addr *IP, struct ip4_addr *NM, struct ip4_addr *GW) {
     
     if (init_dependencies) {
-        // Requires to have NETMAN
-        if (init_netman_driver() != NETMAN_INIT_STATUS_OK)
+        // Requires to have DEV9
+        if (init_dev9_driver() != DEV9_INIT_STATUS_OK) {
+            printf("DEV9_INIT_STATUS_OK\n");
             return IOPIP_INIT_STATUS_DEPENDENCY_IRX_ERROR;
+        }
+
+        // Requires to have NETMAN
+        if (init_netman_driver() != NETMAN_INIT_STATUS_OK) {
+            printf("NETMAN_INIT_STATUS_OK\n");
+            return IOPIP_INIT_STATUS_DEPENDENCY_IRX_ERROR;
+        }
 
         // Requires to have SMAP
-        if (init_smap_driver() != SMAP_INIT_STATUS_OK)
+        if (init_smap_driver() != SMAP_INIT_STATUS_OK) {
+            printf("SMAP_INIT_STATUS_OK\n");
             return IOPIP_INIT_STATUS_DEPENDENCY_IRX_ERROR;
+        }
     } 
 
-    __iopip_init_status = loadIRXs();
+    __iopip_init_status = loadIRXs(IP, NM, GW);
     if (__iopip_init_status < 0)
         return __iopip_init_status;
     
@@ -111,6 +133,8 @@ void deinit_iopip_driver(bool deinit_dependencies) {
         deinit_smap_driver();
         // Requires to have NETMAN
         deinit_netman_driver();
+        // Requires to have DEV9
+        deinit_dev9_driver();
     }
 }
 #endif
