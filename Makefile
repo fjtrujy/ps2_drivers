@@ -8,7 +8,7 @@ LIBS += -lmtap -lpadx
 LIBS += -laudsrv
 LIBS += -lpoweroff
 LIBS += -lmouse -lkbd -lps2cam
-LIBS += -lnetman -lps2ip -lps2ips
+LIBS += -lnetman -lps2ip
 LIBS_NAME = $(LIBS:-l%=lib%.a)
 
 # IRX libs
@@ -22,7 +22,7 @@ IRX_FILES += mtapman.irx padman.irx
 IRX_FILES += libsd.irx audsrv.irx
 IRX_FILES += poweroff.irx
 IRX_FILES += ps2mouse.irx ps2kbd.irx ps2cam.irx
-IRX_FILES += netman.irx smap.irx ps2ips.irx ps2ip_nm.irx
+IRX_FILES += netman.irx smap.irx
 EE_OBJS += $(IRX_FILES:.irx=_irx.o)
 
 # Helpers
