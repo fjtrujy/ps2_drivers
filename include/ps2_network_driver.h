@@ -14,40 +14,41 @@
 #define PS2_NETWORK_DRIVER
 
 #include <ps2_eeip_driver.h>
+#include <ps2_iopip_driver.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 // By default we will use the EEIP driver
-static inline EEIP_INIT_STATUS init_network_driver(bool init_dependencies)
+static inline enum EEIP_INIT_STATUS init_network_driver(bool init_dependencies)
 {
     return init_eeip_driver(init_dependencies);
 }
 
 static inline void deinit_network_driver(bool deinit_dependencies)
 {
-    return deinit_eeip_driver(deinit_dependencies);
+    deinit_eeip_driver(deinit_dependencies);
 }
 
-static inline EEIP_INIT_STATUS init_network_EE_driver(bool init_dependencies)
+static inline enum EEIP_INIT_STATUS init_network_EE_driver(bool init_dependencies)
 {
     return init_eeip_driver(init_dependencies);
 }
 
 static inline void deinit_network_EE_driver(bool deinit_dependencies)
 {
-    return deinit_eeip_driver(deinit_dependencies);
+    deinit_eeip_driver(deinit_dependencies);
 }
 
-static inline EEIP_INIT_STATUS init_network_IOP_driver(bool init_dependencies)
+static inline enum IOPIP_INIT_STATUS init_network_IOP_driver(bool init_dependencies)
 {
-    return init_eeip_driver(init_dependencies);
+    return init_iopip_driver(init_dependencies);
 }
 
 static inline void deinit_network_IOP_driver(bool deinit_dependencies)
 {
-    return deinit_eeip_driver(deinit_dependencies);
+    init_iopip_driver(deinit_dependencies);
 }
 
 #ifdef __cplusplus
