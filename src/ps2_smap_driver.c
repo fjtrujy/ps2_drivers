@@ -30,12 +30,11 @@ EXTERN_IRX_VARS(smap);
 #ifdef F_init_ps2_smap_driver
 static enum SMAP_INIT_STATUS loadIRXs(void) {
     /* SMAP.IRX */
-    if (__smap_id > 0)
-        return SMAP_INIT_STATUS_OK;
-
-    __smap_id = SifExecModuleBuffer(&smap_irx, size_smap_irx, 0, NULL, &__smap_ret);
-    if (CHECK_IRX_ERR(smap))
-        return SMAP_INIT_STATUS_IRX_ERROR;
+    if (CHECK_IRX_LOAD(smap)) {
+        __smap_id = SifExecModuleBuffer(&smap_irx, size_smap_irx, 0, NULL, &__smap_ret);
+        if (CHECK_IRX_ERR(smap))
+            return SMAP_INIT_STATUS_IRX_ERROR;
+    }
 
     return SMAP_INIT_STATUS_OK;
 }

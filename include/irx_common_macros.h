@@ -15,6 +15,9 @@
     __##irx##_id = -1; \
     __##irx##_ret = -1
 
+/// condition to perform irx load
+#define CHECK_IRX_LOAD(irx) (__##irx##_id == -1) && (__##irx##_ret == -1)
+
 /// condition for irx startup errors
 #define CHECK_IRX_ERR(irx) (__##irx##_id < 0 || __##irx##_ret == 1)
 

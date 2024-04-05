@@ -80,23 +80,29 @@ static enum HDD_INIT_STATUS loadIRXs(void) {
                     "20";
 
     /* PS2ATAD.IRX */
-    __ps2atad_id = SifExecModuleBuffer(&ps2atad_irx, size_ps2atad_irx, 0, NULL, &__ps2atad_ret);
-    if (CHECK_IRX_ERR(ps2atad))
-        return HDD_INIT_STATUS_PS2ATAD_IRX_ERROR;
+    if (CHECK_IRX_LOAD(ps2atad)) {
+       __ps2atad_id = SifExecModuleBuffer(&ps2atad_irx, size_ps2atad_irx, 0, NULL, &__ps2atad_ret);
+        if (CHECK_IRX_ERR(ps2atad))
+            return HDD_INIT_STATUS_PS2ATAD_IRX_ERROR;
+    }
 
     /* PS2HDD.IRX */
-    __ps2hdd_id = SifExecModuleBuffer(&ps2hdd_irx, size_ps2hdd_irx, sizeof(hddarg), hddarg, &__ps2hdd_ret);
-    if (CHECK_IRX_ERR(ps2hdd))
-        return HDD_INIT_STATUS_PS2HDD_IRX_ERROR;
+    if (CHECK_IRX_LOAD(ps2hdd)) {
+        __ps2hdd_id = SifExecModuleBuffer(&ps2hdd_irx, size_ps2hdd_irx, sizeof(hddarg), hddarg, &__ps2hdd_ret);
+        if (CHECK_IRX_ERR(ps2hdd))
+            return HDD_INIT_STATUS_PS2HDD_IRX_ERROR;
+    }
 
     /* Check if HDD is formatted and ready to be used */
     if (hddCheck() < 0)
         return HDD_INIT_STATUS_HDD_NOT_READY_ERROR;
 
     /* PS2FS.IRX */
-    __ps2fs_id = SifExecModuleBuffer(&ps2fs_irx, size_ps2fs_irx, 0, NULL, &__ps2fs_ret);
-    if (CHECK_IRX_ERR(ps2fs))
-        return HDD_INIT_STATUS_PS2FS_IRX_ERROR;
+    if (CHECK_IRX_LOAD(ps2fs)) {
+        __ps2fs_id = SifExecModuleBuffer(&ps2fs_irx, size_ps2fs_irx, 0, NULL, &__ps2fs_ret);
+        if (CHECK_IRX_ERR(ps2fs))
+            return HDD_INIT_STATUS_PS2FS_IRX_ERROR;
+    }
 
     return HDD_INIT_STATUS_IRX_OK;
 }
@@ -136,7 +142,6 @@ static void unloadIRXs(void) {
     if (CHECK_IRX_UNLOAD(ps2fs)) {
         SifUnloadModule(__ps2fs_id);
         RESET_IRX_VARS(ps2fs);
-        __ps2fs_id = -1;
     }
 
     /* PS2HDD.IRX */
@@ -149,7 +154,6 @@ static void unloadIRXs(void) {
     if (CHECK_IRX_UNLOAD(ps2atad)) {
         SifUnloadModule(__ps2atad_id);
         RESET_IRX_VARS(ps2atad);
-        __ps2atad_id = -1;
     }
 }
 
@@ -303,9 +307,6 @@ void umount_hdd_partition(const char *mountpoint) {
         __mount_status = HDD_MOUNT_STATUS_UKNOWN;
         memset(__mountString, 0, 10);
     }
-
-    if (__ps2fs_id > 0)
-        fileXioDevctl("dev9x:", DDIOC_OFF, NULL, 0, NULL, 0);
 }
 #else
 void umount_hdd_partition(const char *mountpoint);

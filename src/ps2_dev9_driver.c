@@ -18,6 +18,10 @@
 #include <sifrpc.h>
 #include <loadfile.h>
 
+#define NEWLIB_PORT_AWARE
+#include <fileXio_rpc.h>
+#include <hdd-ioctl.h>
+
 EXTERN_IRX(ps2dev9_irx);
 
 #ifdef F_internals_ps2_dev9_driver
@@ -31,9 +35,11 @@ EXTERN_IRX_VARS(ps2dev9);
 #ifdef F_init_ps2_dev9_driver
 static enum DEV9_INIT_STATUS loadIRXs(void) {
     /* PS2DEV9.IRX */
-    __ps2dev9_id = SifExecModuleBuffer(&ps2dev9_irx, size_ps2dev9_irx, 0, NULL, &__ps2dev9_ret);
-    if (CHECK_IRX_ERR(ps2dev9))
-        return DEV9_INIT_STATUS_IRX_ERROR;
+    if (CHECK_IRX_LOAD(ps2dev9)) {
+        __ps2dev9_id = SifExecModuleBuffer(&ps2dev9_irx, size_ps2dev9_irx, 0, NULL, &__ps2dev9_ret);
+        if (CHECK_IRX_ERR(ps2dev9))
+            return DEV9_INIT_STATUS_IRX_ERROR;
+    }
 
     return DEV9_INIT_STATUS_OK;
 }
@@ -54,6 +60,9 @@ static void unloadIRXs(void) {
 }
 
 void deinit_dev9_driver() {
+    if (__dev9_init_status == DEV9_INIT_STATUS_OK) {
+        while (fileXioDevctl("dev9x:", DDIOC_OFF, NULL, 0, NULL, 0) < 0) {};
+    }
     unloadIRXs();
 }
 #endif

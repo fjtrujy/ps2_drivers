@@ -39,14 +39,18 @@ EXTERN_IRX_VARS(padman);
 #ifdef F_init_ps2_joystick_driver
 static enum JOYSTICK_INIT_STATUS loadIRXs(void) {
     /* MTAPMAN.IRX */
-    __mtapman_id = SifExecModuleBuffer(&mtapman_irx, size_mtapman_irx, 0, NULL, &__mtapman_ret);
-    if (CHECK_IRX_ERR(mtapman))
-        return JOYSTICK_INIT_STATUS_MTAP_IRX_ERROR;
+    if (CHECK_IRX_LOAD(mtapman)) {
+        __mtapman_id = SifExecModuleBuffer(&mtapman_irx, size_mtapman_irx, 0, NULL, &__mtapman_ret);
+        if (CHECK_IRX_ERR(mtapman))
+            return JOYSTICK_INIT_STATUS_MTAP_IRX_ERROR;
+    }
 
     /* PADMAN.IRX */
-    __padman_id = SifExecModuleBuffer(&padman_irx, size_padman_irx, 0, NULL, &__padman_ret);
-    if (CHECK_IRX_ERR(padman))
-        return JOYSTICK_INIT_STATUS_PAD_IRX_ERROR;
+    if (CHECK_IRX_LOAD(padman)) {
+        __padman_id = SifExecModuleBuffer(&padman_irx, size_padman_irx, 0, NULL, &__padman_ret);
+        if (CHECK_IRX_ERR(padman))
+            return JOYSTICK_INIT_STATUS_PAD_IRX_ERROR;
+    }
 
     return JOYSTICK_INIT_STATUS_IRX_OK;
 }

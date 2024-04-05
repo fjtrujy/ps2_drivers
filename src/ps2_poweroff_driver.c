@@ -31,9 +31,11 @@ EXTERN_IRX_VARS(poweroff);
 #ifdef F_init_ps2_poweroff_driver
 static enum POWEROFF_INIT_STATUS loadIRXs(void) {
     /* POWEROFF.IRX */
-    __poweroff_id = SifExecModuleBuffer(&poweroff_irx, size_poweroff_irx, 0, NULL, &__poweroff_ret);
-    if (CHECK_IRX_ERR(poweroff))
-        return POWEROFF_INIT_STATUS_IRX_ERROR;
+    if (CHECK_IRX_LOAD(poweroff)) {
+        __poweroff_id = SifExecModuleBuffer(&poweroff_irx, size_poweroff_irx, 0, NULL, &__poweroff_ret);
+        if (CHECK_IRX_ERR(poweroff))
+            return POWEROFF_INIT_STATUS_IRX_ERROR;
+    }
 
     return POWEROFF_INIT_STATUS_IRX_OK;
 }

@@ -73,6 +73,7 @@ void __internal_deinit_ps2_filesystem_driver(bool deinit_powerOff) {
     deinit_usb_driver();
     deinit_memcard_driver(true);
     deinit_fileXio_driver();
+    deinit_dev9_driver();
 
     if (deinit_powerOff)
         deinit_poweroff_driver();
@@ -103,6 +104,7 @@ void init_ps2_filesystem_driver() {
     init_memcard_driver(true);
     init_usb_driver();
     init_cdfs_driver();
+    init_dev9_driver();
     init_hdd_driver(false, true);
 
     poweroffSetCallback(&poweroffHandler, NULL);

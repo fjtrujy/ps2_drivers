@@ -30,12 +30,11 @@ EXTERN_IRX_VARS(sio2man);
 #ifdef F_init_ps2_sio2man_driver
 static enum SIO2MAN_INIT_STATUS loadIRXs(void) {
     /* SIO2MAN.IRX */
-    if (__sio2man_id > 0)
-        return SIO2MAN_INIT_STATUS_OK;
-
-    __sio2man_id = SifExecModuleBuffer(&sio2man_irx, size_sio2man_irx, 0, NULL, &__sio2man_ret);
-    if (CHECK_IRX_ERR(sio2man))
-        return SIO2MAN_INIT_STATUS_IRX_ERROR;
+    if (CHECK_IRX_LOAD(sio2man)) {
+        __sio2man_id = SifExecModuleBuffer(&sio2man_irx, size_sio2man_irx, 0, NULL, &__sio2man_ret);
+        if (CHECK_IRX_ERR(sio2man))
+            return SIO2MAN_INIT_STATUS_IRX_ERROR;
+    }
 
     return SIO2MAN_INIT_STATUS_OK;
 }

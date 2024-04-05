@@ -40,9 +40,11 @@ static enum MOUSE_INIT_STATUS loadIRXs(bool init_dependencies) {
     }
 
     /* PS2MOUSE.IRX */
-    __mouse_id = SifExecModuleBuffer(&ps2mouse_irx, size_ps2mouse_irx, 0, NULL, &__mouse_ret);
-    if (CHECK_IRX_ERR(mouse))
-        return MOUSE_INIT_STATUS_IRX_ERROR;
+    if (CHECK_IRX_LOAD(mouse)) {
+        __mouse_id = SifExecModuleBuffer(&ps2mouse_irx, size_ps2mouse_irx, 0, NULL, &__mouse_ret);
+        if (CHECK_IRX_ERR(mouse))
+            return MOUSE_INIT_STATUS_IRX_ERROR;
+    }
 
     return MOUSE_INIT_STATUS_IRX_OK;
 }
