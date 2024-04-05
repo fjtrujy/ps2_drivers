@@ -136,7 +136,6 @@ static void unloadIRXs(void) {
     if (CHECK_IRX_UNLOAD(ps2fs)) {
         SifUnloadModule(__ps2fs_id);
         RESET_IRX_VARS(ps2fs);
-        __ps2fs_id = -1;
     }
 
     /* PS2HDD.IRX */
@@ -149,7 +148,6 @@ static void unloadIRXs(void) {
     if (CHECK_IRX_UNLOAD(ps2atad)) {
         SifUnloadModule(__ps2atad_id);
         RESET_IRX_VARS(ps2atad);
-        __ps2atad_id = -1;
     }
 }
 
