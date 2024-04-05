@@ -32,12 +32,11 @@ EXTERN_IRX_VARS(netman);
 #ifdef F_init_ps2_netman_driver
 static enum NETMAN_INIT_STATUS loadIRXs(void) {
     /* NETMAN.IRX */
-    if (__netman_id > 0)
-        return NETMAN_INIT_STATUS_OK;
-
-    __netman_id = SifExecModuleBuffer(&netman_irx, size_netman_irx, 0, NULL, &__netman_ret);
-    if (CHECK_IRX_ERR(netman))
-        return NETMAN_INIT_STATUS_IRX_ERROR;
+    if (CHECK_IRX_LOAD(netman)) {
+        __netman_id = SifExecModuleBuffer(&netman_irx, size_netman_irx, 0, NULL, &__netman_ret);
+        if (CHECK_IRX_ERR(netman))
+            return NETMAN_INIT_STATUS_IRX_ERROR;
+    }
 
     return NETMAN_INIT_STATUS_IRX_OK;
 }

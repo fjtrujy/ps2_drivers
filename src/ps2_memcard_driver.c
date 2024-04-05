@@ -36,14 +36,18 @@ EXTERN_IRX_VARS(mcserv);
 #ifdef F_init_ps2_memcard_driver
 static enum MEMCARD_INIT_STATUS loadIRXs(void) {
     /* MCMAN.IRX */
-    __mcman_id = SifExecModuleBuffer(&mcman_irx, size_mcman_irx, 0, NULL, &__mcman_ret);
-    if (CHECK_IRX_ERR(mcman))
-        return MEMCARD_INIT_STATUS_MCMAN_IRX_ERROR;
+    if (CHECK_IRX_LOAD(mcman)) {
+        __mcman_id = SifExecModuleBuffer(&mcman_irx, size_mcman_irx, 0, NULL, &__mcman_ret);
+        if (CHECK_IRX_ERR(mcman))
+            return MEMCARD_INIT_STATUS_MCMAN_IRX_ERROR;
+    }
 
     /* MCSERV.IRX */
-    __mcserv_id = SifExecModuleBuffer(&mcserv_irx, size_mcserv_irx, 0, NULL, &__mcserv_ret);
-    if (CHECK_IRX_ERR(mcserv))
-        return MEMCARD_INIT_STATUS_MCSERV_IRX_ERROR;
+    if (CHECK_IRX_LOAD(mcserv)) {
+        __mcserv_id = SifExecModuleBuffer(&mcserv_irx, size_mcserv_irx, 0, NULL, &__mcserv_ret);
+        if (CHECK_IRX_ERR(mcserv))
+            return MEMCARD_INIT_STATUS_MCSERV_IRX_ERROR;
+    }
 
     return MEMCARD_INIT_STATUS_IRX_OK;
 }

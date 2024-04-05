@@ -35,14 +35,18 @@ EXTERN_IRX_VARS(audsrv);
 #ifdef F_init_ps2_audio_driver
 static enum AUDIO_INIT_STATUS loadIRXs(void) {
     /* LIBSD.IRX */
-    __libsd_id = SifExecModuleBuffer(&libsd_irx, size_libsd_irx, 0, NULL, &__libsd_ret);
-    if (CHECK_IRX_ERR(libsd))
-        return AUDIO_INIT_STATUS_LIBSD_IRX_ERROR;
+    if (CHECK_IRX_LOAD(libsd)) {
+        __libsd_id = SifExecModuleBuffer(&libsd_irx, size_libsd_irx, 0, NULL, &__libsd_ret);
+        if (CHECK_IRX_ERR(libsd))
+            return AUDIO_INIT_STATUS_LIBSD_IRX_ERROR;
+    }
 
     /* AUDSRV.IRX */
-    __audsrv_id = SifExecModuleBuffer(&audsrv_irx, size_audsrv_irx, 0, NULL, &__audsrv_ret);
-    if (CHECK_IRX_ERR(audsrv))
-        return AUDIO_INIT_STATUS_AUDSRV_IRX_ERROR;
+    if (CHECK_IRX_LOAD(audsrv)) {
+        __audsrv_id = SifExecModuleBuffer(&audsrv_irx, size_audsrv_irx, 0, NULL, &__audsrv_ret);
+        if (CHECK_IRX_ERR(audsrv))
+            return AUDIO_INIT_STATUS_AUDSRV_IRX_ERROR;
+    }
 
     return AUDIO_INIT_STATUS_IRX_OK;
 }

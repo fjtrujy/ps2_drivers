@@ -39,9 +39,11 @@ static enum KEYBOARD_INIT_STATUS loadIRXs(bool init_dependencies) {
     }
 
     /* PS2KBD.IRX */
-    __keyboard_id = SifExecModuleBuffer(&ps2kbd_irx, size_ps2kbd_irx, 0, NULL, &__keyboard_ret);
-    if (CHECK_IRX_ERR(keyboard))
-        return KEYBOARD_INIT_STATUS_IRX_ERROR;
+    if (CHECK_IRX_LOAD(keyboard)) {
+        __keyboard_id = SifExecModuleBuffer(&ps2kbd_irx, size_ps2kbd_irx, 0, NULL, &__keyboard_ret);
+        if (CHECK_IRX_ERR(keyboard))
+            return KEYBOARD_INIT_STATUS_IRX_ERROR;
+    }
 
     return KEYBOARD_INIT_STATUS_IRX_OK;
 }

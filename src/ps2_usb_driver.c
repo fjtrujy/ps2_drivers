@@ -39,22 +39,28 @@ EXTERN_IRX_VARS(usbmass_bd);
 #ifdef F_init_ps2_usb_driver
 static enum USB_INIT_STATUS loadIRXs(void) {
     /* BDM.IRX */
-    __bdm_id = SifExecModuleBuffer(&bdm_irx, size_bdm_irx, 0, NULL, &__bdm_ret);
-    if (CHECK_IRX_ERR(bdm))
-        return USB_INIT_STATUS_BDM_IRX_ERROR;
+    if (CHECK_IRX_LOAD(bdm)) {
+        __bdm_id = SifExecModuleBuffer(&bdm_irx, size_bdm_irx, 0, NULL, &__bdm_ret);
+        if (CHECK_IRX_ERR(bdm))
+            return USB_INIT_STATUS_BDM_IRX_ERROR;
+    }
 
     /* BDMFS_FATFS.IRX */
-    __bdmfs_fatfs_id = SifExecModuleBuffer(&bdmfs_fatfs_irx, size_bdmfs_fatfs_irx, 0, NULL, &__bdmfs_fatfs_ret);
-    if (CHECK_IRX_ERR(bdmfs_fatfs))
-        return USB_INIT_STATUS_BDMFS_FATFS_IRX_ERROR;
+    if (CHECK_IRX_LOAD(bdmfs_fatfs)) {
+        __bdmfs_fatfs_id = SifExecModuleBuffer(&bdmfs_fatfs_irx, size_bdmfs_fatfs_irx, 0, NULL, &__bdmfs_fatfs_ret);
+        if (CHECK_IRX_ERR(bdmfs_fatfs))
+            return USB_INIT_STATUS_BDMFS_FATFS_IRX_ERROR;
+    }
 
     /* USBD.IRX */
     init_usbd_driver();
 
     /* USBMASS_BD.IRX */
-    __usbmass_bd_id = SifExecModuleBuffer(&usbmass_bd_irx, size_usbmass_bd_irx, 0, NULL, &__usbmass_bd_ret);
-    if (CHECK_IRX_ERR(usbmass_bd))
-        return USB_INIT_STATUS_USBMASS_BD_IRX_ERROR;
+    if (CHECK_IRX_LOAD(usbmass_bd)) {
+        __usbmass_bd_id = SifExecModuleBuffer(&usbmass_bd_irx, size_usbmass_bd_irx, 0, NULL, &__usbmass_bd_ret);
+        if (CHECK_IRX_ERR(usbmass_bd))
+            return USB_INIT_STATUS_USBMASS_BD_IRX_ERROR;
+    }
 
     return USB_INIT_STATUS_IRX_OK;
 }

@@ -31,9 +31,11 @@ EXTERN_IRX_VARS(usbd);
 #ifdef F_init_ps2_usbd_driver
 static enum USBD_INIT_STATUS loadIRXs(void) {
     /* USBD.IRX */
-    __usbd_id = SifExecModuleBuffer(&usbd_irx, size_usbd_irx, 0, NULL, &__usbd_ret);
-    if (CHECK_IRX_ERR(usbd))
-        return USBD_INIT_STATUS_IRX_ERROR;
+    if (CHECK_IRX_LOAD(usbd)) {
+        __usbd_id = SifExecModuleBuffer(&usbd_irx, size_usbd_irx, 0, NULL, &__usbd_ret);
+        if (CHECK_IRX_ERR(usbd))
+            return USBD_INIT_STATUS_IRX_ERROR;
+    }
 
     return USBD_INIT_STATUS_OK;
 }

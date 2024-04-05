@@ -40,9 +40,11 @@ static enum CAMERA_INIT_STATUS loadIRXs(bool init_dependencies) {
     }
 
     /* PSCAM.IRX */
-    __camera_id = SifExecModuleBuffer(&ps2cam_irx, size_ps2cam_irx, 0, NULL, &__camera_ret);
-    if (CHECK_IRX_ERR(camera))
-        return CAMERA_INIT_STATUS_IRX_ERROR;
+    if (CHECK_IRX_LOAD(camera)) {
+        __camera_id = SifExecModuleBuffer(&ps2cam_irx, size_ps2cam_irx, 0, NULL, &__camera_ret);
+        if (CHECK_IRX_ERR(camera))
+            return CAMERA_INIT_STATUS_IRX_ERROR;
+    }
 
     return CAMERA_INIT_STATUS_IRX_OK;
 }
