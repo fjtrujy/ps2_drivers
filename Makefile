@@ -58,18 +58,19 @@ EE_OBJS += $(SIO2MAN_DRIVER_OBJS) $(FILEXIO_DRIVER_OBJS) $(MEMCARD_DRIVER_OBJS) 
 EE_CFLAGS += -Werror
 
 ## ALL ACTIONS
-all: prepare
-all: unpack
-all: EE_OBJS += $(shell find ${UNPACKED_DIR} -name '*.o')
-all: $(EE_LIB)
+all: prepare unpack update_objs $(EE_LIB)
 
 prepare:
-	mkdir -p ${UNPACKED_DIR};\
+	mkdir -p ${UNPACKED_DIR}
 
-unpack:
-	for lib in ${LIBS_NAME}; do \
-        ${EE_AR} -x $(PS2SDK)/ee/lib/$$lib  --output=${UNPACKED_DIR};\
-    done;
+unpack: prepare
+	@for lib in ${LIBS_NAME}; do \
+        ${EE_AR} -x $(PS2SDK)/ee/lib/$$lib --output=${UNPACKED_DIR}; \
+    done
+
+update_objs: unpack
+	@echo "Updating EE_OBJS with new object files..."
+	$(eval EE_OBJS += $(shell find ${UNPACKED_DIR} -name '*.o'))
 
 clean:
 	rm -rf ${UNPACKED_DIR}
