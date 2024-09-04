@@ -1,6 +1,6 @@
-EE_LIB = libps2_drivers.a
+EE_LIB = libps2_drivers_impl.a
+EE_LIB_COMBINED = libps2_drivers.a
 EE_SRC_DIR = src/
-UNPACKED_DIR = unpacked_lib
 
 ## EE LIBS
 LIBS += -lfileXio
@@ -9,7 +9,7 @@ LIBS += -laudsrv
 LIBS += -lpoweroff
 LIBS += -lmouse -lkbd -lps2cam
 LIBS += -lnetman -lps2ip
-LIBS_NAME = $(LIBS:-l%=lib%.a)
+LIBS_FULLPATH = $(LIBS:-l%=$(PS2SDK)/ee/lib/lib%.a)
 
 # IRX libs
 IRX_FILES += sio2man.irx
@@ -58,29 +58,19 @@ EE_OBJS += $(SIO2MAN_DRIVER_OBJS) $(FILEXIO_DRIVER_OBJS) $(MEMCARD_DRIVER_OBJS) 
 EE_CFLAGS += -Werror
 
 ## ALL ACTIONS
-all: prepare unpack update_objs $(EE_LIB)
+all: $(EE_LIB_COMBINED)
 
-prepare:
-	mkdir -p ${UNPACKED_DIR}
-
-unpack: prepare
-	@for lib in ${LIBS_NAME}; do \
-        ${EE_AR} -x $(PS2SDK)/ee/lib/$$lib --output=${UNPACKED_DIR}; \
-    done
-
-update_objs: unpack
-	@echo "Updating EE_OBJS with new object files..."
-	$(eval EE_OBJS += $(shell find ${UNPACKED_DIR} -name '*.o'))
+$(EE_LIB_COMBINED): $(EE_LIB) $(LIBS_FULLPATH)
+	$(EE_AR) -cqT $@ $^ && printf 'create %s\naddlib %s\nsave\nend\n' $@ $@ | $(EE_AR) -M
 
 clean:
-	rm -rf ${UNPACKED_DIR}
-	rm -f $(EE_LIB) $(EE_OBJS)
+	rm -f $(EE_LIB) $(EE_LIB_COMBINED) $(EE_OBJS)
 
 install: all
 	mkdir -p $(DESTDIR)$(PS2SDK)/ports/include/
 	mkdir -p $(DESTDIR)$(PS2SDK)/ports/lib/
 	cp -f include/* $(DESTDIR)$(PS2SDK)/ports/include/
-	cp $(EE_LIB) $(DESTDIR)$(PS2SDK)/ports/lib/
+	cp $(EE_LIB_COMBINED) $(DESTDIR)$(PS2SDK)/ports/lib/
 
 # IRX files
 %_irx.c:
