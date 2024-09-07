@@ -28,8 +28,8 @@
 #define CHECK_IRX_ERR(irx) (__##irx##_id < 0 || __##irx##_ret == 1)
 
 /// check if this irx module is successfully loaded and supports unloading.
-/// It should use MODULE_REMOVABLE_END however in PS2SDK it is not used, so we will use MODULE_RESIDENT_END
-#define CHECK_IRX_UNLOAD(irx) (__##irx##_id >= 0 && __##irx##_ret == 0)
+/// It should use just MODULE_REMOVABLE_END, however, in PS2SDK majority of IOP modules return MODULE_RESIDENT_END
+#define CHECK_IRX_UNLOAD(irx) (__##irx##_id >= 0 && (__##irx##_ret == 0 || __##irx##_ret == 2))
 /// extern an embedded irx file buffer and size
 #define EXTERN_IRX(_IRX) \
 extern unsigned char _IRX[] __attribute__((aligned(16))); \
