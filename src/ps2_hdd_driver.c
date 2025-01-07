@@ -99,7 +99,7 @@ static enum HDD_INIT_STATUS loadIRXs(void) {
 
     /* PS2FS.IRX */
     if (CHECK_IRX_LOAD(ps2fs)) {
-        __ps2fs_id = SifExecModuleBuffer(&ps2fs_irx, size_ps2fs_irx, 0, NULL, &__ps2fs_ret);
+        __ps2fs_id = SifExecModuleBuffer(&ps2fs_irx, size_ps2fs_irx, sizeof(hddarg), hddarg, &__ps2fs_ret);
         if (CHECK_IRX_ERR(ps2fs))
             return HDD_INIT_STATUS_PS2FS_IRX_ERROR;
     }
