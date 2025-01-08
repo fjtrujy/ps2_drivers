@@ -70,6 +70,7 @@
 void __internal_deinit_ps2_filesystem_driver(bool deinit_powerOff) {
     deinit_hdd_driver(false);
     deinit_cdfs_driver();
+    init_mx4sio_driver(false);
     deinit_usb_driver();
     deinit_memcard_driver(true);
     deinit_fileXio_driver();
@@ -103,6 +104,7 @@ void init_ps2_filesystem_driver() {
     init_fileXio_driver();
     init_memcard_driver(true);
     init_usb_driver();
+    init_mx4sio_driver(false);
     init_cdfs_driver();
     init_dev9_driver();
     init_hdd_driver(false, true);

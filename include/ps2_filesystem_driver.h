@@ -20,6 +20,7 @@
 #include <ps2_fileXio_driver.h>
 #include <ps2_memcard_driver.h>
 #include <ps2_usb_driver.h>
+#include <ps2_mx4sio_driver.h>
 #include <ps2_cdfs_driver.h>
 #include <ps2_dev9_driver.h>
 #include <ps2_hdd_driver.h>
