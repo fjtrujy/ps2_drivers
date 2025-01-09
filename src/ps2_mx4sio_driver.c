@@ -14,6 +14,7 @@
 #include <stddef.h>
 #include <ps2_mx4sio_driver.h>
 #include <ps2_sio2man_driver.h>
+#include <ps2_bdm_driver.h>
 #include <irx_common_macros.h>
 
 #include <sifrpc.h>
@@ -44,7 +45,11 @@ static enum MX4SIO_INIT_STATUS loadIRXs(void) {
 enum MX4SIO_INIT_STATUS init_mx4sio_driver(bool init_dependencies) {
     // Requires to have SIO2MAN
     if (init_dependencies && init_sio2man_driver() < 0)
-        return MX4SIO_INIT_STATUS_DEPENDENCY_IRX_ERROR;
+        return MX4SIO_INIT_STATUS_DEPENDENCY_SIO2MAN_ERROR;
+
+    /* Requires to have SIO2MAN BDM */
+    if (init_dependencies && init_bdm_driver() < 0)
+        return MX4SIO_INIT_STATUS_DEPENDENCY_BDM_ERROR;
 
     __mx4sio_init_status = loadIRXs();
     return __mx4sio_init_status;
@@ -63,8 +68,9 @@ static void unloadIRXs(void) {
 void deinit_mx4sio_driver(bool deinit_dependencies) {
     unloadIRXs();
 
-    // Requires to have SIO2MAN
-    if (deinit_dependencies)
+    if (deinit_dependencies) {
+        deinit_bdm_driver();
         deinit_sio2man_driver();
+    }
 }
 #endif

@@ -63,7 +63,7 @@ void __internal_deinit_ps2_filesystem_driver(bool deinit_powerOff) {
     deinit_hdd_driver(false);
     deinit_cdfs_driver();
     init_mx4sio_driver(false);
-    deinit_usb_driver();
+    deinit_usb_driver(true);
     deinit_memcard_driver(true);
     deinit_fileXio_driver();
     deinit_dev9_driver();
@@ -99,11 +99,11 @@ void __internal_deinit_only_boot_ps2_filesystem_driver(bool deinit_powerOff) {
         case BOOT_DEVICE_MASS:
         case BOOT_DEVICE_MASS0:
         case BOOT_DEVICE_MASS1:
-            deinit_usb_driver();
-            break;
         case BOOT_DEVICE_MX4SIO:
         case BOOT_DEVICE_MX4SIO0:
         case BOOT_DEVICE_MX4SIO1:
+            deinit_usb_driver(true);
+            deinit_mx4sio_driver(true);
             break;
         case BOOT_DEVICE_HDD:
         case BOOT_DEVICE_HDD0: {
@@ -156,7 +156,7 @@ void init_ps2_filesystem_driver() {
     init_poweroff_driver();
     init_fileXio_driver();
     init_memcard_driver(true);
-    init_usb_driver();
+    init_usb_driver(true);
     init_mx4sio_driver(false);
     init_cdfs_driver();
     init_dev9_driver();
@@ -199,11 +199,10 @@ void init_only_boot_ps2_filesystem_driver() {
         case BOOT_DEVICE_MASS:
         case BOOT_DEVICE_MASS0:
         case BOOT_DEVICE_MASS1:
-            init_usb_driver();
-            break;
         case BOOT_DEVICE_MX4SIO:
         case BOOT_DEVICE_MX4SIO0:
         case BOOT_DEVICE_MX4SIO1:
+            init_usb_driver(true);
             init_mx4sio_driver(true);
             break;
         case BOOT_DEVICE_HDD:

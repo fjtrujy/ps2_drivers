@@ -18,19 +18,18 @@ extern "C" {
 #endif
 
 enum USB_INIT_STATUS {
-    USB_INIT_STATUS_DEPENDENCY_IRX_ERROR = -6,
-    USB_INIT_STATUS_USBMASS_BD_IRX_ERROR = -5,
-    USB_INIT_STATUS_BDMFS_FATFS_IRX_ERROR = -4,
-    USB_INIT_STATUS_BDM_IRX_ERROR = -3,
-    USB_INIT_STATUS_USBD_IRX_ERROR = -2,
+    USB_INIT_STATUS_DEPENDENCY_USBD_ERROR = -5,
+    USB_INIT_STATUS_DEPENDENCY_BMD_ERROR = -4,
+    USB_INIT_STATUS_USBMASS_BD_IRX_ERROR = -3,
+    USB_INIT_STATUS_BDMFS_FATFS_IRX_ERROR = -2,
     USB_INIT_STATUS_UNKNOWN = -1,
     USB_INIT_STATUS_OK = 0,
     USB_INIT_STATUS_IRX_OK = 1,
 };
 
 /* USB DRIVER REQUIRES SIO2MAN DRIVER AS DEPENDENCY */
-enum USB_INIT_STATUS init_usb_driver();
-void deinit_usb_driver();
+enum USB_INIT_STATUS init_usb_driver(bool init_dependencies);
+void deinit_usb_driver(bool deinit_dependencies);
 
 #ifdef __cplusplus
 }

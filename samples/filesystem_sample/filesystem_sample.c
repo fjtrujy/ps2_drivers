@@ -10,16 +10,18 @@
 
 // Based on pad sample by pukko, check the pad samples for more advanced features.
 
+#include <stdbool.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <string.h>
+#include <malloc.h>
+
 #include <tamtypes.h>
 #include <kernel.h>
 #include <sifrpc.h>
 #include <loadfile.h>
-#include <stdio.h>
-#include <string.h>
-#include <malloc.h>
 #include <iopcontrol.h>
 #include <sbv_patches.h>
-#include <stdbool.h>
 
 #include <ps2_filesystem_driver.h>
 
@@ -50,6 +52,10 @@ void write_to_file(const char *path) {
 
     if (pFile) {
         fprintf(pFile, "fjtrujy rocks!\n");
+        // print current working directory
+        char cwd[FILENAME_MAX];
+        getcwd(cwd, sizeof(cwd));
+        fprintf(pFile, "Current working directory: %s\n", cwd);
         fclose(pFile);
     } else {
         printf("Couldn't create Log.txt file\n");
