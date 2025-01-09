@@ -37,11 +37,11 @@ static void reset_IOP() {
 }
 
 static void init_drivers() {
-    init_ps2_filesystem_driver();
+    init_only_boot_ps2_filesystem_driver();
 }
 
 static void deinit_drivers() {
-    deinit_ps2_filesystem_driver();
+    deinit_only_boot_ps2_filesystem_driver();
 }
 
 void write_to_file(const char *path) {
