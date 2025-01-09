@@ -39,8 +39,16 @@ DEV9_DRIVER_OBJS = internals_ps2_dev9_driver.o init_ps2_dev9_driver.o deinit_ps2
 HDD_DRIVER_OBJS = internals_ps2_hdd_driver.o init_ps2_hdd_driver.o deinit_ps2_hdd_driver.o \
 	mount_hdd_partition_ps2_hdd_driver.o mount_current_partition_ps2_hdd_driver.o \
 	umount_hdd_partition_ps2_hdd_driver.o umount_current_partition_ps2_hdd_driver.o
-FILESYSTEM_DRIVER_OBJS = waitUntilDeviceIsReady_ps2_filesystem_driver.o rootDevicePath_ps2_filesystem_driver.o getBootDeviceID_ps2_filesystem_driver.o \
-	__internal_deinit_ps2_filesystem_driver.o deinit_ps2_filesystem_driver.o init_ps2_filesystem_driver.o
+FILESYSTEM_DRIVER_OBJS = \
+	waitUntilDeviceIsReady_ps2_filesystem_driver.o \
+	rootDevicePath_ps2_filesystem_driver.o \
+	getBootDeviceID_ps2_filesystem_driver.o \
+	__internal_deinit_ps2_filesystem_driver.o \
+	deinit_ps2_filesystem_driver.o \
+	init_ps2_filesystem_driver.o \
+	__internal_deinit_only_boot_ps2_filesystem_driver.o \
+	deinit_only_boot_ps2_filesystem_driver.o \
+	init_only_boot_ps2_filesystem_driver.o
 JOYSTICK_DRIVER_OBJS = internals_ps2_joystick_driver.o init_ps2_joystick_driver.o deinit_ps2_joystick_driver.o
 AUDIO_DRIVER_OBJS = internals_ps2_audio_driver.o init_ps2_audio_driver.o deinit_ps2_audio_driver.o
 POWEROFF_DRIVER_OBJS = internals_ps2_poweroff_driver.o init_ps2_poweroff_driver.o deinit_ps2_poweroff_driver.o

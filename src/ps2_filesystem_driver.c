@@ -32,19 +32,15 @@
 #define DEVICE_CDFS  "cdfs:"
 #define DEVICE_MASS  "mass:"
 #define DEVICE_MASS0 "mass0:"
+#define DEVICE_MASS1 "mass1:"
+#define DEVICE_MX4SIO "mx4sio:"
+#define DEVICE_MX4SIO0 "mx4sio0:"
+#define DEVICE_MX4SIO1 "mx4sio1:"
 #define DEVICE_HDD   "hdd:"
 #define DEVICE_HDD0  "hdd0:"
 #define DEVICE_HOST  "host:"
 #define DEVICE_HOST0 "host0:"
 #define DEVICE_HOST1 "host1:"
-#define DEVICE_HOST2 "host2:"
-#define DEVICE_HOST3 "host3:"
-#define DEVICE_HOST4 "host4:"
-#define DEVICE_HOST5 "host5:"
-#define DEVICE_HOST6 "host6:"
-#define DEVICE_HOST7 "host7:"
-#define DEVICE_HOST8 "host8:"
-#define DEVICE_HOST9 "host9:"
 
 #define DEVICE_MC0_PATH   DEVICE_MC0 DEVICE_SLASH
 #define DEVICE_MC1_PATH   DEVICE_MC1 DEVICE_SLASH
@@ -52,19 +48,15 @@
 #define DEVICE_CDROM_PATH DEVICE_CDROM DEVICE_SLASH
 #define DEVICE_MASS_PATH  DEVICE_MASS DEVICE_SLASH
 #define DEVICE_MASS0_PATH DEVICE_MASS0 DEVICE_SLASH
+#define DEVICE_MASS1_PATH DEVICE_MASS1 DEVICE_SLASH
+#define DEVICE_MX4SIO_PATH  DEVICE_MX4SIO DEVICE_SLASH
+#define DEVICE_MX4SIO0_PATH DEVICE_MX4SIO0 DEVICE_SLASH
+#define DEVICE_MX4SIO1_PATH DEVICE_MX4SIO1 DEVICE_SLASH
 #define DEVICE_HDD_PATH   DEVICE_HDD DEVICE_SLASH
 #define DEVICE_HDD0_PATH  DEVICE_HDD0 DEVICE_SLASH
 #define DEVICE_HOST_PATH  DEVICE_HOST DEVICE_SLASH
 #define DEVICE_HOST0_PATH DEVICE_HOST0 DEVICE_SLASH
 #define DEVICE_HOST1_PATH DEVICE_HOST1 DEVICE_SLASH
-#define DEVICE_HOST2_PATH DEVICE_HOST2 DEVICE_SLASH
-#define DEVICE_HOST3_PATH DEVICE_HOST3 DEVICE_SLASH
-#define DEVICE_HOST4_PATH DEVICE_HOST4 DEVICE_SLASH
-#define DEVICE_HOST5_PATH DEVICE_HOST5 DEVICE_SLASH
-#define DEVICE_HOST6_PATH DEVICE_HOST6 DEVICE_SLASH
-#define DEVICE_HOST7_PATH DEVICE_HOST7 DEVICE_SLASH
-#define DEVICE_HOST8_PATH DEVICE_HOST8 DEVICE_SLASH
-#define DEVICE_HOST9_PATH DEVICE_HOST9 DEVICE_SLASH
 
 #if F___internal_deinit_ps2_filesystem_driver
 void __internal_deinit_ps2_filesystem_driver(bool deinit_powerOff) {
@@ -91,6 +83,67 @@ void deinit_ps2_filesystem_driver() {
 }
 #endif
 
+#if F___internal_deinit_only_boot_ps2_filesystem_driver
+enum BootDeviceIDs __boot_device_id = BOOT_DEVICE_UNKNOWN;
+
+void __internal_deinit_only_boot_ps2_filesystem_driver(bool deinit_powerOff) {
+    switch (__boot_device_id) {
+        case BOOT_DEVICE_MC0:
+        case BOOT_DEVICE_MC1:
+            deinit_memcard_driver(true);
+            break;
+        case BOOT_DEVICE_CDROM:
+        case BOOT_DEVICE_CDFS:
+            deinit_cdfs_driver();
+            break;
+        case BOOT_DEVICE_MASS:
+        case BOOT_DEVICE_MASS0:
+        case BOOT_DEVICE_MASS1:
+            deinit_usb_driver();
+            break;
+        case BOOT_DEVICE_MX4SIO:
+        case BOOT_DEVICE_MX4SIO0:
+        case BOOT_DEVICE_MX4SIO1:
+            break;
+        case BOOT_DEVICE_HDD:
+        case BOOT_DEVICE_HDD0: {
+            deinit_hdd_driver(false);
+            deinit_dev9_driver();
+            if (deinit_powerOff) {
+                deinit_poweroff_driver();
+            }
+            break;
+        }
+        case BOOT_DEVICE_HOST:
+        case BOOT_DEVICE_HOST0:
+        case BOOT_DEVICE_HOST1:
+            break;
+        default:
+            break;
+    }
+
+    deinit_fileXio_driver();
+}
+#else
+extern enum BootDeviceIDs __boot_device_id;
+void __internal_deinit_only_boot_ps2_filesystem_driver(bool deinit_powerOff);
+#endif
+
+#if F_deinit_only_boot_ps2_filesystem_driver
+void deinit_only_boot_ps2_filesystem_driver() {
+    switch (__boot_device_id) {
+        case BOOT_DEVICE_HDD:
+        case BOOT_DEVICE_HDD0:
+            umount_current_hdd_partition();
+            break;
+        default:
+            break;
+    }
+
+    __internal_deinit_only_boot_ps2_filesystem_driver(true);
+}
+#endif
+
 #if F_init_ps2_filesystem_driver
 static void poweroffHandler(void *arg) {
     __internal_deinit_ps2_filesystem_driver(false);
@@ -113,6 +166,62 @@ void init_ps2_filesystem_driver() {
     mount_current_hdd_partition();
 
     getcwd(cwd, sizeof(cwd));
+    waitUntilDeviceIsReady(cwd);
+}
+#endif
+
+#if F_init_only_boot_ps2_filesystem_driver
+static void poweroffHandler(void *arg) {
+    __internal_deinit_only_boot_ps2_filesystem_driver(false);
+    poweroffShutdown();
+}
+
+void init_only_boot_ps2_filesystem_driver() {
+    // get current working directory
+    char cwd[FILENAME_MAX];
+    getcwd(cwd, sizeof(cwd));
+
+    // get current boot device
+    enum BootDeviceIDs boot_device_id = getBootDeviceID(cwd);
+
+    // Only init the boot device
+    init_fileXio_driver();
+
+    switch (boot_device_id) {
+        case BOOT_DEVICE_MC0:
+        case BOOT_DEVICE_MC1:
+            init_memcard_driver(true);
+            break;
+        case BOOT_DEVICE_CDROM:
+        case BOOT_DEVICE_CDFS:
+            init_cdfs_driver();
+            break;
+        case BOOT_DEVICE_MASS:
+        case BOOT_DEVICE_MASS0:
+        case BOOT_DEVICE_MASS1:
+            init_usb_driver();
+            break;
+        case BOOT_DEVICE_MX4SIO:
+        case BOOT_DEVICE_MX4SIO0:
+        case BOOT_DEVICE_MX4SIO1:
+            init_mx4sio_driver(true);
+            break;
+        case BOOT_DEVICE_HDD:
+        case BOOT_DEVICE_HDD0:
+            init_poweroff_driver();
+            init_dev9_driver();
+            init_hdd_driver(false, false);
+            poweroffSetCallback(&poweroffHandler, NULL);
+            mount_current_hdd_partition();
+            break;
+        case BOOT_DEVICE_HOST:
+        case BOOT_DEVICE_HOST0:
+        case BOOT_DEVICE_HOST1:
+            break;
+        default:
+            break;
+    }
+
     waitUntilDeviceIsReady(cwd);
 }
 #endif
@@ -152,7 +261,15 @@ char *rootDevicePath(enum BootDeviceIDs device_id) {
         case BOOT_DEVICE_MASS:
             return DEVICE_MASS_PATH;
         case BOOT_DEVICE_MASS0:
-            return DEVICE_MASS_PATH;
+            return DEVICE_MASS0_PATH;
+        case BOOT_DEVICE_MASS1:
+            return DEVICE_MASS1_PATH;
+        case BOOT_DEVICE_MX4SIO:
+            return DEVICE_MX4SIO_PATH;
+        case BOOT_DEVICE_MX4SIO0:
+            return DEVICE_MX4SIO0_PATH;
+        case BOOT_DEVICE_MX4SIO1:
+            return DEVICE_MX4SIO1_PATH;
         case BOOT_DEVICE_HDD:
             return DEVICE_HDD_PATH;
         case BOOT_DEVICE_HDD0:
@@ -163,22 +280,6 @@ char *rootDevicePath(enum BootDeviceIDs device_id) {
             return DEVICE_HOST0_PATH;
         case BOOT_DEVICE_HOST1:
             return DEVICE_HOST1_PATH;
-        case BOOT_DEVICE_HOST2:
-            return DEVICE_HOST2_PATH;
-        case BOOT_DEVICE_HOST3:
-            return DEVICE_HOST3_PATH;
-        case BOOT_DEVICE_HOST4:
-            return DEVICE_HOST4_PATH;
-        case BOOT_DEVICE_HOST5:
-            return DEVICE_HOST5_PATH;
-        case BOOT_DEVICE_HOST6:
-            return DEVICE_HOST6_PATH;
-        case BOOT_DEVICE_HOST7:
-            return DEVICE_HOST7_PATH;
-        case BOOT_DEVICE_HOST8:
-            return DEVICE_HOST8_PATH;
-        case BOOT_DEVICE_HOST9:
-            return DEVICE_HOST9_PATH;
         default:
             return "";
     }
@@ -199,6 +300,14 @@ enum BootDeviceIDs getBootDeviceID(char *path) {
         return BOOT_DEVICE_MASS;
     else if (!strncmp(path, DEVICE_MASS0, 6))
         return BOOT_DEVICE_MASS0;
+    else if (!strncmp(path, DEVICE_MASS1, 6))
+        return BOOT_DEVICE_MASS1;
+    else if (!strncmp(path, DEVICE_MX4SIO, 5))
+        return BOOT_DEVICE_MX4SIO;
+    else if (!strncmp(path, DEVICE_MX4SIO0, 6))
+        return BOOT_DEVICE_MX4SIO0;
+    else if (!strncmp(path, DEVICE_MX4SIO1, 6))
+        return BOOT_DEVICE_MX4SIO1;
     else if (!strncmp(path, DEVICE_HDD, 4))
         return BOOT_DEVICE_HDD;
     else if (!strncmp(path, DEVICE_HDD0, 5))
@@ -209,22 +318,6 @@ enum BootDeviceIDs getBootDeviceID(char *path) {
         return BOOT_DEVICE_HOST0;
     else if (!strncmp(path, DEVICE_HOST1, 6))
         return BOOT_DEVICE_HOST1;
-    else if (!strncmp(path, DEVICE_HOST2, 6))
-        return BOOT_DEVICE_HOST2;
-    else if (!strncmp(path, DEVICE_HOST3, 6))
-        return BOOT_DEVICE_HOST3;
-    else if (!strncmp(path, DEVICE_HOST4, 6))
-        return BOOT_DEVICE_HOST4;
-    else if (!strncmp(path, DEVICE_HOST5, 6))
-        return BOOT_DEVICE_HOST5;
-    else if (!strncmp(path, DEVICE_HOST6, 6))
-        return BOOT_DEVICE_HOST6;
-    else if (!strncmp(path, DEVICE_HOST7, 6))
-        return BOOT_DEVICE_HOST7;
-    else if (!strncmp(path, DEVICE_HOST8, 6))
-        return BOOT_DEVICE_HOST8;
-    else if (!strncmp(path, DEVICE_HOST9, 6))
-        return BOOT_DEVICE_HOST9;
     else
         return BOOT_DEVICE_UNKNOWN;
 }
