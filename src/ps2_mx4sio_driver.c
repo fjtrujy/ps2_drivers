@@ -31,8 +31,31 @@ EXTERN_IRX_VARS(mx4sio_bd);
 #endif
 
 #ifdef F_init_ps2_mx4sio_driver
+// Using this piece of code extracted from 
+// https://github.com/F0bes/Fobesmark/blob/_test/tests/emulation.cpp#L75C1-L93C2
+// to identify if we are running the code over PCSX2 or a real PS2, 
+// for avoiding loading the IRX driver because it is not currently supported.
+static bool isCOP2Pipelined()
+{
+    float num __attribute__((aligned(16))) = 2.0f;
+    asm volatile (
+        "QMTC2 %1, $vf1\n"         // Move num into vf1
+        "VDIV $Q, $vf1x, $vf1x\n"  // Divide 2.0 / 2.0
+        "VWAITQ\n"                 // Wait until Q is ready (1)
+        "VDIV $Q, $vf0x, $vf1x\n"  // Divide 0 / 2 (latency of 7) and store in Q
+        "VMULQ $vf1, $vf1, $Q\n"   // Multiply 2 by Q and store in vf1
+        "SQC2 $vf1, %0\n"          // Store vf1 into num
+        : "=m"(num)
+        : "r"(num)
+    );
+    return num == 2.0f;
+}
+
 static enum MX4SIO_INIT_STATUS loadIRXs(void) {
     /* MX4SIO_BD.IRX */
+    if (!isCOP2Pipelined())
+        return MX4SIO_INIT_STATUS_IRX_NOT_SUPPORTED;
+
     if (CHECK_IRX_LOAD(mx4sio_bd)) {
         __mx4sio_bd_id = SifExecModuleBuffer(&mx4sio_bd_irx, size_mx4sio_bd_irx, 0, NULL, &__mx4sio_bd_ret);
         if (CHECK_IRX_ERR(mx4sio_bd))
