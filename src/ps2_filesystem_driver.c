@@ -212,6 +212,8 @@ void init_only_boot_ps2_filesystem_driver() {
             init_hdd_driver(false, false);
             poweroffSetCallback(&poweroffHandler, NULL);
             mount_current_hdd_partition();
+            // When mounting the HDD, the current working directory is changed
+            getcwd(cwd, sizeof(cwd));
             break;
         case BOOT_DEVICE_HOST:
         case BOOT_DEVICE_HOST0:
