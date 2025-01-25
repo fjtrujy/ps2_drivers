@@ -20,6 +20,7 @@
 #include <ps2_hdd_driver.h>
 #include <ps2_fileXio_driver.h>
 #include <ps2_dev9_driver.h>
+#include <ps2_bdm_driver.h>
 #include <irx_common_macros.h>
 
 #include <sifrpc.h>
@@ -129,6 +130,12 @@ enum HDD_INIT_STATUS init_hdd_driver(bool init_dependencies, bool only_if_booted
             __hdd_init_status = HDD_INIT_STATUS_DEPENDENCY_IRX_ERROR;
             return __hdd_init_status;
         }
+
+        ret = init_bdm_driver();
+        if (ret != BDM_INIT_STATUS_OK) {
+            __hdd_init_status = HDD_INIT_STATUS_DEPENDENCY_IRX_ERROR;
+            return __hdd_init_status;
+        }
     }
 
     __hdd_init_status = loadIRXs();
@@ -162,6 +169,7 @@ void deinit_hdd_driver(bool deinit_dependencies) {
 
     // Requires to have FILEXIO and DEV9 drivers loaded
     if (deinit_dependencies) {
+        deinit_bdm_driver();
         deinit_dev9_driver();
         deinit_fileXio_driver();
     }
