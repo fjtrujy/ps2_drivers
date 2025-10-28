@@ -20,6 +20,7 @@
 #include <ps2_fileXio_driver.h>
 #include <ps2_memcard_driver.h>
 #include <ps2_usb_driver.h>
+#include <ps2_mx4sio_driver.h>
 #include <ps2_cdfs_driver.h>
 #include <ps2_dev9_driver.h>
 #include <ps2_hdd_driver.h>
@@ -36,24 +37,22 @@ enum BootDeviceIDs {
     BOOT_DEVICE_CDFS,
     BOOT_DEVICE_MASS,
     BOOT_DEVICE_MASS0,
+    BOOT_DEVICE_MASS1,
+    BOOT_DEVICE_MX4SIO,
+    BOOT_DEVICE_MX4SIO0,
+    BOOT_DEVICE_MX4SIO1,
     BOOT_DEVICE_HDD,
     BOOT_DEVICE_HDD0,
     BOOT_DEVICE_HOST,
     BOOT_DEVICE_HOST0,
     BOOT_DEVICE_HOST1,
-    BOOT_DEVICE_HOST2,
-    BOOT_DEVICE_HOST3,
-    BOOT_DEVICE_HOST4,
-    BOOT_DEVICE_HOST5,
-    BOOT_DEVICE_HOST6,
-    BOOT_DEVICE_HOST7,
-    BOOT_DEVICE_HOST8,
-    BOOT_DEVICE_HOST9,
     BOOT_DEVICE_COUNT,
 };
 
 void init_ps2_filesystem_driver();
 void deinit_ps2_filesystem_driver();
+void init_only_boot_ps2_filesystem_driver();
+void deinit_only_boot_ps2_filesystem_driver();
 bool waitUntilDeviceIsReady(char *path);
 char *rootDevicePath(enum BootDeviceIDs device_id);
 enum BootDeviceIDs getBootDeviceID(char *path);

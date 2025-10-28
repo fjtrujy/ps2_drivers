@@ -55,7 +55,7 @@ static void umount_default_partition() {
 
 static void deinit_drivers(bool deinit_powerOff) {
     deinit_hdd_driver(false);
-    deinit_usb_driver();
+    deinit_usb_driver(true);
     deinit_memcard_driver(true);
     deinit_fileXio_driver();
 
@@ -82,7 +82,7 @@ static void init_drivers() {
     init_poweroff_driver();
     init_fileXio_driver();
     init_memcard_driver(true);
-    init_usb_driver();
+    init_usb_driver(true);
     init_hdd_driver(false, false);
 
     poweroffSetCallback(&poweroffHandler, NULL);
@@ -117,7 +117,7 @@ static void print_folder(const char *path) {
             itoa(st.st_size, size, 10);
             scr_printf(size);
 
-            scr_printf(S_ISDIR(st.st_mode) ? " DIR\n" : " FILE\n");
+            scr_printf(ep->d_type == DT_DIR ? "DIR" : "FILE");
 
             count++;
         }

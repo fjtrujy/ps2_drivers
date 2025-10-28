@@ -20,6 +20,7 @@
 #include <ps2_hdd_driver.h>
 #include <ps2_fileXio_driver.h>
 #include <ps2_dev9_driver.h>
+#include <ps2_bdm_driver.h>
 #include <irx_common_macros.h>
 
 #include <sifrpc.h>
@@ -99,7 +100,7 @@ static enum HDD_INIT_STATUS loadIRXs(void) {
 
     /* PS2FS.IRX */
     if (CHECK_IRX_LOAD(ps2fs)) {
-        __ps2fs_id = SifExecModuleBuffer(&ps2fs_irx, size_ps2fs_irx, 0, NULL, &__ps2fs_ret);
+        __ps2fs_id = SifExecModuleBuffer(&ps2fs_irx, size_ps2fs_irx, sizeof(hddarg), hddarg, &__ps2fs_ret);
         if (CHECK_IRX_ERR(ps2fs))
             return HDD_INIT_STATUS_PS2FS_IRX_ERROR;
     }
@@ -126,6 +127,12 @@ enum HDD_INIT_STATUS init_hdd_driver(bool init_dependencies, bool only_if_booted
 
         ret = init_dev9_driver();
         if (ret != DEV9_INIT_STATUS_OK) {
+            __hdd_init_status = HDD_INIT_STATUS_DEPENDENCY_IRX_ERROR;
+            return __hdd_init_status;
+        }
+
+        ret = init_bdm_driver();
+        if (ret != BDM_INIT_STATUS_OK) {
             __hdd_init_status = HDD_INIT_STATUS_DEPENDENCY_IRX_ERROR;
             return __hdd_init_status;
         }
@@ -162,6 +169,7 @@ void deinit_hdd_driver(bool deinit_dependencies) {
 
     // Requires to have FILEXIO and DEV9 drivers loaded
     if (deinit_dependencies) {
+        deinit_bdm_driver();
         deinit_dev9_driver();
         deinit_fileXio_driver();
     }

@@ -10,20 +10,31 @@
 
 // Based on pad sample by pukko, check the pad samples for more advanced features.
 
+#include <fcntl.h>
+#include <limits.h>
+#include <malloc.h>
 #include <stdbool.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <string.h>
-#include <malloc.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
-#include <tamtypes.h>
+#include <elf-loader.h>
 #include <kernel.h>
-#include <sifrpc.h>
-#include <loadfile.h>
 #include <iopcontrol.h>
+#include <loadfile.h>
+#include <sifrpc.h>
 #include <sbv_patches.h>
+#include <tamtypes.h>
 
 #include <ps2_filesystem_driver.h>
+
+// Used to get BDM driver name
+#define NEWLIB_PORT_AWARE
+#include <fileXio_rpc.h>
+#include <io_common.h>
+#include <usbhdfsd-common.h>
+#include <ps2sdkapi.h>
 
 static void reset_IOP() {
     SifInitRpc(0);
@@ -39,34 +50,32 @@ static void reset_IOP() {
 }
 
 static void init_drivers() {
-    init_only_boot_ps2_filesystem_driver();
+    init_ps2_filesystem_driver();
 }
 
 static void deinit_drivers() {
-    deinit_only_boot_ps2_filesystem_driver();
-}
-
-void write_to_file(const char *path) {
-    FILE *pFile;
-    pFile = fopen(path, "a");
-
-    if (pFile) {
-        fprintf(pFile, "fjtrujy rocks!\n");
-        // print current working directory
-        char cwd[FILENAME_MAX];
-        getcwd(cwd, sizeof(cwd));
-        fprintf(pFile, "Current working directory: %s\n", cwd);
-        fclose(pFile);
-    } else {
-        printf("Couldn't create Log.txt file\n");
-    }
+    deinit_ps2_filesystem_driver();
 }
 
 int main(int argc, char **argv) {
+    char elf_path[PATH_MAX];
     reset_IOP();
     init_drivers();
 
-    write_to_file("dummy.txt");
+    printf("Starting tiny loader\n");
+    
+    // Get the game name from a file called game_name.ini
+	FILE *fp = fopen("elf_path.ini", "r");
+	if (fp) {
+		fgets(elf_path, PATH_MAX, fp);
+		fclose(fp);
+	}
+
+    printf("Loading ELF from %s\n", elf_path);
+    waitUntilDeviceIsReady(elf_path);
+    LoadELFFromFile(elf_path, argc, argv);
+
+    printf("Done");
 
     deinit_drivers();
 }
