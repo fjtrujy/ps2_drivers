@@ -18,6 +18,53 @@ Without this, the current situation assumes:
 
 With the solution that I propose within this library, the developer just needs to link the library and initiate the desired libraries.
 
+## BUILDING
+
+This library uses CMake as its build system. You need to have PS2DEV and PS2SDK properly set up before building.
+
+### Prerequisites
+
+```bash
+export PS2DEV=/path/to/ps2dev
+export PS2SDK=$PS2DEV/ps2sdk
+export PATH=$PATH:$PS2DEV/bin:$PS2DEV/ee/bin:$PS2DEV/iop/bin:$PS2DEV/dvp/bin:$PS2SDK/bin
+```
+
+### Build and Install
+
+```bash
+# Create build directory
+mkdir build
+cd build
+
+# Configure with CMake
+cmake ..
+
+# Build the library and samples
+make -j$(nproc)
+
+# Install to PS2SDK
+make install
+```
+
+### Build Options
+
+- `BUILD_SAMPLES` (default: ON) - Build sample projects
+
+To disable building samples:
+
+```bash
+cmake .. -DBUILD_SAMPLES=OFF
+```
+
+### Build Output
+
+The build process will generate:
+- `libps2_drivers.a` - The main library combining all drivers and PS2SDK libraries
+- Sample executables in `build/samples/*/` directories (if BUILD_SAMPLES=ON)
+
+After installation, the library will be available at `$PS2SDK/ports/lib/` and headers at `$PS2SDK/ports/include/`.
+
 ## EXAMPLE
 
 Let me put an example, where we compare `Before` vs `After`. I'm not going to put the error handling in the before version otherwise will be too long :)

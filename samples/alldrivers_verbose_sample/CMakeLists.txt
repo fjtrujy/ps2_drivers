@@ -1,0 +1,22 @@
+# alldrivers_verbose_sample CMakeLists.txt
+
+add_executable(alldrivers_verbose_sample.elf alldrivers_verbose_sample.c)
+
+target_include_directories(alldrivers_verbose_sample.elf PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
+)
+
+target_link_libraries(alldrivers_verbose_sample.elf
+    -lps2_drivers
+    -lpatches
+    -ldebug
+)
+
+target_compile_options(alldrivers_verbose_sample.elf PRIVATE -O0 -g)
+
+set_target_properties(alldrivers_verbose_sample.elf PROPERTIES
+    LINK_FLAGS "-L${CMAKE_BINARY_DIR}"
+)
+
+# Add dependency on the main library
+add_dependencies(alldrivers_verbose_sample.elf ps2_drivers)
