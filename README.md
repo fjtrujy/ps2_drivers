@@ -1,6 +1,6 @@
 # ps2_drivers
 
-A library for making it easier to use IO drivers (`.IRX` + `EE .a`)
+A library for making it easier to use IO drivers (`.IRX` + `EE .a`) on PlayStation 2.
 
 ## MOTIVATION
 
@@ -17,6 +17,31 @@ Without this, the current situation assumes:
 - Error handling is too messy.
 
 With the solution that I propose within this library, the developer just needs to link the library and initiate the desired libraries.
+
+## AVAILABLE DRIVERS
+
+| Driver | Function | Description |
+|--------|----------|-------------|
+| Audio | `init_audio_driver()` | Sound output via audsrv |
+| Camera | `init_camera_driver(bool)` | EyeToy camera support |
+| CDFS | `init_cdfs_driver()` | CD/DVD filesystem |
+| DEV9 | `init_dev9_driver()` | Expansion bay device (HDD/Network) |
+| FileXio | `init_fileXio_driver()` | Extended file I/O |
+| Filesystem | `init_ps2_filesystem_driver()` | Combined filesystem driver (all storage devices) |
+| HDD | `init_hdd_driver(bool, bool)` | Hard disk drive support |
+| Joystick | `init_joystick_driver(bool)` | Controller input with multitap support |
+| Keyboard | `init_keyboard_driver(bool)` | USB keyboard support |
+| Memory Card | `init_memcard_driver(bool)` | Memory card access |
+| Mouse | `init_mouse_driver(bool)` | USB mouse support |
+| MX4SIO | `init_mx4sio_driver(bool)` | SD card via memory card slot adapter |
+| Netman | `init_netman_driver()` | Network manager |
+| Poweroff | `init_poweroff_driver()` | Power-off callback handling |
+| SIO2MAN | `init_sio2man_driver()` | Serial I/O manager (dependency for many drivers) |
+| SMAP | `init_smap_driver()` | Network adapter (Ethernet) |
+| USB | `init_usb_driver(bool)` | USB mass storage support |
+| USBD | `init_usbd_driver()` | USB host controller |
+
+Most drivers accept a `bool` parameter to automatically initialize their dependencies.
 
 ## BUILDING
 
@@ -71,26 +96,24 @@ Let me put an example, where we compare `Before` vs `After`. I'm not going to pu
 
 ### BEFORE
 
-`Makefile`
+`CMakeLists.txt`
 
-```make
+```cmake
+# Complex setup required for IRX embedding
+add_custom_command(OUTPUT sio2man_irx.c
+    COMMAND ${BIN2C} ${PS2SDK}/iop/irx/sio2man.irx sio2man_irx.c sio2man_irx)
+add_custom_command(OUTPUT mtapman_irx.c
+    COMMAND ${BIN2C} ${PS2SDK}/iop/irx/mtapman.irx mtapman_irx.c mtapman_irx)
+add_custom_command(OUTPUT padman_irx.c
+    COMMAND ${BIN2C} ${PS2SDK}/iop/irx/padman.irx padman_irx.c padman_irx)
 
-IRX_FILES += sio2man.irx
-IRX_FILES += mtapman.irx padman.irx
-
-EE_OBJS += $(IRX_FILES:.irx=_irx.o)
-
-LIBS += -lmtap -lpadx
-
-# IRX files
-%_irx.c:
-	$(PS2SDK)/bin/bin2c $(PS2SDK)/iop/irx/$*.irx $@ $*_irx
+target_sources(your_target PRIVATE sio2man_irx.c mtapman_irx.c padman_irx.c)
+target_link_libraries(your_target PRIVATE mtap padx)
 ```
 
 `main.c`
 
 ```c
-
 extern unsigned char sio2man_irx[] __attribute__((aligned(16)));
 extern unsigned int size_sio2man_irx;
 
@@ -112,7 +135,7 @@ void start_libraries(void) {
 }
 
 int main(int argc, char **argv) {
-    .......
+    // ...
     load_modules();
     start_libraries();
 }
@@ -120,44 +143,48 @@ int main(int argc, char **argv) {
 
 ### AFTER
 
-`Makefile`
+`CMakeLists.txt`
 
-```make
-LIBS += -lps2_drivers
+```cmake
+target_link_libraries(your_target PRIVATE ps2_drivers)
 ```
 
 `main.c`
 
 ```c
+#include <ps2_joystick_driver.h>
+
 int main(int argc, char **argv) {
-    .......
-    init_joystick_driver(true);
+    // ...
+    init_joystick_driver(true);  // true = auto-init dependencies
 }
 ```
 
 ### ALL DRIVERS EXAMPLE
 
-This example will prepare, the next drivers:
+This example initializes the most common drivers:
 
+- FileXio (extended file I/O)
 - Memory Card
-- FileXio
-- USB
-- CDFS
-- Sound
-- Joystick
+- USB Mass Storage
+- CDFS (CD/DVD)
+- Joystick (with multitap)
+- Audio
 - Poweroff
 - HDD
 
-`Makefile`
+`CMakeLists.txt`
 
-```make
-LIBS += -lps2_drivers
+```cmake
+target_link_libraries(your_target PRIVATE ps2_drivers)
 ```
 
 `main.c`
 
 ```c
-static void prepare_drivers() {
+#include <ps2_all_drivers.h>
+
+static void init_drivers() {
     init_fileXio_driver();
     init_memcard_driver(true);
     init_usb_driver(true);
@@ -168,13 +195,76 @@ static void prepare_drivers() {
     init_hdd_driver(true, true);
 }
 
+static void deinit_drivers() {
+    deinit_poweroff_driver();
+    deinit_audio_driver();
+    deinit_joystick_driver(false);
+    deinit_usb_driver(false);
+    deinit_cdfs_driver();
+    deinit_memcard_driver(true);
+    deinit_hdd_driver(false);
+    deinit_fileXio_driver();
+}
+
 int main(int argc, char **argv) {
-    prepare_drivers();
+    init_drivers();
+    // Your code here
+    deinit_drivers();
+    return 0;
+}
+```
+
+### FILESYSTEM DRIVER EXAMPLE
+
+For a simpler approach, use the unified filesystem driver that handles all storage devices:
+
+```c
+#include <ps2_filesystem_driver.h>
+
+int main(int argc, char **argv) {
+    // Initialize all filesystem drivers (MC, USB, CDFS, HDD, MX4SIO)
+    init_ps2_filesystem_driver();
+
+    // Wait for a specific device to be ready
+    waitUntilDeviceIsReady("mass:");
+
+    // Your code here
+
+    deinit_ps2_filesystem_driver();
+    return 0;
 }
 ```
 
 ### CONCLUSION
 
-I tried to follow the KISS concept while implementing this library
+I tried to follow the KISS concept while implementing this library.
+
+## SAMPLES
+
+The repository includes several sample projects to demonstrate driver usage:
+
+| Sample | Description |
+|--------|-------------|
+| `alldrivers_sample` | Basic initialization of all common drivers |
+| `alldrivers_verbose_sample` | Verbose output during driver initialization |
+| `filesystem_sample` | Filesystem driver usage |
+| `hdd_sample` | HDD partition mounting |
+| `listdir_sample` | Directory listing example |
+| `mtap_sample` | Multitap controller support |
+| `poweroff_sample` | Power-off callback handling |
+| `wav_sample` | Audio playback example |
+| `basic_elf_loader` | ELF loader example |
+| `showiopinfo_sample` | IOP module information |
+
+Build samples with:
+
+```bash
+cmake .. -DBUILD_SAMPLES=ON
+make
+```
+
+## LICENSE
+
+Licensed under GNU Library General Public License version 2. See LICENSE file for details.
 
 ## THANKS
