@@ -263,15 +263,20 @@ set(PS2SDK_LIBS
 )
 
 # Create the combined library using ar with MRI script
+# Use a temporary thin archive to avoid issues with reading/writing the same file
+set(EE_LIB_THIN "libps2_drivers_thin.a")
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_COMBINED}
-    COMMAND ${CMAKE_AR} -cqT ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_COMBINED}
+    COMMAND ${CMAKE_COMMAND} -E rm -f ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_THIN}
+    COMMAND ${CMAKE_COMMAND} -E rm -f ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_COMBINED}
+    COMMAND ${CMAKE_AR} -cqT ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_THIN}
             $<TARGET_FILE:ps2_drivers_impl> ${PS2SDK_LIBS}
     COMMAND echo "create ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_COMBINED}" > ${CMAKE_CURRENT_BINARY_DIR}/mri_script.txt
-    COMMAND echo "addlib ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_COMBINED}" >> ${CMAKE_CURRENT_BINARY_DIR}/mri_script.txt
+    COMMAND echo "addlib ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_THIN}" >> ${CMAKE_CURRENT_BINARY_DIR}/mri_script.txt
     COMMAND echo "save" >> ${CMAKE_CURRENT_BINARY_DIR}/mri_script.txt
     COMMAND echo "end" >> ${CMAKE_CURRENT_BINARY_DIR}/mri_script.txt
     COMMAND ${CMAKE_AR} -M < ${CMAKE_CURRENT_BINARY_DIR}/mri_script.txt
+    COMMAND ${CMAKE_COMMAND} -E rm -f ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_THIN}
     DEPENDS ps2_drivers_impl ${PS2SDK_LIBS}
     COMMENT "Combining libraries into ${EE_LIB_COMBINED}"
 )
