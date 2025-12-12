@@ -263,16 +263,22 @@ set(PS2SDK_LIBS
 )
 
 # Create the combined library using ar with MRI script
+# Generate the MRI script content with all libraries to combine
+set(MRI_SCRIPT_CONTENT "create ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_COMBINED}\n")
+set(MRI_SCRIPT_CONTENT "${MRI_SCRIPT_CONTENT}addlib $<TARGET_FILE:ps2_drivers_impl>\n")
+foreach(lib ${PS2SDK_LIBS})
+    set(MRI_SCRIPT_CONTENT "${MRI_SCRIPT_CONTENT}addlib ${lib}\n")
+endforeach()
+set(MRI_SCRIPT_CONTENT "${MRI_SCRIPT_CONTENT}save\nend\n")
+
+# Write MRI script at configure time (generator expressions evaluated at build time via file(GENERATE))
+file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/mri_script.txt CONTENT "${MRI_SCRIPT_CONTENT}")
+
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_COMBINED}
-    COMMAND ${CMAKE_AR} -cqT ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_COMBINED}
-            $<TARGET_FILE:ps2_drivers_impl> ${PS2SDK_LIBS}
-    COMMAND echo "create ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_COMBINED}" > ${CMAKE_CURRENT_BINARY_DIR}/mri_script.txt
-    COMMAND echo "addlib ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_COMBINED}" >> ${CMAKE_CURRENT_BINARY_DIR}/mri_script.txt
-    COMMAND echo "save" >> ${CMAKE_CURRENT_BINARY_DIR}/mri_script.txt
-    COMMAND echo "end" >> ${CMAKE_CURRENT_BINARY_DIR}/mri_script.txt
+    COMMAND ${CMAKE_COMMAND} -E rm -f ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_COMBINED}
     COMMAND ${CMAKE_AR} -M < ${CMAKE_CURRENT_BINARY_DIR}/mri_script.txt
-    DEPENDS ps2_drivers_impl ${PS2SDK_LIBS}
+    DEPENDS ps2_drivers_impl ${PS2SDK_LIBS} ${CMAKE_CURRENT_BINARY_DIR}/mri_script.txt
     COMMENT "Combining libraries into ${EE_LIB_COMBINED}"
 )
 
