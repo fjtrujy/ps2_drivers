@@ -265,6 +265,7 @@ set(PS2SDK_LIBS
 # Create the combined library using ar with MRI script
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_COMBINED}
+    COMMAND ${CMAKE_COMMAND} -E rm -f ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_COMBINED}
     COMMAND ${CMAKE_AR} -cqT ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_COMBINED}
             $<TARGET_FILE:ps2_drivers_impl> ${PS2SDK_LIBS}
     COMMAND echo "create ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_COMBINED}" > ${CMAKE_CURRENT_BINARY_DIR}/mri_script.txt
