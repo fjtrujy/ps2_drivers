@@ -24,6 +24,59 @@ if(NOT DEFINED BIN2C)
     set(BIN2C "${PS2SDK}/bin/bin2c")
 endif()
 
+set(INSTALL_LIB_DIR "${PS2SDK}/ports/lib" CACHE PATH "Installation directory for libraries")
+set(INSTALL_INC_DIR "${PS2SDK}/ports/include" CACHE PATH "Installation directory for headers")
+set(INSTALL_PKGCONFIG_DIR "${PS2SDK}/ports/lib/pkgconfig" CACHE PATH "Installation directory for pkgconfig (.pc) files")
+
+# Prepare git metadata
+set(CUR_GIT_TAG v0.0.0)
+set(CUR_GIT_COMMIT_HASH "")
+set(CUR_GIT_COMMIT_TIMESTAMP "")
+set(CUR_GIT_REFS "")
+set(CUR_GIT_REMOTE_URL "")
+find_package(Git)
+if(GIT_FOUND)
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
+        execute_process(COMMAND ${GIT_EXECUTABLE} describe --abbrev=0 --tags
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE TMP_GIT_TAG
+        RESULT_VARIABLE TMP_RES
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+        execute_process(COMMAND ${GIT_EXECUTABLE} show --no-patch --format=%H
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE TMP_GIT_COMMIT_HASH
+        RESULT_VARIABLE TMP_RES
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+        if(TMP_RES EQUAL "0")
+            set(CUR_GIT_COMMIT_HASH ${TMP_GIT_COMMIT_HASH})
+        endif()
+        execute_process(COMMAND ${GIT_EXECUTABLE} show --no-patch --format=%cd --date=unix
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE TMP_GIT_COMMIT_TIMESTAMP
+        RESULT_VARIABLE TMP_RES
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+        if(TMP_RES EQUAL "0")
+            set(CUR_GIT_COMMIT_TIMESTAMP ${TMP_GIT_COMMIT_TIMESTAMP})
+        endif()
+        execute_process(COMMAND ${GIT_EXECUTABLE} show --no-patch "--format=%(decorate:prefix=,suffix=,tag=,separator=%x2C,pointer=%x2C)"
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE TMP_GIT_REFS
+        RESULT_VARIABLE TMP_RES
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+        if(TMP_RES EQUAL "0")
+            set(CUR_GIT_REFS ${TMP_GIT_REFS})
+        endif()
+        execute_process(COMMAND ${GIT_EXECUTABLE} config --get remote.origin.url
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE TMP_GIT_REMOTE_URL
+        RESULT_VARIABLE TMP_RES
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+        if(TMP_RES EQUAL "0")
+            set(CUR_GIT_REMOTE_URL ${TMP_GIT_REMOTE_URL})
+        endif()
+    endif()
+endif()
+
 # Set output library names
 set(EE_LIB_IMPL "libps2_drivers_impl.a")
 set(EE_LIB_COMBINED "libps2_drivers.a")
@@ -309,18 +362,42 @@ add_custom_target(ps2_drivers ALL
 )
 
 # ============================================================================
+# Prepare pkg-config metadata file
+# ============================================================================
+set(PCKEY_NAME ${PROJECT_NAME})
+set(PCKEY_DESCRIPTION "Convenience library for ps2sdk I/O drivers")
+set(PCKEY_VERSION ${PROJECT_VERSION})
+set(PCKEY_REQUIRES "")
+set(PCKEY_LIBS "-lps2_drivers")
+set(PCKEY_CFLAGS "")
+set(PS2_DRIVERS_PC ${CMAKE_CURRENT_BINARY_DIR}/ps2_drivers.pc)
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/ps2_drivers.pc.cmakein
+    ${PS2_DRIVERS_PC} @ONLY)
+
+# ============================================================================
 # Install targets
 # ============================================================================
-install(
-    FILES ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_COMBINED}
-    DESTINATION "${PS2SDK}/ports/lib"
-)
+if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
+    install(
+        FILES ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_COMBINED}
+        DESTINATION "${INSTALL_LIB_DIR}"
+    )
+endif()
 
-install(
-    DIRECTORY ${CMAKE_SOURCE_DIR}/include/
-    DESTINATION "${PS2SDK}/ports/include"
-    FILES_MATCHING PATTERN "*.h"
-)
+if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL)
+    install(
+        DIRECTORY ${CMAKE_SOURCE_DIR}/include/
+        DESTINATION "${INSTALL_INC_DIR}"
+        FILES_MATCHING PATTERN "*.h"
+    )
+endif()
+
+if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
+    install(
+        FILES ${PS2_DRIVERS_PC}
+        DESTINATION "${INSTALL_PKGCONFIG_DIR}"
+    )
+endif()
 
 # ============================================================================
 # Include samples if enabled
