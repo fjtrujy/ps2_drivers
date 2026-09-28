@@ -108,3 +108,30 @@ The external flavor must still be compared against this baseline after E2/E3. In
 - the external flavor should remove the corresponding `*_irx` data symbols from final ELFs;
 - any provider metadata/code overhead must be measured against these payload savings;
 - peak pre-reset staging memory is separate from steady-state memory and must be measured later on PCSX2 and real hardware.
+
+## E2 embedded-provider regression check
+
+The E2 descriptor/executor refactor was compared against a freshly built E1 archive using the same toolchain and sample object files.
+
+A pre-existing sample-build issue was found during this check: sample link commands searched `$PS2SDK/ports/lib` before the current build directory, so `-lps2_drivers` could resolve to an already installed copy instead of the archive just built in the checkout. The sample CMake files were changed to link the build-tree `libps2_drivers.a` by explicit path so future local and CI validation exercises the intended archive.
+
+After correcting the link target:
+
+- every sample retained the exact same set of linked `*_irx` payload symbols;
+- `.data` delta was 0 bytes for every sample;
+- `.bss` delta was 0 bytes for every sample;
+- `.text` overhead ranged from 64 to 224 bytes depending on the number of referenced descriptors/call sites.
+
+Representative loaded-size deltas:
+
+| Sample | text delta | data delta | bss delta |
+| --- | ---: | ---: | ---: |
+| `poweroff_sample` | +64 | 0 | 0 |
+| `wav_sample` | +80 | 0 | 0 |
+| `mtap_sample` | +96 | 0 | 0 |
+| `network_iop_sample` | +96 | 0 | 0 |
+| `filesystem_sample` | +192 | 0 | 0 |
+| `alldrivers_sample` | +208 | 0 | 0 |
+| `alldrivers_verbose_sample` | +224 | 0 | 0 |
+
+The descriptor objects remain one-per-IRX archive members. Linking a driver therefore still pulls only the descriptor and payload for IRXs referenced by that driver path; the refactor does not introduce a central table that retains unrelated IRX payloads.

@@ -19,8 +19,8 @@
 #include <sifrpc.h>
 #include <loadfile.h>
 
-EXTERN_IRX(mcman_irx);
-EXTERN_IRX(mcserv_irx);
+EXTERN_PS2_IRX_MODULE(mcman);
+EXTERN_PS2_IRX_MODULE(mcserv);
 
 
 #ifdef F_internals_ps2_memcard_driver
@@ -37,14 +37,14 @@ EXTERN_IRX_VARS(mcserv);
 static enum MEMCARD_INIT_STATUS loadIRXs(void) {
     /* MCMAN.IRX */
     if (CHECK_IRX_LOAD(mcman)) {
-        __mcman_id = SifExecModuleBuffer(&mcman_irx, size_mcman_irx, 0, NULL, &__mcman_ret);
+        __mcman_id = ps2_irx_exec(&ps2_irx_mcman, 0, NULL, &__mcman_ret);
         if (CHECK_IRX_ERR(mcman))
             return MEMCARD_INIT_STATUS_MCMAN_IRX_ERROR;
     }
 
     /* MCSERV.IRX */
     if (CHECK_IRX_LOAD(mcserv)) {
-        __mcserv_id = SifExecModuleBuffer(&mcserv_irx, size_mcserv_irx, 0, NULL, &__mcserv_ret);
+        __mcserv_id = ps2_irx_exec(&ps2_irx_mcserv, 0, NULL, &__mcserv_ret);
         if (CHECK_IRX_ERR(mcserv))
             return MEMCARD_INIT_STATUS_MCSERV_IRX_ERROR;
     }

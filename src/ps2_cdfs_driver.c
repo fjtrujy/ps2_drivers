@@ -19,7 +19,7 @@
 #include <loadfile.h>
 
 /* References to CDFS.IRX */
-EXTERN_IRX(cdfs_irx);
+EXTERN_PS2_IRX_MODULE(cdfs);
 
 #ifdef F_internals_ps2_cdfs_driver
 enum CDFS_INIT_STATUS __cdfs_init_status = CDFS_INIT_STATUS_UNKNOWN;
@@ -33,7 +33,7 @@ EXTERN_IRX_VARS(cdfs);
 static enum CDFS_INIT_STATUS loadIRXs(void) {
     /* CDFS.IRX */
     if (CHECK_IRX_LOAD(cdfs)) {
-        __cdfs_id = SifExecModuleBuffer(&cdfs_irx, size_cdfs_irx, 0, NULL, &__cdfs_ret);
+        __cdfs_id = ps2_irx_exec(&ps2_irx_cdfs, 0, NULL, &__cdfs_ret);
         if (CHECK_IRX_ERR(cdfs))
             return CDFS_INIT_STATUS_IRX_ERROR;
     }

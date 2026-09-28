@@ -21,7 +21,7 @@
 #include <libmouse.h>
 
 /* References to PS2MOUSE.IRX */
-EXTERN_IRX(ps2mouse_irx);
+EXTERN_PS2_IRX_MODULE(ps2mouse);
 
 #ifdef F_internals_ps2_mouse_driver
 enum MOUSE_INIT_STATUS __mouse_init_status = MOUSE_INIT_STATUS_UNKNOWN;
@@ -41,7 +41,7 @@ static enum MOUSE_INIT_STATUS loadIRXs(bool init_dependencies) {
 
     /* PS2MOUSE.IRX */
     if (CHECK_IRX_LOAD(mouse)) {
-        __mouse_id = SifExecModuleBuffer(&ps2mouse_irx, size_ps2mouse_irx, 0, NULL, &__mouse_ret);
+        __mouse_id = ps2_irx_exec(&ps2_irx_ps2mouse, 0, NULL, &__mouse_ret);
         if (CHECK_IRX_ERR(mouse))
             return MOUSE_INIT_STATUS_IRX_ERROR;
     }

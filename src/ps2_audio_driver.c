@@ -19,8 +19,8 @@
 #include <loadfile.h>
 #include <audsrv.h>
 
-EXTERN_IRX(libsd_irx);
-EXTERN_IRX(audsrv_irx);
+EXTERN_PS2_IRX_MODULE(libsd);
+EXTERN_PS2_IRX_MODULE(audsrv);
 
 #ifdef F_internals_ps2_audio_driver
 enum AUDIO_INIT_STATUS __audio_init_status = AUDIO_INIT_STATUS_UNKNOWN;
@@ -36,14 +36,14 @@ EXTERN_IRX_VARS(audsrv);
 static enum AUDIO_INIT_STATUS loadIRXs(void) {
     /* LIBSD.IRX */
     if (CHECK_IRX_LOAD(libsd)) {
-        __libsd_id = SifExecModuleBuffer(&libsd_irx, size_libsd_irx, 0, NULL, &__libsd_ret);
+        __libsd_id = ps2_irx_exec(&ps2_irx_libsd, 0, NULL, &__libsd_ret);
         if (CHECK_IRX_ERR(libsd))
             return AUDIO_INIT_STATUS_LIBSD_IRX_ERROR;
     }
 
     /* AUDSRV.IRX */
     if (CHECK_IRX_LOAD(audsrv)) {
-        __audsrv_id = SifExecModuleBuffer(&audsrv_irx, size_audsrv_irx, 0, NULL, &__audsrv_ret);
+        __audsrv_id = ps2_irx_exec(&ps2_irx_audsrv, 0, NULL, &__audsrv_ret);
         if (CHECK_IRX_ERR(audsrv))
             return AUDIO_INIT_STATUS_AUDSRV_IRX_ERROR;
     }

@@ -7,7 +7,7 @@ target_include_directories(tcp_burst_client_ee.elf PRIVATE
 )
 
 target_link_libraries(tcp_burst_client_ee.elf
-    -lps2_drivers
+    ${CMAKE_BINARY_DIR}/${EE_LIB_COMBINED}
     -lpatches
     -ldebug
 )

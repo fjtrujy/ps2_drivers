@@ -105,6 +105,26 @@ function(add_irx_source irx_filename irx_symbol output_var)
 endfunction()
 
 # ============================================================================
+# Function: add_embedded_irx_descriptor
+# Compiles one descriptor archive member for one embedded IRX payload
+# ============================================================================
+function(add_embedded_irx_descriptor module_id irx_symbol module_name output_var)
+    string(REPLACE "-" "_" module_symbol "${module_name}")
+    set(target_name "embedded_${module_symbol}_irx_descriptor")
+
+    add_library(${target_name} OBJECT "${CMAKE_SOURCE_DIR}/src/ps2_irx_module_descriptor.c")
+    target_compile_definitions(${target_name} PRIVATE
+        "PS2_IRX_MODULE_ID=${module_id}"
+        "PS2_IRX_DESCRIPTOR_SYMBOL=ps2_irx_${module_symbol}"
+        "PS2_IRX_EMBEDDED_SYMBOL=${irx_symbol}"
+        "PS2_IRX_SIZE_SYMBOL=size_${irx_symbol}"
+    )
+    target_include_directories(${target_name} PRIVATE "${CMAKE_SOURCE_DIR}/include")
+
+    set(${output_var} $<TARGET_OBJECTS:${target_name}> PARENT_SCOPE)
+endfunction()
+
+# ============================================================================
 # Function: add_driver_objects
 # Compiles a driver source file multiple times with different defines
 # ============================================================================
@@ -133,6 +153,7 @@ file(STRINGS "${IRX_MANIFEST}" IRX_MANIFEST_LINES)
 
 set(IRX_SOURCES "")
 set(IRX_INPUTS "")
+set(IRX_DESCRIPTOR_OBJECTS "")
 
 foreach(irx_manifest_line IN LISTS IRX_MANIFEST_LINES)
     string(STRIP "${irx_manifest_line}" irx_manifest_line)
@@ -146,11 +167,20 @@ foreach(irx_manifest_line IN LISTS IRX_MANIFEST_LINES)
         message(FATAL_ERROR "Invalid IRX manifest entry: ${irx_manifest_line}")
     endif()
 
+    list(GET irx_manifest_fields 0 irx_id)
     list(GET irx_manifest_fields 1 irx_filename)
     list(GET irx_manifest_fields 2 irx_symbol)
+    list(GET irx_manifest_fields 3 irx_name)
 
     add_irx_source("${irx_filename}" "${irx_symbol}" generated_irx_source)
+    add_embedded_irx_descriptor(
+        "${irx_id}"
+        "${irx_symbol}"
+        "${irx_name}"
+        generated_irx_descriptor_object
+    )
     list(APPEND IRX_SOURCES "${generated_irx_source}")
+    list(APPEND IRX_DESCRIPTOR_OBJECTS "${generated_irx_descriptor_object}")
     list(APPEND IRX_INPUTS "${PS2SDK}/iop/irx/${irx_filename}")
 endforeach()
 
@@ -322,6 +352,8 @@ add_driver_objects(iopip
 # ============================================================================
 add_library(ps2_drivers_impl STATIC
     ${IRX_SOURCES}
+    ${IRX_DESCRIPTOR_OBJECTS}
+    src/ps2_irx_module_embedded.c
     ${sio2man_DRIVER_OBJECTS}
     ${fileXio_DRIVER_OBJECTS}
     ${memcard_DRIVER_OBJECTS}

@@ -7,7 +7,7 @@ target_include_directories(basic_elf_loader.elf PRIVATE
 )
 
 target_link_libraries(basic_elf_loader.elf
-    -lps2_drivers
+    ${CMAKE_BINARY_DIR}/${EE_LIB_COMBINED}
     -lpatches
     # Note: -lloadfile removed as it's not available in this toolchain build
 )

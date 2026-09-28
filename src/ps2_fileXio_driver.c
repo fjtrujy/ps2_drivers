@@ -23,8 +23,8 @@
 int fileXioInit(void);
 void fileXioExit(void);
 
-EXTERN_IRX(iomanX_irx);
-EXTERN_IRX(fileXio_irx);
+EXTERN_PS2_IRX_MODULE(iomanX);
+EXTERN_PS2_IRX_MODULE(fileXio);
 
 #ifdef F_internals_ps2_fileXio_driver
 enum FILEXIO_INIT_STATUS __fileXio_init_status = FILEXIO_INIT_STATUS_UNKNOWN;
@@ -40,14 +40,14 @@ EXTERN_IRX_VARS(fileXio);
 static enum FILEXIO_INIT_STATUS loadIRXs(void) {
     /* IOMANX.IRX */
     if (CHECK_IRX_LOAD(iomanX)) {
-        __iomanX_id = SifExecModuleBuffer(&iomanX_irx, size_iomanX_irx, 0, NULL, &__iomanX_ret);
+        __iomanX_id = ps2_irx_exec(&ps2_irx_iomanX, 0, NULL, &__iomanX_ret);
         if (CHECK_IRX_ERR(iomanX))
             return FILEXIO_INIT_STATUS_IOMANX_IRX_ERROR;
     }
 
     /* FILEXIO.IRX */
     if (CHECK_IRX_LOAD(fileXio)) {
-        __fileXio_id = SifExecModuleBuffer(&fileXio_irx, size_fileXio_irx, 0, NULL, &__fileXio_ret);
+        __fileXio_id = ps2_irx_exec(&ps2_irx_fileXio, 0, NULL, &__fileXio_ret);
         if (CHECK_IRX_ERR(fileXio))
             return FILEXIO_INIT_STATUS_FILEXIO_IRX_ERROR;
     }

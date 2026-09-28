@@ -7,7 +7,7 @@ target_include_directories(poweroff_sample.elf PRIVATE
 )
 
 target_link_libraries(poweroff_sample.elf
-    -lps2_drivers
+    ${CMAKE_BINARY_DIR}/${EE_LIB_COMBINED}
     -lpatches
 )
 
