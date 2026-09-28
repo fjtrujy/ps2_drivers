@@ -4,13 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define IRXIMG_MAGIC "PS2IRX01"
-#define IRXIMG_MAGIC_SIZE 8u
-#define IRXIMG_VERSION 1u
-#define IRXIMG_HEADER_SIZE 44u
-#define IRXIMG_ENTRY_SIZE 20u
-#define IRXIMG_ALIGNMENT 16u
-#define IRXIMG_MAX_ENTRIES 128u
+#include <ps2_irx_image_format.h>
+
 #define IRXIMG_MAX_FIELD 128u
 #define IRXIMG_PATH_MAX 1024u
 

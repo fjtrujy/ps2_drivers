@@ -9,6 +9,16 @@
 #error "PS2_IRX_DESCRIPTOR_SYMBOL must be defined"
 #endif
 
+#ifdef PS2_IRX_EXTERNAL
+
+const struct ps2_irx_module PS2_IRX_DESCRIPTOR_SYMBOL = {
+    PS2_IRX_MODULE_ID,
+    NULL,
+    NULL,
+};
+
+#else
+
 #ifndef PS2_IRX_EMBEDDED_SYMBOL
 #error "PS2_IRX_EMBEDDED_SYMBOL must be defined"
 #endif
@@ -25,3 +35,5 @@ const struct ps2_irx_module PS2_IRX_DESCRIPTOR_SYMBOL = {
     PS2_IRX_EMBEDDED_SYMBOL,
     &PS2_IRX_SIZE_SYMBOL,
 };
+
+#endif

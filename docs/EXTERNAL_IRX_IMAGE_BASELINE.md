@@ -135,3 +135,29 @@ Representative loaded-size deltas:
 | `alldrivers_verbose_sample` | +224 | 0 | 0 |
 
 The descriptor objects remain one-per-IRX archive members. Linking a driver therefore still pulls only the descriptor and payload for IRXs referenced by that driver path; the refactor does not introduce a central table that retains unrelated IRX payloads.
+
+## E3/E4 external-image measurements
+
+The external provider was validated on the host against the generated image before runtime testing. The dependency expansion produced these staged sets with the active PS2SDK:
+
+| Requirement | Modules | Staged bytes |
+| --- | ---: | ---: |
+| `PS2_DRIVER_REQ_JOYSTICK` | 3 | 49,763 |
+| `PS2_DRIVER_REQ_AUDIO` | 2 | 35,202 |
+| `PS2_DRIVER_REQ_IOPIP` | 5 | 142,269 |
+| `PS2_DRIVER_REQ_FILESYSTEM_ALL` | 16 | 301,292 |
+
+The staging test also verifies that a second staging attempt is rejected while a set is active and that `ps2_drivers_img_discard_staged()` returns both the staged-module and staged-byte counters to zero.
+
+Both `libps2_drivers_img.a` and the dedicated external-flavor sample ELF are checked with `nm` and contain no defined `*_irx` or `size_*_irx` payload symbols.
+
+For a direct same-source comparison using the joystick dependency set:
+
+| Flavor | text | data | bss | Loaded total | Embedded IRX bytes |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Embedded reference | 149,676 | 55,948 | 28,128 | 233,752 | 49,763 |
+| External image | 158,564 | 6,156 | 28,128 | 192,848 | 0 |
+
+The first external implementation therefore removes all 49,763 raw joystick IRX bytes while adding 8,888 bytes of parser/staging/executor text. The net loaded-size reduction for this sample is **40,904 bytes**.
+
+These are build-time loaded-section measurements, not a substitute for runtime EE heap measurements. PCSX2 and real-hardware testing must still verify the full pre-reset staging -> IOP reset -> module execution -> staged-buffer release lifecycle, including startup from the practical boot media listed in the plan.

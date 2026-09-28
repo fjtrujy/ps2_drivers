@@ -32,7 +32,9 @@ jobs:
     - name: Validate IRX image
       run: |
         cmake --build build --target ps2_drivers_irximg_check
+        cmake --build build --target ps2_drivers_irximg_stage_check
         cmake --build build --target ps2_drivers_irximg_inspect
+        cmake --build build --target ps2_drivers_img_payload_check
 
     - name: Install library
       run: |

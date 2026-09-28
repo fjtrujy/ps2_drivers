@@ -27,6 +27,7 @@ endif()
 set(INSTALL_LIB_DIR "${PS2SDK}/ports/lib" CACHE PATH "Installation directory for libraries")
 set(INSTALL_INC_DIR "${PS2SDK}/ports/include" CACHE PATH "Installation directory for headers")
 set(INSTALL_PKGCONFIG_DIR "${PS2SDK}/ports/lib/pkgconfig" CACHE PATH "Installation directory for pkgconfig (.pc) files")
+set(INSTALL_SHARE_DIR "${PS2SDK}/ports/share/ps2_drivers" CACHE PATH "Installation directory for ps2_drivers data files")
 
 # Prepare git metadata
 set(CUR_GIT_TAG v0.0.0)
@@ -80,6 +81,8 @@ endif()
 # Set output library names
 set(EE_LIB_IMPL "libps2_drivers_impl.a")
 set(EE_LIB_COMBINED "libps2_drivers.a")
+set(EE_LIB_IMG_IMPL "libps2_drivers_img_impl.a")
+set(EE_LIB_IMG_COMBINED "libps2_drivers_img.a")
 
 # Compiler flags (matching the Makefile)
 add_compile_options(-Werror)
@@ -125,6 +128,25 @@ function(add_embedded_irx_descriptor module_id irx_symbol module_name output_var
 endfunction()
 
 # ============================================================================
+# Function: add_external_irx_descriptor
+# Compiles one descriptor archive member that only carries the stable module ID
+# ============================================================================
+function(add_external_irx_descriptor module_id module_name output_var)
+    string(REPLACE "-" "_" module_symbol "${module_name}")
+    set(target_name "external_${module_symbol}_irx_descriptor")
+
+    add_library(${target_name} OBJECT "${CMAKE_SOURCE_DIR}/src/ps2_irx_module_descriptor.c")
+    target_compile_definitions(${target_name} PRIVATE
+        "PS2_IRX_MODULE_ID=${module_id}"
+        "PS2_IRX_DESCRIPTOR_SYMBOL=ps2_irx_${module_symbol}"
+        "PS2_IRX_EXTERNAL=1"
+    )
+    target_include_directories(${target_name} PRIVATE "${CMAKE_SOURCE_DIR}/include")
+
+    set(${output_var} $<TARGET_OBJECTS:${target_name}> PARENT_SCOPE)
+endfunction()
+
+# ============================================================================
 # Function: add_driver_objects
 # Compiles a driver source file multiple times with different defines
 # ============================================================================
@@ -154,6 +176,8 @@ file(STRINGS "${IRX_MANIFEST}" IRX_MANIFEST_LINES)
 set(IRX_SOURCES "")
 set(IRX_INPUTS "")
 set(IRX_DESCRIPTOR_OBJECTS "")
+set(IRX_EXTERNAL_DESCRIPTOR_OBJECTS "")
+set(IRX_IDS_HEADER_CONTENT "#ifndef PS2_IRX_IDS_H\n#define PS2_IRX_IDS_H\n\n")
 
 foreach(irx_manifest_line IN LISTS IRX_MANIFEST_LINES)
     string(STRIP "${irx_manifest_line}" irx_manifest_line)
@@ -179,14 +203,29 @@ foreach(irx_manifest_line IN LISTS IRX_MANIFEST_LINES)
         "${irx_name}"
         generated_irx_descriptor_object
     )
+    add_external_irx_descriptor(
+        "${irx_id}"
+        "${irx_name}"
+        generated_external_irx_descriptor_object
+    )
     list(APPEND IRX_SOURCES "${generated_irx_source}")
     list(APPEND IRX_DESCRIPTOR_OBJECTS "${generated_irx_descriptor_object}")
+    list(APPEND IRX_EXTERNAL_DESCRIPTOR_OBJECTS "${generated_external_irx_descriptor_object}")
     list(APPEND IRX_INPUTS "${PS2SDK}/iop/irx/${irx_filename}")
+
+    string(TOUPPER "${irx_name}" irx_id_macro)
+    string(REPLACE "-" "_" irx_id_macro "${irx_id_macro}")
+    string(APPEND IRX_IDS_HEADER_CONTENT "#define PS2_IRX_ID_${irx_id_macro} ${irx_id}u\n")
 endforeach()
 
 if(NOT IRX_SOURCES)
     message(FATAL_ERROR "IRX manifest contains no modules: ${IRX_MANIFEST}")
 endif()
+
+string(APPEND IRX_IDS_HEADER_CONTENT "\n#endif\n")
+set(GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+file(MAKE_DIRECTORY "${GENERATED_INCLUDE_DIR}")
+file(WRITE "${GENERATED_INCLUDE_DIR}/ps2_irx_ids.h" "${IRX_IDS_HEADER_CONTENT}")
 
 # ============================================================================
 # Build the host-side IRX image tool and versioned companion image
@@ -199,6 +238,7 @@ endif()
 set(IRXIMG_TOOL_DIR "${CMAKE_CURRENT_BINARY_DIR}/host-tools")
 set(IRXIMG_TOOL "${IRXIMG_TOOL_DIR}/ps2_irximg_tool")
 set(IRXIMG_TOOL_SOURCE "${CMAKE_SOURCE_DIR}/tools/ps2_irximg.c")
+set(IRXIMG_STAGE_TEST "${IRXIMG_TOOL_DIR}/ps2_irximg_stage_test")
 set(IRX_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/ps2_drivers.irximg")
 set(IRX_IMAGE_DETERMINISM "${CMAKE_CURRENT_BINARY_DIR}/ps2_drivers.determinism.irximg")
 
@@ -211,9 +251,10 @@ add_custom_command(
         -Wall
         -Wextra
         -Werror
+        -I${CMAKE_SOURCE_DIR}/include
         "${IRXIMG_TOOL_SOURCE}"
         -o "${IRXIMG_TOOL}"
-    DEPENDS "${IRXIMG_TOOL_SOURCE}"
+    DEPENDS "${IRXIMG_TOOL_SOURCE}" "${CMAKE_SOURCE_DIR}/include/ps2_irx_image_format.h"
     COMMENT "Building host ps2_irximg_tool"
     VERBATIM
 )
@@ -246,6 +287,39 @@ add_custom_target(ps2_drivers_irximg_inspect
     DEPENDS "${IRX_IMAGE}" "${IRXIMG_TOOL}" "${IRX_MANIFEST}"
     COMMENT "Inspecting ps2_drivers.irximg"
     USES_TERMINAL
+    VERBATIM
+)
+
+add_custom_command(
+    OUTPUT "${IRXIMG_STAGE_TEST}"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${IRXIMG_TOOL_DIR}"
+    COMMAND ${PS2_DRIVERS_HOST_C_COMPILER}
+        -std=c99
+        -D_POSIX_C_SOURCE=200112L
+        -O2
+        -Wall
+        -Wextra
+        -Werror
+        -I${CMAKE_SOURCE_DIR}/include
+        -I${GENERATED_INCLUDE_DIR}
+        "${CMAKE_SOURCE_DIR}/src/ps2_drivers_img.c"
+        "${CMAKE_SOURCE_DIR}/tools/ps2_irximg_stage_test.c"
+        -o "${IRXIMG_STAGE_TEST}"
+    DEPENDS
+        "${CMAKE_SOURCE_DIR}/src/ps2_drivers_img.c"
+        "${CMAKE_SOURCE_DIR}/src/ps2_drivers_img_internal.h"
+        "${CMAKE_SOURCE_DIR}/tools/ps2_irximg_stage_test.c"
+        "${CMAKE_SOURCE_DIR}/include/ps2_drivers_img.h"
+        "${CMAKE_SOURCE_DIR}/include/ps2_irx_image_format.h"
+        "${GENERATED_INCLUDE_DIR}/ps2_irx_ids.h"
+    COMMENT "Building host IRX image staging test"
+    VERBATIM
+)
+
+add_custom_target(ps2_drivers_irximg_stage_check
+    COMMAND "${IRXIMG_STAGE_TEST}" "${IRX_IMAGE}"
+    DEPENDS "${IRXIMG_STAGE_TEST}" "${IRX_IMAGE}"
+    COMMENT "Checking external IRX staging dependency closures"
     VERBATIM
 )
 
@@ -350,10 +424,7 @@ add_driver_objects(iopip
 # ============================================================================
 # Build the implementation library
 # ============================================================================
-add_library(ps2_drivers_impl STATIC
-    ${IRX_SOURCES}
-    ${IRX_DESCRIPTOR_OBJECTS}
-    src/ps2_irx_module_embedded.c
+set(PS2_DRIVER_OBJECTS
     ${sio2man_DRIVER_OBJECTS}
     ${fileXio_DRIVER_OBJECTS}
     ${memcard_DRIVER_OBJECTS}
@@ -377,9 +448,34 @@ add_library(ps2_drivers_impl STATIC
     ${iopip_DRIVER_OBJECTS}
 )
 
+add_library(ps2_drivers_impl STATIC
+    ${IRX_SOURCES}
+    ${IRX_DESCRIPTOR_OBJECTS}
+    src/ps2_irx_module_embedded.c
+    ${PS2_DRIVER_OBJECTS}
+)
+
 set_target_properties(ps2_drivers_impl PROPERTIES
     OUTPUT_NAME "ps2_drivers_impl"
     ARCHIVE_OUTPUT_NAME "ps2_drivers_impl"
+)
+
+add_library(ps2_drivers_img_impl STATIC
+    ${IRX_EXTERNAL_DESCRIPTOR_OBJECTS}
+    src/ps2_irx_module_image.c
+    src/ps2_drivers_img.c
+    ${PS2_DRIVER_OBJECTS}
+)
+
+target_include_directories(ps2_drivers_img_impl PRIVATE
+    "${CMAKE_SOURCE_DIR}/include"
+    "${CMAKE_SOURCE_DIR}/src"
+    "${GENERATED_INCLUDE_DIR}"
+)
+
+set_target_properties(ps2_drivers_img_impl PROPERTIES
+    OUTPUT_NAME "ps2_drivers_img_impl"
+    ARCHIVE_OUTPUT_NAME "ps2_drivers_img_impl"
 )
 
 # ============================================================================
@@ -424,6 +520,42 @@ add_custom_target(ps2_drivers ALL
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_COMBINED}
 )
 
+# Create the external-image flavor from the same EE driver objects and support
+# libraries, but with ID-only descriptors and no embedded IRX payload members.
+set(MRI_IMG_SCRIPT_CONTENT "create ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_IMG_COMBINED}\n")
+set(MRI_IMG_SCRIPT_CONTENT "${MRI_IMG_SCRIPT_CONTENT}addlib $<TARGET_FILE:ps2_drivers_img_impl>\n")
+foreach(lib ${PS2SDK_LIBS})
+    set(MRI_IMG_SCRIPT_CONTENT "${MRI_IMG_SCRIPT_CONTENT}addlib ${lib}\n")
+endforeach()
+set(MRI_IMG_SCRIPT_CONTENT "${MRI_IMG_SCRIPT_CONTENT}save\nend\n")
+
+file(GENERATE
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/mri_img_script.txt
+    CONTENT "${MRI_IMG_SCRIPT_CONTENT}"
+)
+
+add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_IMG_COMBINED}
+    COMMAND ${CMAKE_COMMAND} -E rm -f ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_IMG_COMBINED}
+    COMMAND ${CMAKE_AR} -M < ${CMAKE_CURRENT_BINARY_DIR}/mri_img_script.txt
+    DEPENDS ps2_drivers_img_impl ${PS2SDK_LIBS} ${CMAKE_CURRENT_BINARY_DIR}/mri_img_script.txt
+    COMMENT "Combining libraries into ${EE_LIB_IMG_COMBINED}"
+)
+
+add_custom_target(ps2_drivers_img ALL
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_IMG_COMBINED}
+)
+
+add_custom_target(ps2_drivers_img_payload_check ALL
+    COMMAND ${CMAKE_COMMAND}
+        -DNM=${CMAKE_NM}
+        -DARTIFACT=${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_IMG_COMBINED}
+        -P ${CMAKE_SOURCE_DIR}/cmake/check_no_embedded_irx.cmake
+    DEPENDS ps2_drivers_img
+    COMMENT "Checking external image archive for embedded IRX payloads"
+    VERBATIM
+)
+
 # ============================================================================
 # Prepare pkg-config metadata file
 # ============================================================================
@@ -437,12 +569,21 @@ set(PS2_DRIVERS_PC ${CMAKE_CURRENT_BINARY_DIR}/ps2_drivers.pc)
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/ps2_drivers.pc.cmakein
     ${PS2_DRIVERS_PC} @ONLY)
 
+set(PCKEY_NAME "${PROJECT_NAME}-img")
+set(PCKEY_DESCRIPTION "External-IRX-image flavor of ps2_drivers")
+set(PCKEY_LIBS "-lps2_drivers_img")
+set(PS2_DRIVERS_IMG_PC ${CMAKE_CURRENT_BINARY_DIR}/ps2_drivers-img.pc)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ps2_drivers.pc.cmakein
+    ${PS2_DRIVERS_IMG_PC} @ONLY)
+
 # ============================================================================
 # Install targets
 # ============================================================================
 if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
     install(
-        FILES ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_COMBINED}
+        FILES
+            ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_COMBINED}
+            ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_IMG_COMBINED}
         DESTINATION "${INSTALL_LIB_DIR}"
     )
 endif()
@@ -457,8 +598,12 @@ endif()
 
 if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
     install(
-        FILES ${PS2_DRIVERS_PC}
+        FILES ${PS2_DRIVERS_PC} ${PS2_DRIVERS_IMG_PC}
         DESTINATION "${INSTALL_PKGCONFIG_DIR}"
+    )
+    install(
+        FILES "${IRX_IMAGE}"
+        DESTINATION "${INSTALL_SHARE_DIR}"
     )
 endif()
 
@@ -477,6 +622,7 @@ message(STATUS "ps2_drivers configuration:")
 message(STATUS "  Version: ${PROJECT_VERSION}")
 message(STATUS "  Build samples: ${BUILD_SAMPLES}")
 message(STATUS "  Output library: ${EE_LIB_COMBINED}")
+message(STATUS "  External image library: ${EE_LIB_IMG_COMBINED}")
 message(STATUS "  IRX image: ${IRX_IMAGE}")
 message(STATUS "  Install prefix: ${PS2SDK}/ports")
 message(STATUS "")

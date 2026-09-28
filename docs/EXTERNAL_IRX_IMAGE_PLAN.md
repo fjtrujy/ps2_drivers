@@ -15,7 +15,10 @@ This is intended to reduce steady-state EE memory consumption without changing t
 - E0 - Baseline and measurements: complete. See `docs/EXTERNAL_IRX_IMAGE_BASELINE.md`.
 - E1 - Canonical manifest and image packer: complete. The build now generates and validates a deterministic `ps2_drivers.irximg` from `irx/manifest.txt`.
 - E2 - Module descriptor abstraction: complete. Driver code now uses per-module descriptors plus a shared executor while preserving embedded IRX archive granularity.
-- E3-E7: pending.
+- E3 - External provider and staging API: complete at build/test level. Required driver sets expand to deduplicated IRX IDs, selected payloads are bounds/CRC checked and staged before reset, and each staged payload is released immediately after its module execution attempt.
+- E4 - Second archive flavor: complete at build/test level. `libps2_drivers_img.a`, `ps2_drivers-img.pc`, image installation, an external-flavor sample, and archive/ELF assertions that reject embedded IRX payload symbols are in place.
+- E5 - Filesystem and dependency coverage: build-time dependency-closure coverage is in place; PCSX2 and real-hardware boot-medium validation remains.
+- E6-E7: pending.
 
 ## Why the idea is viable
 
