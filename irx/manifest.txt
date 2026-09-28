@@ -26,3 +26,4 @@
 25|smap.irx|smap_irx|smap
 26|ps2ip-nm.irx|ps2ip_nm_irx|ps2ip-nm
 27|ps2ips.irx|ps2ips_irx|ps2ips
+28|cacheio.irx|cacheio_irx|cacheio

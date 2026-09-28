@@ -14,7 +14,7 @@
 #include "ps2_drivers_img_internal.h"
 #include "ps2_irx_ids.h"
 
-#define PS2_DRIVER_REQ_KNOWN_MASK ((1u << 20) - 1u)
+#define PS2_DRIVER_REQ_KNOWN_MASK ((1u << 21) - 1u)
 
 struct ps2_irx_image_entry {
     uint32_t id;
@@ -292,6 +292,14 @@ static void expand_requirements(
         mark_module(requested, PS2_IRX_ID_SMAP);
         mark_module(requested, PS2_IRX_ID_PS2IP_NM);
         mark_module(requested, PS2_IRX_ID_PS2IPS);
+    }
+
+    if (requirements & PS2_DRIVER_REQ_CACHEIO) {
+        mark_module(requested, PS2_IRX_ID_IOMANX);
+        mark_module(requested, PS2_IRX_ID_FILEXIO);
+        mark_module(requested, PS2_IRX_ID_BDM);
+        mark_module(requested, PS2_IRX_ID_BDMFS_FATFS);
+        mark_module(requested, PS2_IRX_ID_CACHEIO);
     }
 }
 

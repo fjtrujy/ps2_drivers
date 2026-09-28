@@ -386,6 +386,9 @@ add_driver_objects(joystick internals init deinit)
 # Audio driver
 add_driver_objects(audio internals init deinit)
 
+# Extent-aware cache I/O driver
+add_driver_objects(cacheio internals init deinit)
+
 # Poweroff driver
 add_driver_objects(poweroff internals init deinit)
 
@@ -441,6 +444,7 @@ set(PS2_DRIVER_OBJECTS
     ${filesystem_DRIVER_OBJECTS}
     ${joystick_DRIVER_OBJECTS}
     ${audio_DRIVER_OBJECTS}
+    ${cacheio_DRIVER_OBJECTS}
     ${poweroff_DRIVER_OBJECTS}
     ${mouse_DRIVER_OBJECTS}
     ${keyboard_DRIVER_OBJECTS}
@@ -492,6 +496,7 @@ set(PS2SDK_LIBS
     "${PS2SDK}/ee/lib/libmtap.a"
     "${PS2SDK}/ee/lib/libpadx.a"
     "${PS2SDK}/ee/lib/libaudsrv.a"
+    "${PS2SDK}/ee/lib/libcacheio.a"
     "${PS2SDK}/ee/lib/libpoweroff.a"
     "${PS2SDK}/ee/lib/libmouse.a"
     "${PS2SDK}/ee/lib/libkbd.a"

@@ -14,6 +14,7 @@
 #define PS2_ALL_DRIVERS
 
 #include <ps2_audio_driver.h>
+#include <ps2_cacheio_driver.h>
 #include <ps2_joystick_driver.h>
 #include <ps2_filesystem_driver.h>
 

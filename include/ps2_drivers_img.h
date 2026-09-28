@@ -33,6 +33,7 @@ enum ps2_driver_requirement {
     PS2_DRIVER_REQ_SMAP     = 1u << 17,
     PS2_DRIVER_REQ_EEIP     = 1u << 18,
     PS2_DRIVER_REQ_IOPIP    = 1u << 19,
+    PS2_DRIVER_REQ_CACHEIO  = 1u << 20,
 };
 
 #define PS2_DRIVER_REQ_FILESYSTEM_ALL \

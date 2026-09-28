@@ -212,6 +212,7 @@ int main(int argc, char **argv)
         {"smap", PS2_DRIVER_REQ_SMAP, 1u},
         {"eeip", PS2_DRIVER_REQ_EEIP, 3u},
         {"iopip", PS2_DRIVER_REQ_IOPIP, 5u},
+        {"cacheio", PS2_DRIVER_REQ_CACHEIO, 5u},
         {"filesystem", PS2_DRIVER_REQ_FILESYSTEM_ALL, 16u},
     };
     size_t i;
