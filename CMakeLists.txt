@@ -304,12 +304,15 @@ add_custom_command(
         -I${CMAKE_SOURCE_DIR}/src
         -I${GENERATED_INCLUDE_DIR}
         "${CMAKE_SOURCE_DIR}/src/ps2_drivers_img.c"
+        "${CMAKE_SOURCE_DIR}/src/ps2_boot_device.c"
         "${CMAKE_SOURCE_DIR}/tools/ps2_irximg_stage_test.c"
         -o "${IRXIMG_STAGE_TEST}"
     DEPENDS
         "${CMAKE_SOURCE_DIR}/src/ps2_drivers_img.c"
+        "${CMAKE_SOURCE_DIR}/src/ps2_boot_device.c"
         "${CMAKE_SOURCE_DIR}/src/ps2_drivers_img_internal.h"
         "${CMAKE_SOURCE_DIR}/tools/ps2_irximg_stage_test.c"
+        "${CMAKE_SOURCE_DIR}/include/ps2_boot_device.h"
         "${CMAKE_SOURCE_DIR}/include/ps2_drivers_img.h"
         "${CMAKE_SOURCE_DIR}/include/ps2_irx_image_format.h"
         "${GENERATED_INCLUDE_DIR}/ps2_irx_ids.h"
@@ -320,6 +323,7 @@ add_custom_command(
 add_custom_target(ps2_drivers_irximg_stage_check
     COMMAND "${IRXIMG_STAGE_TEST}" "${IRX_IMAGE}"
     DEPENDS "${IRXIMG_STAGE_TEST}" "${IRX_IMAGE}"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     COMMENT "Checking external IRX staging dependency closures"
     VERBATIM
 )
@@ -368,8 +372,6 @@ add_driver_objects(hdd
 # Filesystem driver
 add_driver_objects(filesystem
     waitUntilDeviceIsReady
-    rootDevicePath
-    getBootDeviceID
     __internal_deinit
     deinit
     init
@@ -452,6 +454,7 @@ set(PS2_DRIVER_OBJECTS
 add_library(ps2_drivers_impl STATIC
     ${IRX_SOURCES}
     ${IRX_DESCRIPTOR_OBJECTS}
+    src/ps2_boot_device.c
     src/ps2_irx_module_embedded.c
     ${PS2_DRIVER_OBJECTS}
 )
@@ -463,6 +466,7 @@ set_target_properties(ps2_drivers_impl PROPERTIES
 
 add_library(ps2_drivers_img_impl STATIC
     ${IRX_EXTERNAL_DESCRIPTOR_OBJECTS}
+    src/ps2_boot_device.c
     src/ps2_irx_module_image.c
     src/ps2_drivers_img.c
     ${PS2_DRIVER_OBJECTS}

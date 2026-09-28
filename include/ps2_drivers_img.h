@@ -4,9 +4,13 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <ps2_boot_device.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define PS2_DRIVERS_IMG_DEFAULT_PATH "ps2_drivers.irximg"
 
 enum ps2_driver_requirement {
     PS2_DRIVER_REQ_SIO2MAN  = 1u << 0,
@@ -47,10 +51,64 @@ enum ps2_drivers_img_error {
     PS2_DRIVERS_IMG_ERR_CRC = -7,
     PS2_DRIVERS_IMG_ERR_MEMORY = -8,
     PS2_DRIVERS_IMG_ERR_NO_SOURCE = -9,
+    PS2_DRIVERS_IMG_ERR_CWD = -10,
 };
 
+const char *ps2_drivers_img_error_string(int error);
+
+uint32_t ps2_drivers_img_requirements_for_boot_device(enum BootDeviceIDs boot_device);
+int ps2_drivers_img_requirements_for_path(
+    const char *path,
+    uint32_t additional_requirements,
+    uint32_t *requirements);
+int ps2_drivers_img_requirements_for_current_boot(
+    uint32_t additional_requirements,
+    uint32_t *requirements);
+
+/*
+ * Low-level staging API. Use the convenience helpers below when possible.
+ */
 int ps2_drivers_img_stage(const char *image_path, uint32_t driver_requirements);
+
+/* Stage an explicit requirement set from PS2_DRIVERS_IMG_DEFAULT_PATH. */
+int ps2_drivers_img_stage_default(uint32_t driver_requirements);
+
+/*
+ * Stage the drivers required by init_only_boot_ps2_filesystem_driver() for a
+ * known launch device/path/current working directory, plus application-specific
+ * requirements such as AUDIO or JOYSTICK.
+ */
+int ps2_drivers_img_stage_for_boot_device(
+    const char *image_path,
+    enum BootDeviceIDs boot_device,
+    uint32_t additional_requirements);
+int ps2_drivers_img_stage_for_path(
+    const char *image_path,
+    const char *path,
+    uint32_t additional_requirements);
+int ps2_drivers_img_stage_for_current_boot(
+    const char *image_path,
+    uint32_t additional_requirements);
+
+/*
+ * Stage everything required by init_ps2_filesystem_driver(), plus any
+ * application-specific requirements.
+ */
+int ps2_drivers_img_stage_for_all_filesystems(
+    const char *image_path,
+    uint32_t additional_requirements);
+int ps2_drivers_img_stage_default_for_boot_device(
+    enum BootDeviceIDs boot_device,
+    uint32_t additional_requirements);
+int ps2_drivers_img_stage_default_for_path(
+    const char *path,
+    uint32_t additional_requirements);
+int ps2_drivers_img_stage_default_for_current_boot(uint32_t additional_requirements);
+int ps2_drivers_img_stage_default_for_all_filesystems(uint32_t additional_requirements);
+
+/* Restage an explicit set, or repeat the last successful staging request. */
 int ps2_drivers_img_restage(uint32_t driver_requirements);
+int ps2_drivers_img_restage_last(void);
 void ps2_drivers_img_discard_staged(void);
 void ps2_drivers_img_forget_source(void);
 size_t ps2_drivers_img_staged_bytes(void);

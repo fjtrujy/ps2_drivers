@@ -18,7 +18,7 @@ This is intended to reduce steady-state EE memory consumption without changing t
 - E3 - External provider and staging API: complete at build/test level. Required driver sets expand to deduplicated IRX IDs, selected payloads are bounds/CRC checked and staged before reset, and each staged payload is released immediately after its module execution attempt.
 - E4 - Second archive flavor: complete at build/test level. `libps2_drivers_img.a`, `ps2_drivers-img.pc`, image installation, an external-flavor sample, and archive/ELF assertions that reject embedded IRX payload symbols are in place.
 - E5 - Filesystem and dependency coverage: every public driver requirement and the combined filesystem closure are covered by host staging tests. PCSX2 has validated the full stage -> reset -> execute -> release path for the joystick dependency set. Real-hardware boot-medium validation remains; see `docs/EXTERNAL_IRX_IMAGE_RUNTIME.md`.
-- E6 - Reinit semantics: complete at host/PCSX2 level. The provider retains only the successful image path, supports explicit `ps2_drivers_img_restage()`, and PCSX2 has validated unload -> restage -> reinitialize for sio2man/mtapman/padman without retaining IRX payloads.
+- E6 - Reinit/convenience semantics: complete at host/PCSX2 level. The provider retains only the successful image path, supports explicit or repeat-last restaging, and exposes default-image plus boot-device/path/current-boot/all-filesystem staging helpers so applications do not duplicate ps2_drivers filesystem policy. PCSX2 has validated unload -> restage -> reinitialize for sio2man/mtapman/padman without retaining IRX payloads.
 - E7: pending/optional.
 
 ## Why the idea is viable
@@ -202,19 +202,28 @@ int ps2_drivers_img_stage(
     const char *image_path,
     uint32_t driver_requirements);
 
+int ps2_drivers_img_stage_default(uint32_t driver_requirements);
+int ps2_drivers_img_stage_default_for_current_boot(
+    uint32_t additional_requirements);
+int ps2_drivers_img_stage_default_for_all_filesystems(
+    uint32_t additional_requirements);
+
 void ps2_drivers_img_discard_staged(void);
 size_t ps2_drivers_img_staged_bytes(void);
 ```
 
 `ps2_drivers_img_stage()` expands the requested driver set to the complete transitive IRX dependency set, deduplicates modules, validates the image, and allocates/reads all required IRXs before returning.
 
-A convenience profile may be useful:
+The implementation now also provides convenience helpers so applications do not need to duplicate ps2_drivers filesystem policy:
 
-```c
-#define PS2_DRIVER_REQ_FILESYSTEM_ALL (...)
-```
+- `PS2_DRIVERS_IMG_DEFAULT_PATH` is the relative `ps2_drivers.irximg` beside the ELF;
+- boot-device, launch-path, and current-working-directory requirement resolvers;
+- default-path staging helpers;
+- current-boot staging that mirrors `init_only_boot_ps2_filesystem_driver()`;
+- all-filesystem staging that mirrors `init_ps2_filesystem_driver()`;
+- `ps2_drivers_img_restage_last()` for repeating the last successful request.
 
-but it should be defined from the same dependency metadata rather than maintained independently.
+The low-level explicit requirement-mask API remains available for applications that want complete control.
 
 ### 5. Future automatic linked-module discovery
 
@@ -329,18 +338,14 @@ Keep low-level ownership flexible.
 The minimum supported application sequence for the image flavor should be:
 
 ```c
-if (ps2_drivers_img_stage(
-        "ps2_drivers.irximg",
-        PS2_DRIVER_REQ_FILEXIO |
-        PS2_DRIVER_REQ_USB |
+if (ps2_drivers_img_stage_default_for_current_boot(
         PS2_DRIVER_REQ_JOYSTICK) < 0) {
     /* handle staging failure */
 }
 
 reset_IOP();
 
-init_fileXio_driver();
-init_usb_driver(true);
+init_only_boot_ps2_filesystem_driver();
 init_joystick_driver(true);
 ```
 

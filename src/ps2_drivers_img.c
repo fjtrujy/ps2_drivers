@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <ps2_drivers_img.h>
 #include <ps2_irx_image_format.h>
@@ -34,6 +35,112 @@ static size_t g_staged_capacity;
 static size_t g_staged_count;
 static size_t g_staged_bytes;
 static char *g_image_path;
+static uint32_t g_last_requirements;
+
+const char *ps2_drivers_img_error_string(int error)
+{
+    switch (error) {
+        case PS2_DRIVERS_IMG_OK:
+            return "success";
+        case PS2_DRIVERS_IMG_ERR_ARGUMENT:
+            return "invalid argument or driver requirement mask";
+        case PS2_DRIVERS_IMG_ERR_ALREADY_STAGED:
+            return "IRX modules are already staged";
+        case PS2_DRIVERS_IMG_ERR_OPEN:
+            return "failed to open IRX image";
+        case PS2_DRIVERS_IMG_ERR_IO:
+            return "IRX image I/O error";
+        case PS2_DRIVERS_IMG_ERR_FORMAT:
+            return "invalid IRX image format";
+        case PS2_DRIVERS_IMG_ERR_MISSING_MODULE:
+            return "required IRX module is missing from the image";
+        case PS2_DRIVERS_IMG_ERR_CRC:
+            return "IRX payload CRC mismatch";
+        case PS2_DRIVERS_IMG_ERR_MEMORY:
+            return "not enough memory to stage IRX modules";
+        case PS2_DRIVERS_IMG_ERR_NO_SOURCE:
+            return "no remembered IRX image source";
+        case PS2_DRIVERS_IMG_ERR_CWD:
+            return "failed to determine the current working directory";
+        default:
+            return "unknown ps2_drivers image error";
+    }
+}
+
+uint32_t ps2_drivers_img_requirements_for_boot_device(enum BootDeviceIDs boot_device)
+{
+    uint32_t requirements = PS2_DRIVER_REQ_FILEXIO;
+
+    switch (boot_device) {
+        case BOOT_DEVICE_MC0:
+        case BOOT_DEVICE_MC1:
+            requirements |= PS2_DRIVER_REQ_MEMCARD;
+            break;
+        case BOOT_DEVICE_CDROM:
+        case BOOT_DEVICE_CDFS:
+            requirements |= PS2_DRIVER_REQ_CDFS;
+            break;
+        case BOOT_DEVICE_MASS:
+        case BOOT_DEVICE_MASS0:
+        case BOOT_DEVICE_MASS1:
+        case BOOT_DEVICE_MX4SIO:
+        case BOOT_DEVICE_MX4SIO0:
+        case BOOT_DEVICE_MX4SIO1:
+            /*
+             * Keep this aligned with init_only_boot_ps2_filesystem_driver(),
+             * which currently brings up both removable-storage transports.
+             */
+            requirements |= PS2_DRIVER_REQ_USB | PS2_DRIVER_REQ_MX4SIO;
+            break;
+        case BOOT_DEVICE_HDD:
+        case BOOT_DEVICE_HDD0:
+            requirements |= PS2_DRIVER_REQ_POWEROFF | PS2_DRIVER_REQ_HDD;
+            break;
+        case BOOT_DEVICE_HOST:
+        case BOOT_DEVICE_HOST0:
+        case BOOT_DEVICE_HOST1:
+        case BOOT_DEVICE_UNKNOWN:
+        default:
+            break;
+    }
+
+    return requirements;
+}
+
+int ps2_drivers_img_requirements_for_path(
+    const char *path,
+    uint32_t additional_requirements,
+    uint32_t *requirements)
+{
+    if (path == NULL ||
+        requirements == NULL ||
+        (additional_requirements & ~PS2_DRIVER_REQ_KNOWN_MASK) != 0u)
+        return PS2_DRIVERS_IMG_ERR_ARGUMENT;
+
+    *requirements =
+        ps2_drivers_img_requirements_for_boot_device(getBootDeviceID(path)) |
+        additional_requirements;
+    return PS2_DRIVERS_IMG_OK;
+}
+
+int ps2_drivers_img_requirements_for_current_boot(
+    uint32_t additional_requirements,
+    uint32_t *requirements)
+{
+    char cwd[FILENAME_MAX];
+
+    if (requirements == NULL ||
+        (additional_requirements & ~PS2_DRIVER_REQ_KNOWN_MASK) != 0u)
+        return PS2_DRIVERS_IMG_ERR_ARGUMENT;
+
+    if (getcwd(cwd, sizeof(cwd)) == NULL)
+        return PS2_DRIVERS_IMG_ERR_CWD;
+
+    return ps2_drivers_img_requirements_for_path(
+        cwd,
+        additional_requirements,
+        requirements);
+}
 
 static uint32_t read_u32_le(const unsigned char *src)
 {
@@ -469,7 +576,111 @@ int ps2_drivers_img_stage(const char *image_path, uint32_t driver_requirements)
 
     free(g_image_path);
     g_image_path = image_path_copy;
+    g_last_requirements = driver_requirements;
     return PS2_DRIVERS_IMG_OK;
+}
+
+int ps2_drivers_img_stage_default(uint32_t driver_requirements)
+{
+    return ps2_drivers_img_stage(
+        PS2_DRIVERS_IMG_DEFAULT_PATH,
+        driver_requirements);
+}
+
+int ps2_drivers_img_stage_for_boot_device(
+    const char *image_path,
+    enum BootDeviceIDs boot_device,
+    uint32_t additional_requirements)
+{
+    uint32_t requirements;
+
+    if ((additional_requirements & ~PS2_DRIVER_REQ_KNOWN_MASK) != 0u)
+        return PS2_DRIVERS_IMG_ERR_ARGUMENT;
+
+    requirements =
+        ps2_drivers_img_requirements_for_boot_device(boot_device) |
+        additional_requirements;
+    return ps2_drivers_img_stage(image_path, requirements);
+}
+
+int ps2_drivers_img_stage_for_path(
+    const char *image_path,
+    const char *path,
+    uint32_t additional_requirements)
+{
+    uint32_t requirements;
+    int result;
+
+    result = ps2_drivers_img_requirements_for_path(
+        path,
+        additional_requirements,
+        &requirements);
+    if (result != PS2_DRIVERS_IMG_OK)
+        return result;
+
+    return ps2_drivers_img_stage(image_path, requirements);
+}
+
+int ps2_drivers_img_stage_for_current_boot(
+    const char *image_path,
+    uint32_t additional_requirements)
+{
+    uint32_t requirements;
+    int result;
+
+    result = ps2_drivers_img_requirements_for_current_boot(
+        additional_requirements,
+        &requirements);
+    if (result != PS2_DRIVERS_IMG_OK)
+        return result;
+
+    return ps2_drivers_img_stage(image_path, requirements);
+}
+
+int ps2_drivers_img_stage_for_all_filesystems(
+    const char *image_path,
+    uint32_t additional_requirements)
+{
+    if ((additional_requirements & ~PS2_DRIVER_REQ_KNOWN_MASK) != 0u)
+        return PS2_DRIVERS_IMG_ERR_ARGUMENT;
+
+    return ps2_drivers_img_stage(
+        image_path,
+        PS2_DRIVER_REQ_FILESYSTEM_ALL | additional_requirements);
+}
+
+int ps2_drivers_img_stage_default_for_boot_device(
+    enum BootDeviceIDs boot_device,
+    uint32_t additional_requirements)
+{
+    return ps2_drivers_img_stage_for_boot_device(
+        PS2_DRIVERS_IMG_DEFAULT_PATH,
+        boot_device,
+        additional_requirements);
+}
+
+int ps2_drivers_img_stage_default_for_path(
+    const char *path,
+    uint32_t additional_requirements)
+{
+    return ps2_drivers_img_stage_for_path(
+        PS2_DRIVERS_IMG_DEFAULT_PATH,
+        path,
+        additional_requirements);
+}
+
+int ps2_drivers_img_stage_default_for_current_boot(uint32_t additional_requirements)
+{
+    return ps2_drivers_img_stage_for_current_boot(
+        PS2_DRIVERS_IMG_DEFAULT_PATH,
+        additional_requirements);
+}
+
+int ps2_drivers_img_stage_default_for_all_filesystems(uint32_t additional_requirements)
+{
+    return ps2_drivers_img_stage_for_all_filesystems(
+        PS2_DRIVERS_IMG_DEFAULT_PATH,
+        additional_requirements);
 }
 
 int ps2_drivers_img_restage(uint32_t driver_requirements)
@@ -481,7 +692,21 @@ int ps2_drivers_img_restage(uint32_t driver_requirements)
     if (g_image_path == NULL)
         return PS2_DRIVERS_IMG_ERR_NO_SOURCE;
 
-    return stage_from_path(g_image_path, driver_requirements);
+    {
+        int result = stage_from_path(g_image_path, driver_requirements);
+
+        if (result == PS2_DRIVERS_IMG_OK)
+            g_last_requirements = driver_requirements;
+        return result;
+    }
+}
+
+int ps2_drivers_img_restage_last(void)
+{
+    if (g_image_path == NULL || g_last_requirements == 0u)
+        return PS2_DRIVERS_IMG_ERR_NO_SOURCE;
+
+    return ps2_drivers_img_restage(g_last_requirements);
 }
 
 void ps2_drivers_img_discard_staged(void)
@@ -497,6 +722,7 @@ void ps2_drivers_img_forget_source(void)
 {
     free(g_image_path);
     g_image_path = NULL;
+    g_last_requirements = 0u;
 }
 
 size_t ps2_drivers_img_staged_bytes(void)

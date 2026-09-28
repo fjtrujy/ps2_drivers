@@ -29,14 +29,17 @@ int main(int argc, char **argv)
     enum JOYSTICK_INIT_STATUS joystick_status;
 
 #ifdef PS2_DRIVERS_IMG_FLAVOR
-    const char *image_path = argc > 1 ? argv[1] : "ps2_drivers.irximg";
     int result;
 
     SifInitRpc(0);
 
-    result = ps2_drivers_img_stage(image_path, PS2_DRIVER_REQ_JOYSTICK);
+    result = argc > 1
+        ? ps2_drivers_img_stage(argv[1], PS2_DRIVER_REQ_JOYSTICK)
+        : ps2_drivers_img_stage_default(PS2_DRIVER_REQ_JOYSTICK);
     if (result != PS2_DRIVERS_IMG_OK) {
-        printf("ps2_drivers_img_stage(%s) failed: %d\n", image_path, result);
+        printf("ps2_drivers image staging failed: %s (%d)\n",
+               ps2_drivers_img_error_string(result),
+               result);
         return 1;
     }
 
@@ -74,9 +77,11 @@ int main(int argc, char **argv)
      */
     deinit_joystick_driver(true);
 
-    result = ps2_drivers_img_restage(PS2_DRIVER_REQ_JOYSTICK);
+    result = ps2_drivers_img_restage_last();
     if (result != PS2_DRIVERS_IMG_OK) {
-        printf("ps2_drivers_img_restage failed: %d\n", result);
+        printf("ps2_drivers_img_restage_last failed: %s (%d)\n",
+               ps2_drivers_img_error_string(result),
+               result);
         return 4;
     }
 

@@ -116,7 +116,7 @@ The required order is:
 
 1. link against `libps2_drivers_img.a`;
 2. deploy `ps2_drivers.irximg` beside the ELF and run with that directory as the current working directory;
-3. call `ps2_drivers_img_stage()` **before** resetting the IOP;
+3. call one of the `ps2_drivers_img_stage_*()` helpers **before** resetting the IOP;
 4. reset/sync the IOP and apply the usual SBV patches;
 5. call the existing `init_*_driver()` APIs normally.
 
@@ -126,8 +126,7 @@ For example:
 #include <ps2_drivers_img.h>
 #include <ps2_joystick_driver.h>
 
-if (ps2_drivers_img_stage(
-        "ps2_drivers.irximg",
+if (ps2_drivers_img_stage_default(
         PS2_DRIVER_REQ_JOYSTICK) != PS2_DRIVERS_IMG_OK) {
     /* handle error before resetting the IOP */
 }
@@ -141,19 +140,45 @@ if (init_joystick_driver(true) != JOYSTICK_INIT_STATUS_OK) {
 
 The staging API expands driver requirements into their transitive IRX dependencies and deduplicates them. Each module's temporary EE buffer is freed immediately after its `SifExecModuleBuffer()` call returns.
 
+For applications that use `init_only_boot_ps2_filesystem_driver()`, there is no need to duplicate boot-device detection or filesystem dependency logic. Stage the current boot filesystem plus only the application's additional drivers:
+
+```c
+if (ps2_drivers_img_stage_default_for_current_boot(
+        PS2_DRIVER_REQ_AUDIO |
+        PS2_DRIVER_REQ_JOYSTICK) != PS2_DRIVERS_IMG_OK) {
+    /* handle error before resetting the IOP */
+}
+
+/* reset/sync the IOP and apply SBV patches */
+
+init_only_boot_ps2_filesystem_driver();
+init_audio_driver();
+init_joystick_driver(true);
+```
+
+If the application uses `init_ps2_filesystem_driver()` instead, use `ps2_drivers_img_stage_default_for_all_filesystems(additional_requirements)`.
+
+The convenience API also provides:
+
+- `ps2_drivers_img_stage_default()` for an explicit requirement set using the standard relative image name;
+- `ps2_drivers_img_stage_for_boot_device()` and `ps2_drivers_img_stage_default_for_boot_device()` when the boot device is already known;
+- `ps2_drivers_img_stage_for_path()` and `ps2_drivers_img_stage_default_for_path()` when a launch path is already known;
+- `ps2_drivers_img_requirements_for_boot_device()`, `ps2_drivers_img_requirements_for_path()`, and `ps2_drivers_img_requirements_for_current_boot()` when an application only wants the resolved mask.
+- `ps2_drivers_img_error_string()` for readable diagnostics without duplicating the error-code switch.
+
 After a successful initial stage, the image flavor remembers only the image path. If a driver genuinely unloads its IOP modules and later needs to initialize them again, call:
 
 ```c
 deinit_joystick_driver(true);
 
-if (ps2_drivers_img_restage(PS2_DRIVER_REQ_JOYSTICK) != PS2_DRIVERS_IMG_OK) {
+if (ps2_drivers_img_restage_last() != PS2_DRIVERS_IMG_OK) {
     /* the remembered image source must currently be accessible */
 }
 
 init_joystick_driver(true);
 ```
 
-`ps2_drivers_img_restage()` reopens the remembered image and recreates only the requested temporary staging buffers. It does not retain IRX payloads between initializations. `ps2_drivers_img_discard_staged()` clears temporary buffers while preserving the remembered source path; call `ps2_drivers_img_forget_source()` when the path should also be released.
+`ps2_drivers_img_restage_last()` repeats the last successful staging request. `ps2_drivers_img_restage(requirements)` remains available when a different set is needed. Neither retains IRX payloads between initializations. `ps2_drivers_img_discard_staged()` clears temporary buffers while preserving the remembered source path; call `ps2_drivers_img_forget_source()` when the path should also be released.
 
 The API deliberately uses a relative filename rather than a concrete device prefix. The current convention is that `ps2_drivers.irximg` lives beside the ELF and that the ELF directory is the process working directory. An IOP reset may remove the filesystem/device stack that made that directory accessible, so initial staging must still happen before reset. A later explicit restage is only possible once the same relative path is accessible again.
 
