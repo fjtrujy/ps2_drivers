@@ -26,8 +26,8 @@
 
 #define IOPIP_DEFAULT_TIMEOUT_SECONDS 10
 
-EXTERN_IRX(ps2ips_irx);
-EXTERN_IRX(ps2ip_nm_irx);
+EXTERN_PS2_IRX_MODULE(ps2ips);
+EXTERN_PS2_IRX_MODULE(ps2ip_nm);
 
 #ifdef F_internals_ps2_iopip_driver
 enum IOPIP_INIT_STATUS __iopip_init_status = IOPIP_INIT_STATUS_UNKNOWN;
@@ -43,14 +43,14 @@ EXTERN_IRX_VARS(ps2ips);
 static enum IOPIP_INIT_STATUS loadIRXs(void) {
     /* PS2IP_NM.IRX */
     if (CHECK_IRX_LOAD(ps2ip_nm)) {
-        __ps2ip_nm_id = SifExecModuleBuffer(&ps2ip_nm_irx, size_ps2ip_nm_irx, 0, NULL, &__ps2ip_nm_ret);
+        __ps2ip_nm_id = ps2_irx_exec(&ps2_irx_ps2ip_nm, 0, NULL, &__ps2ip_nm_ret);
         if (CHECK_IRX_ERR(ps2ip_nm))
             return IOPIP_INIT_STATUS_PS2IP_NM_IRX_ERROR;
     }
     
     /* PS2IPS.IRX */
     if (CHECK_IRX_LOAD(ps2ips)) {
-        __ps2ips_id = SifExecModuleBuffer(&ps2ips_irx, size_ps2ips_irx, 0, NULL, &__ps2ips_ret);
+        __ps2ips_id = ps2_irx_exec(&ps2_irx_ps2ips, 0, NULL, &__ps2ips_ret);
         if (CHECK_IRX_ERR(ps2ips))
             return IOPIP_INIT_STATUS_PS2IPS_IRX_ERROR;
     }

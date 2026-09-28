@@ -1,6 +1,8 @@
 #ifndef COMMON_MACROS_H
 #define COMMON_MACROS_H
 
+#include <ps2_irx_module.h>
+
 /// declare IRX ID and return value variables
 #define DECL_IRX_VARS(irx) \
     int32_t __##irx##_id = -1; \

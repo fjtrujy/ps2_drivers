@@ -20,7 +20,7 @@
 
 #include <netman.h>
 
-EXTERN_IRX(netman_irx);
+EXTERN_PS2_IRX_MODULE(netman);
 #ifdef F_internals_ps2_netman_driver
 enum NETMAN_INIT_STATUS __netman_init_status = NETMAN_INIT_STATUS_UNKNOWN;
 DECL_IRX_VARS(netman);
@@ -33,7 +33,7 @@ EXTERN_IRX_VARS(netman);
 static enum NETMAN_INIT_STATUS loadIRXs(void) {
     /* NETMAN.IRX */
     if (CHECK_IRX_LOAD(netman)) {
-        __netman_id = SifExecModuleBuffer(&netman_irx, size_netman_irx, 0, NULL, &__netman_ret);
+        __netman_id = ps2_irx_exec(&ps2_irx_netman, 0, NULL, &__netman_ret);
         if (CHECK_IRX_ERR(netman))
             return NETMAN_INIT_STATUS_IRX_ERROR;
     }

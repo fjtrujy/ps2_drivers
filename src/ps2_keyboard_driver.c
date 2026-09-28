@@ -20,7 +20,7 @@
 #include <loadfile.h>
 #include <libkbd.h>
 
-EXTERN_IRX(ps2kbd_irx);
+EXTERN_PS2_IRX_MODULE(ps2kbd);
 
 #ifdef F_internals_ps2_keyboard_driver
 enum KEYBOARD_INIT_STATUS __keyboard_init_status = KEYBOARD_INIT_STATUS_UNKNOWN;
@@ -40,7 +40,7 @@ static enum KEYBOARD_INIT_STATUS loadIRXs(bool init_dependencies) {
 
     /* PS2KBD.IRX */
     if (CHECK_IRX_LOAD(keyboard)) {
-        __keyboard_id = SifExecModuleBuffer(&ps2kbd_irx, size_ps2kbd_irx, 0, NULL, &__keyboard_ret);
+        __keyboard_id = ps2_irx_exec(&ps2_irx_ps2kbd, 0, NULL, &__keyboard_ret);
         if (CHECK_IRX_ERR(keyboard))
             return KEYBOARD_INIT_STATUS_IRX_ERROR;
     }

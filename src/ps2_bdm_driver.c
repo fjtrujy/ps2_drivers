@@ -18,8 +18,8 @@
 #include <sifrpc.h>
 #include <loadfile.h>
 
-EXTERN_IRX(bdm_irx);
-EXTERN_IRX(bdmfs_fatfs_irx);
+EXTERN_PS2_IRX_MODULE(bdm);
+EXTERN_PS2_IRX_MODULE(bdmfs_fatfs);
 #ifdef F_internals_ps2_bdm_driver
 enum BDM_INIT_STATUS __bdm_init_status = BDM_INIT_STATUS_UNKNOWN;
 DECL_IRX_VARS(bdm);
@@ -34,14 +34,14 @@ EXTERN_IRX_VARS(bdmfs_fatfs);
 static enum BDM_INIT_STATUS loadIRXs(void) {
     /* BDM.IRX */
     if (CHECK_IRX_LOAD(bdm)) {
-        __bdm_id = SifExecModuleBuffer(&bdm_irx, size_bdm_irx, 0, NULL, &__bdm_ret);
+        __bdm_id = ps2_irx_exec(&ps2_irx_bdm, 0, NULL, &__bdm_ret);
         if (CHECK_IRX_ERR(bdm))
             return BDM_INIT_STATUS_IRX_ERROR;
     }
 
     /* BDMFS_FATFS.IRX */
     if (CHECK_IRX_LOAD(bdmfs_fatfs)) {
-        __bdmfs_fatfs_id = SifExecModuleBuffer(&bdmfs_fatfs_irx, size_bdmfs_fatfs_irx, 0, NULL, &__bdmfs_fatfs_ret);
+        __bdmfs_fatfs_id = ps2_irx_exec(&ps2_irx_bdmfs_fatfs, 0, NULL, &__bdmfs_fatfs_ret);
         if (CHECK_IRX_ERR(bdmfs_fatfs))
             return BDM_INIT_STATUS_IRX_FATFS_ERROR;
     }

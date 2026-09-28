@@ -22,7 +22,7 @@
 #include <fileXio_rpc.h>
 #include <hdd-ioctl.h>
 
-EXTERN_IRX(ps2dev9_irx);
+EXTERN_PS2_IRX_MODULE(ps2dev9);
 
 #ifdef F_internals_ps2_dev9_driver
 enum DEV9_INIT_STATUS __dev9_init_status = DEV9_INIT_STATUS_UNKNOWN;
@@ -36,7 +36,7 @@ EXTERN_IRX_VARS(ps2dev9);
 static enum DEV9_INIT_STATUS loadIRXs(void) {
     /* PS2DEV9.IRX */
     if (CHECK_IRX_LOAD(ps2dev9)) {
-        __ps2dev9_id = SifExecModuleBuffer(&ps2dev9_irx, size_ps2dev9_irx, 0, NULL, &__ps2dev9_ret);
+        __ps2dev9_id = ps2_irx_exec(&ps2_irx_ps2dev9, 0, NULL, &__ps2dev9_ret);
         if (CHECK_IRX_ERR(ps2dev9))
             return DEV9_INIT_STATUS_IRX_ERROR;
     }

@@ -19,7 +19,7 @@
 #include <loadfile.h>
 #include <libpwroff.h>
 
-EXTERN_IRX(poweroff_irx);
+EXTERN_PS2_IRX_MODULE(poweroff);
 #ifdef F_internals_ps2_poweroff_driver
 enum POWEROFF_INIT_STATUS __poweroff_init_status = POWEROFF_INIT_STATUS_UNKNOWN;
 DECL_IRX_VARS(poweroff);
@@ -32,7 +32,7 @@ EXTERN_IRX_VARS(poweroff);
 static enum POWEROFF_INIT_STATUS loadIRXs(void) {
     /* POWEROFF.IRX */
     if (CHECK_IRX_LOAD(poweroff)) {
-        __poweroff_id = SifExecModuleBuffer(&poweroff_irx, size_poweroff_irx, 0, NULL, &__poweroff_ret);
+        __poweroff_id = ps2_irx_exec(&ps2_irx_poweroff, 0, NULL, &__poweroff_ret);
         if (CHECK_IRX_ERR(poweroff))
             return POWEROFF_INIT_STATUS_IRX_ERROR;
     }

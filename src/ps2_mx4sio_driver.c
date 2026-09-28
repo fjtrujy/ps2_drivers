@@ -20,7 +20,7 @@
 #include <sifrpc.h>
 #include <loadfile.h>
 
-EXTERN_IRX(mx4sio_bd_irx);
+EXTERN_PS2_IRX_MODULE(mx4sio_bd);
 
 #ifdef F_internals_ps2_mx4sio_driver
 enum MX4SIO_INIT_STATUS __mx4sio_init_status = MX4SIO_INIT_STATUS_UNKNOWN;
@@ -57,7 +57,7 @@ static enum MX4SIO_INIT_STATUS loadIRXs(void) {
         return MX4SIO_INIT_STATUS_IRX_NOT_SUPPORTED;
 
     if (CHECK_IRX_LOAD(mx4sio_bd)) {
-        __mx4sio_bd_id = SifExecModuleBuffer(&mx4sio_bd_irx, size_mx4sio_bd_irx, 0, NULL, &__mx4sio_bd_ret);
+        __mx4sio_bd_id = ps2_irx_exec(&ps2_irx_mx4sio_bd, 0, NULL, &__mx4sio_bd_ret);
         if (CHECK_IRX_ERR(mx4sio_bd))
             return MX4SIO_INIT_STATUS_IRX_ERROR;
     }

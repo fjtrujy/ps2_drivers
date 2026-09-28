@@ -21,8 +21,8 @@
 #include <sifrpc.h>
 #include <loadfile.h>
 
-EXTERN_IRX(bdmfs_fatfs_irx);
-EXTERN_IRX(usbmass_bd_irx);
+EXTERN_PS2_IRX_MODULE(bdmfs_fatfs);
+EXTERN_PS2_IRX_MODULE(usbmass_bd);
 
 #ifdef F_internals_ps2_usb_driver
 enum USB_INIT_STATUS __usb_init_status = USB_INIT_STATUS_UNKNOWN;
@@ -36,7 +36,7 @@ EXTERN_IRX_VARS(usbmass_bd);
 static enum USB_INIT_STATUS loadIRXs(void) {
     /* USBMASS_BD.IRX */
     if (CHECK_IRX_LOAD(usbmass_bd)) {
-        __usbmass_bd_id = SifExecModuleBuffer(&usbmass_bd_irx, size_usbmass_bd_irx, 0, NULL, &__usbmass_bd_ret);
+        __usbmass_bd_id = ps2_irx_exec(&ps2_irx_usbmass_bd, 0, NULL, &__usbmass_bd_ret);
         if (CHECK_IRX_ERR(usbmass_bd))
             return USB_INIT_STATUS_USBMASS_BD_IRX_ERROR;
     }

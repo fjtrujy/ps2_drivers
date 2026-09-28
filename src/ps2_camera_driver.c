@@ -21,7 +21,7 @@
 #include <irx_common_macros.h>
 
 /* References to PSCAM.IRX */
-EXTERN_IRX(ps2cam_irx);
+EXTERN_PS2_IRX_MODULE(ps2cam);
 
 #ifdef F_internals_ps2_camera_driver
 enum CAMERA_INIT_STATUS __camera_init_status = CAMERA_INIT_STATUS_UNKNOWN;
@@ -41,7 +41,7 @@ static enum CAMERA_INIT_STATUS loadIRXs(bool init_dependencies) {
 
     /* PSCAM.IRX */
     if (CHECK_IRX_LOAD(camera)) {
-        __camera_id = SifExecModuleBuffer(&ps2cam_irx, size_ps2cam_irx, 0, NULL, &__camera_ret);
+        __camera_id = ps2_irx_exec(&ps2_irx_ps2cam, 0, NULL, &__camera_ret);
         if (CHECK_IRX_ERR(camera))
             return CAMERA_INIT_STATUS_IRX_ERROR;
     }

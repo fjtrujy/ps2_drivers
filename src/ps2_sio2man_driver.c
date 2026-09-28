@@ -18,7 +18,7 @@
 #include <sifrpc.h>
 #include <loadfile.h>
 
-EXTERN_IRX(sio2man_irx);
+EXTERN_PS2_IRX_MODULE(sio2man);
 #ifdef F_internals_ps2_sio2man_driver
 enum SIO2MAN_INIT_STATUS __sio2man_init_status = SIO2MAN_INIT_STATUS_UNKNOWN;
 DECL_IRX_VARS(sio2man);
@@ -31,7 +31,7 @@ EXTERN_IRX_VARS(sio2man);
 static enum SIO2MAN_INIT_STATUS loadIRXs(void) {
     /* SIO2MAN.IRX */
     if (CHECK_IRX_LOAD(sio2man)) {
-        __sio2man_id = SifExecModuleBuffer(&sio2man_irx, size_sio2man_irx, 0, NULL, &__sio2man_ret);
+        __sio2man_id = ps2_irx_exec(&ps2_irx_sio2man, 0, NULL, &__sio2man_ret);
         if (CHECK_IRX_ERR(sio2man))
             return SIO2MAN_INIT_STATUS_IRX_ERROR;
     }

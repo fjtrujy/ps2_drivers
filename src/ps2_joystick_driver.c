@@ -22,8 +22,8 @@
 #include <libmtap.h>
 #include <libpad.h>
 
-EXTERN_IRX(mtapman_irx);
-EXTERN_IRX(padman_irx);
+EXTERN_PS2_IRX_MODULE(mtapman);
+EXTERN_PS2_IRX_MODULE(padman);
 
 
 #ifdef F_internals_ps2_joystick_driver
@@ -40,14 +40,14 @@ EXTERN_IRX_VARS(padman);
 static enum JOYSTICK_INIT_STATUS loadIRXs(void) {
     /* MTAPMAN.IRX */
     if (CHECK_IRX_LOAD(mtapman)) {
-        __mtapman_id = SifExecModuleBuffer(&mtapman_irx, size_mtapman_irx, 0, NULL, &__mtapman_ret);
+        __mtapman_id = ps2_irx_exec(&ps2_irx_mtapman, 0, NULL, &__mtapman_ret);
         if (CHECK_IRX_ERR(mtapman))
             return JOYSTICK_INIT_STATUS_MTAP_IRX_ERROR;
     }
 
     /* PADMAN.IRX */
     if (CHECK_IRX_LOAD(padman)) {
-        __padman_id = SifExecModuleBuffer(&padman_irx, size_padman_irx, 0, NULL, &__padman_ret);
+        __padman_id = ps2_irx_exec(&ps2_irx_padman, 0, NULL, &__padman_ret);
         if (CHECK_IRX_ERR(padman))
             return JOYSTICK_INIT_STATUS_PAD_IRX_ERROR;
     }

@@ -7,7 +7,7 @@ target_include_directories(select_test_ee.elf PRIVATE
 )
 
 target_link_libraries(select_test_ee.elf
-    -lps2_drivers
+    ${CMAKE_BINARY_DIR}/${EE_LIB_COMBINED}
     -lpatches
     -ldebug
 )

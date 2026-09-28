@@ -45,7 +45,7 @@ Most drivers accept a `bool` parameter to automatically initialize their depende
 
 ## BUILDING
 
-This library uses CMake as its build system. You need to have PS2DEV and PS2SDK properly set up before building.
+This library uses CMake as its build system. You need to have PS2DEV and PS2SDK properly set up before building, plus a native host C compiler (`cc`, `gcc`, or `clang`) for the IRX image tooling.
 
 ### Prerequisites
 
@@ -86,9 +86,101 @@ cmake .. -DBUILD_SAMPLES=OFF
 
 The build process will generate:
 - `libps2_drivers.a` - The main library combining all drivers and PS2SDK libraries
+- `libps2_drivers_img.a` - External-image flavor with no embedded IRX payload arrays
+- `ps2_drivers.irximg` - A deterministic, validated container with the canonical IRX set
 - Sample executables in `build/samples/*/` directories (if BUILD_SAMPLES=ON)
 
-After installation, the library will be available at `$PS2SDK/ports/lib/` and headers at `$PS2SDK/ports/include/`.
+The current `libps2_drivers.a` behavior is unchanged and still embeds the IRX payloads selected by the final application link. The optional `libps2_drivers_img.a` flavor keeps those payloads out of the ELF and loads them from `ps2_drivers.irximg` through temporary EE staging memory.
+
+The image tooling can be checked explicitly with:
+
+```bash
+cmake --build . --target ps2_drivers_irximg_check
+cmake --build . --target ps2_drivers_irximg_stage_check
+cmake --build . --target ps2_drivers_irximg_inspect
+cmake --build . --target ps2_drivers_img_payload_check
+```
+
+After installation:
+
+- both libraries are under `$PS2SDK/ports/lib/`;
+- headers are under `$PS2SDK/ports/include/`;
+- pkg-config metadata is available as `ps2_drivers` and `ps2_drivers-img`;
+- the companion image is installed at `$PS2SDK/ports/share/ps2_drivers/ps2_drivers.irximg`.
+
+### External IRX image flavor
+
+The external flavor is useful when EE RAM is more valuable than keeping IRX source bytes permanently embedded in the application ELF.
+
+The required order is:
+
+1. link against `libps2_drivers_img.a`;
+2. deploy `ps2_drivers.irximg` beside the ELF and run with that directory as the current working directory;
+3. call one of the `ps2_drivers_img_stage_*()` helpers **before** resetting the IOP;
+4. reset/sync the IOP and apply the usual SBV patches;
+5. call the existing `init_*_driver()` APIs normally.
+
+For example:
+
+```c
+#include <ps2_drivers_img.h>
+#include <ps2_joystick_driver.h>
+
+if (ps2_drivers_img_stage_default(
+        PS2_DRIVER_REQ_JOYSTICK) != PS2_DRIVERS_IMG_OK) {
+    /* handle error before resetting the IOP */
+}
+
+/* SifIopReset / SifIopSync / SifInitRpc / SBV patches */
+
+if (init_joystick_driver(true) != JOYSTICK_INIT_STATUS_OK) {
+    /* handle driver initialization error */
+}
+```
+
+The staging API expands driver requirements into their transitive IRX dependencies and deduplicates them. Each module's temporary EE buffer is freed immediately after its `SifExecModuleBuffer()` call returns.
+
+For applications that use `init_only_boot_ps2_filesystem_driver()`, there is no need to duplicate boot-device detection or filesystem dependency logic. Stage the current boot filesystem plus only the application's additional drivers:
+
+```c
+if (ps2_drivers_img_stage_default_for_current_boot(
+        PS2_DRIVER_REQ_AUDIO |
+        PS2_DRIVER_REQ_JOYSTICK) != PS2_DRIVERS_IMG_OK) {
+    /* handle error before resetting the IOP */
+}
+
+/* reset/sync the IOP and apply SBV patches */
+
+init_only_boot_ps2_filesystem_driver();
+init_audio_driver();
+init_joystick_driver(true);
+```
+
+If the application uses `init_ps2_filesystem_driver()` instead, use `ps2_drivers_img_stage_default_for_all_filesystems(additional_requirements)`.
+
+The convenience API also provides:
+
+- `ps2_drivers_img_stage_default()` for an explicit requirement set using the standard relative image name;
+- `ps2_drivers_img_stage_for_boot_device()` and `ps2_drivers_img_stage_default_for_boot_device()` when the boot device is already known;
+- `ps2_drivers_img_stage_for_path()` and `ps2_drivers_img_stage_default_for_path()` when a launch path is already known;
+- `ps2_drivers_img_requirements_for_boot_device()`, `ps2_drivers_img_requirements_for_path()`, and `ps2_drivers_img_requirements_for_current_boot()` when an application only wants the resolved mask.
+- `ps2_drivers_img_error_string()` for readable diagnostics without duplicating the error-code switch.
+
+After a successful initial stage, the image flavor remembers only the image path. If a driver genuinely unloads its IOP modules and later needs to initialize them again, call:
+
+```c
+deinit_joystick_driver(true);
+
+if (ps2_drivers_img_restage_last() != PS2_DRIVERS_IMG_OK) {
+    /* the remembered image source must currently be accessible */
+}
+
+init_joystick_driver(true);
+```
+
+`ps2_drivers_img_restage_last()` repeats the last successful staging request. `ps2_drivers_img_restage(requirements)` remains available when a different set is needed. Neither retains IRX payloads between initializations. `ps2_drivers_img_discard_staged()` clears temporary buffers while preserving the remembered source path; call `ps2_drivers_img_forget_source()` when the path should also be released.
+
+The API deliberately uses a relative filename rather than a concrete device prefix. The current convention is that `ps2_drivers.irximg` lives beside the ELF and that the ELF directory is the process working directory. An IOP reset may remove the filesystem/device stack that made that directory accessible, so initial staging must still happen before reset. A later explicit restage is only possible once the same relative path is accessible again.
 
 ## EXAMPLE
 
