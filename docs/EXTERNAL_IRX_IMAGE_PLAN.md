@@ -10,6 +10,13 @@ The new flavor will instead ship a companion `ps2_drivers.irximg` file containin
 
 This is intended to reduce steady-state EE memory consumption without changing the public driver initialization APIs.
 
+## Implementation status
+
+- E0 - Baseline and measurements: complete. See `docs/EXTERNAL_IRX_IMAGE_BASELINE.md`.
+- E1 - Canonical manifest and image packer: complete. The build now generates and validates a deterministic `ps2_drivers.irximg` from `irx/manifest.txt`.
+- E2 - Module descriptor abstraction: next.
+- E3-E7: pending.
+
 ## Why the idea is viable
 
 PS2SDK's current `SifExecModuleBuffer()` implementation:

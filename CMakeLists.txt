@@ -89,18 +89,15 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 # Function: add_irx_source
 # Converts an IRX file to a C source file using bin2c
 # ============================================================================
-function(add_irx_source irx_name output_var)
-    set(irx_path "${PS2SDK}/iop/irx/${irx_name}.irx")
-    # IRX file names may contain hyphens (ps2ip-nm.irx); the resulting C
-    # symbol must use underscores (ps2ip_nm_irx) to be a valid identifier.
-    string(REPLACE "-" "_" irx_symbol "${irx_name}")
-    set(output_c "${CMAKE_CURRENT_BINARY_DIR}/${irx_symbol}_irx.c")
+function(add_irx_source irx_filename irx_symbol output_var)
+    set(irx_path "${PS2SDK}/iop/irx/${irx_filename}")
+    set(output_c "${CMAKE_CURRENT_BINARY_DIR}/${irx_symbol}.c")
 
     add_custom_command(
         OUTPUT ${output_c}
-        COMMAND ${BIN2C} ${irx_path} ${output_c} ${irx_symbol}_irx
+        COMMAND ${BIN2C} ${irx_path} ${output_c} ${irx_symbol}
         DEPENDS ${irx_path}
-        COMMENT "Converting ${irx_name}.irx to C source"
+        COMMENT "Converting ${irx_filename} to C source"
         VERBATIM
     )
 
@@ -128,64 +125,98 @@ function(add_driver_objects driver_name)
 endfunction()
 
 # ============================================================================
-# Generate IRX source files
+# Generate IRX source files from the canonical manifest
 # ============================================================================
-add_irx_source(sio2man SIO2MAN_IRX)
-add_irx_source(iomanX IOMANX_IRX)
-add_irx_source(fileXio FILEXIO_IRX)
-add_irx_source(mcman MCMAN_IRX)
-add_irx_source(mcserv MCSERV_IRX)
-add_irx_source(bdm BDM_IRX)
-add_irx_source(bdmfs_fatfs BDMFS_FATFS_IRX)
-add_irx_source(usbd USBD_IRX)
-add_irx_source(usbmass_bd USBMASS_BD_IRX)
-add_irx_source(mx4sio_bd MX4SIO_BD_IRX)
-add_irx_source(cdfs CDFS_IRX)
-add_irx_source(ps2dev9 PS2DEV9_IRX)
-add_irx_source(ps2atad PS2ATAD_IRX)
-add_irx_source(ps2hdd PS2HDD_IRX)
-add_irx_source(ps2fs PS2FS_IRX)
-add_irx_source(mtapman MTAPMAN_IRX)
-add_irx_source(padman PADMAN_IRX)
-add_irx_source(libsd LIBSD_IRX)
-add_irx_source(audsrv AUDSRV_IRX)
-add_irx_source(poweroff POWEROFF_IRX)
-add_irx_source(ps2mouse PS2MOUSE_IRX)
-add_irx_source(ps2kbd PS2KBD_IRX)
-add_irx_source(ps2cam PS2CAM_IRX)
-add_irx_source(netman NETMAN_IRX)
-add_irx_source(smap SMAP_IRX)
-add_irx_source(ps2ip-nm PS2IP_NM_IRX)
-add_irx_source(ps2ips PS2IPS_IRX)
+set(IRX_MANIFEST "${CMAKE_SOURCE_DIR}/irx/manifest.txt")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${IRX_MANIFEST}")
+file(STRINGS "${IRX_MANIFEST}" IRX_MANIFEST_LINES)
 
-set(IRX_SOURCES
-    ${SIO2MAN_IRX}
-    ${IOMANX_IRX}
-    ${FILEXIO_IRX}
-    ${MCMAN_IRX}
-    ${MCSERV_IRX}
-    ${BDM_IRX}
-    ${BDMFS_FATFS_IRX}
-    ${USBD_IRX}
-    ${USBMASS_BD_IRX}
-    ${MX4SIO_BD_IRX}
-    ${CDFS_IRX}
-    ${PS2DEV9_IRX}
-    ${PS2ATAD_IRX}
-    ${PS2HDD_IRX}
-    ${PS2FS_IRX}
-    ${MTAPMAN_IRX}
-    ${PADMAN_IRX}
-    ${LIBSD_IRX}
-    ${AUDSRV_IRX}
-    ${POWEROFF_IRX}
-    ${PS2MOUSE_IRX}
-    ${PS2KBD_IRX}
-    ${PS2CAM_IRX}
-    ${NETMAN_IRX}
-    ${SMAP_IRX}
-    ${PS2IP_NM_IRX}
-    ${PS2IPS_IRX}
+set(IRX_SOURCES "")
+set(IRX_INPUTS "")
+
+foreach(irx_manifest_line IN LISTS IRX_MANIFEST_LINES)
+    string(STRIP "${irx_manifest_line}" irx_manifest_line)
+    if(irx_manifest_line STREQUAL "" OR irx_manifest_line MATCHES "^#")
+        continue()
+    endif()
+
+    string(REPLACE "|" ";" irx_manifest_fields "${irx_manifest_line}")
+    list(LENGTH irx_manifest_fields irx_manifest_field_count)
+    if(NOT irx_manifest_field_count EQUAL 4)
+        message(FATAL_ERROR "Invalid IRX manifest entry: ${irx_manifest_line}")
+    endif()
+
+    list(GET irx_manifest_fields 1 irx_filename)
+    list(GET irx_manifest_fields 2 irx_symbol)
+
+    add_irx_source("${irx_filename}" "${irx_symbol}" generated_irx_source)
+    list(APPEND IRX_SOURCES "${generated_irx_source}")
+    list(APPEND IRX_INPUTS "${PS2SDK}/iop/irx/${irx_filename}")
+endforeach()
+
+if(NOT IRX_SOURCES)
+    message(FATAL_ERROR "IRX manifest contains no modules: ${IRX_MANIFEST}")
+endif()
+
+# ============================================================================
+# Build the host-side IRX image tool and versioned companion image
+# ============================================================================
+find_program(PS2_DRIVERS_HOST_C_COMPILER NAMES cc gcc clang)
+if(NOT PS2_DRIVERS_HOST_C_COMPILER)
+    message(FATAL_ERROR "A host C compiler (cc, gcc, or clang) is required to build ps2_irximg_tool")
+endif()
+
+set(IRXIMG_TOOL_DIR "${CMAKE_CURRENT_BINARY_DIR}/host-tools")
+set(IRXIMG_TOOL "${IRXIMG_TOOL_DIR}/ps2_irximg_tool")
+set(IRXIMG_TOOL_SOURCE "${CMAKE_SOURCE_DIR}/tools/ps2_irximg.c")
+set(IRX_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/ps2_drivers.irximg")
+set(IRX_IMAGE_DETERMINISM "${CMAKE_CURRENT_BINARY_DIR}/ps2_drivers.determinism.irximg")
+
+add_custom_command(
+    OUTPUT "${IRXIMG_TOOL}"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${IRXIMG_TOOL_DIR}"
+    COMMAND ${PS2_DRIVERS_HOST_C_COMPILER}
+        -std=c99
+        -O2
+        -Wall
+        -Wextra
+        -Werror
+        "${IRXIMG_TOOL_SOURCE}"
+        -o "${IRXIMG_TOOL}"
+    DEPENDS "${IRXIMG_TOOL_SOURCE}"
+    COMMENT "Building host ps2_irximg_tool"
+    VERBATIM
+)
+
+add_custom_command(
+    OUTPUT "${IRX_IMAGE}"
+    COMMAND "${IRXIMG_TOOL}" pack "${IRX_MANIFEST}" "${PS2SDK}/iop/irx" "${IRX_IMAGE}"
+    COMMAND "${IRXIMG_TOOL}" validate "${IRX_MANIFEST}" "${IRX_IMAGE}"
+    DEPENDS "${IRXIMG_TOOL}" "${IRX_MANIFEST}" ${IRX_INPUTS}
+    COMMENT "Packing ps2_drivers.irximg"
+    VERBATIM
+)
+
+add_custom_target(ps2_drivers_irximg ALL
+    DEPENDS "${IRX_IMAGE}"
+)
+
+add_custom_target(ps2_drivers_irximg_check
+    COMMAND "${IRXIMG_TOOL}" pack "${IRX_MANIFEST}" "${PS2SDK}/iop/irx" "${IRX_IMAGE_DETERMINISM}"
+    COMMAND "${IRXIMG_TOOL}" validate "${IRX_MANIFEST}" "${IRX_IMAGE_DETERMINISM}"
+    COMMAND ${CMAKE_COMMAND} -E compare_files "${IRX_IMAGE}" "${IRX_IMAGE_DETERMINISM}"
+    COMMAND ${CMAKE_COMMAND} -E remove -f "${IRX_IMAGE_DETERMINISM}"
+    DEPENDS "${IRX_IMAGE}" "${IRXIMG_TOOL}" "${IRX_MANIFEST}" ${IRX_INPUTS}
+    COMMENT "Checking deterministic IRX image generation"
+    VERBATIM
+)
+
+add_custom_target(ps2_drivers_irximg_inspect
+    COMMAND "${IRXIMG_TOOL}" inspect "${IRX_MANIFEST}" "${IRX_IMAGE}"
+    DEPENDS "${IRX_IMAGE}" "${IRXIMG_TOOL}" "${IRX_MANIFEST}"
+    COMMENT "Inspecting ps2_drivers.irximg"
+    USES_TERMINAL
+    VERBATIM
 )
 
 # ============================================================================
@@ -414,5 +445,6 @@ message(STATUS "ps2_drivers configuration:")
 message(STATUS "  Version: ${PROJECT_VERSION}")
 message(STATUS "  Build samples: ${BUILD_SAMPLES}")
 message(STATUS "  Output library: ${EE_LIB_COMBINED}")
+message(STATUS "  IRX image: ${IRX_IMAGE}")
 message(STATUS "  Install prefix: ${PS2SDK}/ports")
 message(STATUS "")

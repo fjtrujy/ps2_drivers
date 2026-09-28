@@ -45,7 +45,7 @@ Most drivers accept a `bool` parameter to automatically initialize their depende
 
 ## BUILDING
 
-This library uses CMake as its build system. You need to have PS2DEV and PS2SDK properly set up before building.
+This library uses CMake as its build system. You need to have PS2DEV and PS2SDK properly set up before building, plus a native host C compiler (`cc`, `gcc`, or `clang`) for the IRX image tooling.
 
 ### Prerequisites
 
@@ -86,7 +86,17 @@ cmake .. -DBUILD_SAMPLES=OFF
 
 The build process will generate:
 - `libps2_drivers.a` - The main library combining all drivers and PS2SDK libraries
+- `ps2_drivers.irximg` - A deterministic, validated container with the canonical IRX set
 - Sample executables in `build/samples/*/` directories (if BUILD_SAMPLES=ON)
+
+The current `libps2_drivers.a` behavior is unchanged and still embeds the IRX payloads selected by the final application link. The image is the build-time foundation for the optional external-image flavor described in `docs/EXTERNAL_IRX_IMAGE_PLAN.md`.
+
+The image tooling can be checked explicitly with:
+
+```bash
+cmake --build . --target ps2_drivers_irximg_check
+cmake --build . --target ps2_drivers_irximg_inspect
+```
 
 After installation, the library will be available at `$PS2SDK/ports/lib/` and headers at `$PS2SDK/ports/include/`.
 
