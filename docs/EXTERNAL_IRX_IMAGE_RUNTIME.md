@@ -8,9 +8,11 @@ This document records E5/E6 validation for the external IRX image flavor.
 - Branch: `external-irx-image`
 - PS2 toolchain: `/Users/fjtrujy/toolchains/ps2/ps2dev`
 - PCSX2: v2.9.91
-- Runtime image source used by emulator tests: `host:ps2_drivers.irximg`
+- Runtime image source used by emulator tests: relative `ps2_drivers.irximg`, placed beside the ELF.
 
-The `host:` source is intentionally useful for emulator validation because it remains accessible after the IOP reset. It does **not** prove that USB, MX4SIO, HDD/PFS, optical-disc, or memory-card sources remain accessible after reset; those devices still require the image to be staged before resetting the IOP.
+The runtime API deliberately does not encode a concrete device prefix. The current convention is that the ELF directory is the process working directory and the image is opened by relative filename. Emulator validation of that convention does **not** prove that every real-hardware filesystem remains accessible after reset; the image still has to be staged before resetting the IOP.
+
+PCSX2 v2.9.91 was run from the sample output directory with no image-path argument. The default relative `ps2_drivers.irximg` was found beside the ELF, and the subsequent IOP reset successfully loaded `sio2man`, `mtapman`, and `padman` from the staged data.
 
 ## E5 dependency-closure coverage
 
@@ -57,7 +59,7 @@ The dedicated `irximg_sample` was built against `libps2_drivers_img.a`. Its post
 
 Runtime sequence:
 
-1. open `host:ps2_drivers.irximg`;
+1. open relative `ps2_drivers.irximg` from the ELF directory;
 2. stage `PS2_DRIVER_REQ_JOYSTICK`;
 3. reset/sync the IOP and apply SBV patches;
 4. call `init_joystick_driver(true)`;
@@ -137,15 +139,8 @@ This validates the intended E6 semantics without retaining IRX bytes permanently
 
 The remaining E5 work is source-device validation on a real PS2. The runtime architecture is specifically designed so these tests do not require reopening the image immediately after reset.
 
-Still to validate on hardware where practical:
+Still to validate on hardware: the same relative `ps2_drivers.irximg` convention while booting from each practical filesystem environment supported by ps2_drivers.
 
-- `host:` through ps2link;
-- `mass:` USB;
-- `mx4sio:`;
-- `mc0:` / `mc1:`;
-- `cdfs:` / `cdrom0:`;
-- HDD/PFS.
-
-For each source the pass condition is: the complete required IRX set is staged before reset, initialization succeeds after reset without reading the image again, and staged EE bytes return to zero after module execution.
+For each environment the pass condition is: the image is placed beside the ELF, the ELF directory is the working directory, the complete required IRX set is staged before reset, initialization succeeds after reset without reading the image again, and staged EE bytes return to zero after module execution.
 
 Restaging after an unload is only available while the remembered image source is accessible at that moment. For media whose driver disappears across an IOP reset, applications may need to re-establish that filesystem stack before calling `ps2_drivers_img_restage()`, or avoid unloading modules they intend to use for the rest of the process.

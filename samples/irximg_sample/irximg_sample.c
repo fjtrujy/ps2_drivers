@@ -29,7 +29,7 @@ int main(int argc, char **argv)
     enum JOYSTICK_INIT_STATUS joystick_status;
 
 #ifdef PS2_DRIVERS_IMG_FLAVOR
-    const char *image_path = argc > 1 ? argv[1] : "host:ps2_drivers.irximg";
+    const char *image_path = argc > 1 ? argv[1] : "ps2_drivers.irximg";
     int result;
 
     SifInitRpc(0);
@@ -68,9 +68,9 @@ int main(int argc, char **argv)
         return 3;
 
     /*
-     * Exercise E6 explicitly. The image source is host: in this sample, so it
-     * remains available after the IOP reset and can be used to restage modules
-     * after they have been unloaded.
+     * Exercise E6 explicitly. This sample expects the image beside the ELF and
+     * therefore uses the same relative path again when restaging modules after
+     * they have been unloaded.
      */
     deinit_joystick_driver(true);
 

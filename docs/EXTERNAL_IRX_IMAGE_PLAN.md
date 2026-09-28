@@ -330,7 +330,7 @@ The minimum supported application sequence for the image flavor should be:
 
 ```c
 if (ps2_drivers_img_stage(
-        "mass:/ps2_drivers.irximg",
+        "ps2_drivers.irximg",
         PS2_DRIVER_REQ_FILEXIO |
         PS2_DRIVER_REQ_USB |
         PS2_DRIVER_REQ_JOYSTICK) < 0) {
@@ -483,16 +483,9 @@ Then test the all-filesystem profile.
 
 The main risk is not `SifExecModuleBuffer()`; it is whether the companion image can be read successfully before reset from each boot environment.
 
-Test at least:
+Test the same relative `ps2_drivers.irximg` path while booting the ELF from each practical filesystem environment supported by ps2_drivers.
 
-- host:/ps2link;
-- mass:/USB;
-- mx4sio:;
-- mc0:/mc1: where practical;
-- cdfs:/cdrom0:;
-- HDD/PFS.
-
-For each source, prove the image is completely staged before reset and that no post-reset access to the image is needed for the initial driver startup.
+For each environment, place the image beside the ELF, make the ELF directory the working directory, and prove that the image is completely staged before reset and that no post-reset access to the image is needed for the initial driver startup.
 
 ## Memory measurement
 
