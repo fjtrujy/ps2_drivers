@@ -141,7 +141,21 @@ if (init_joystick_driver(true) != JOYSTICK_INIT_STATUS_OK) {
 
 The staging API expands driver requirements into their transitive IRX dependencies and deduplicates them. Each module's temporary EE buffer is freed immediately after its `SifExecModuleBuffer()` call returns.
 
-Because those bytes are deliberately discarded, unloading an IOP module and later initializing it again may require calling `ps2_drivers_img_stage()` again while the image source is accessible.
+After a successful initial stage, the image flavor remembers only the image path. If a driver genuinely unloads its IOP modules and later needs to initialize them again, call:
+
+```c
+deinit_joystick_driver(true);
+
+if (ps2_drivers_img_restage(PS2_DRIVER_REQ_JOYSTICK) != PS2_DRIVERS_IMG_OK) {
+    /* the remembered image source must currently be accessible */
+}
+
+init_joystick_driver(true);
+```
+
+`ps2_drivers_img_restage()` reopens the remembered image and recreates only the requested temporary staging buffers. It does not retain IRX payloads between initializations. `ps2_drivers_img_discard_staged()` clears temporary buffers while preserving the remembered source path; call `ps2_drivers_img_forget_source()` when the path should also be released.
+
+For USB, MX4SIO, HDD/PFS, and similar sources, remember that an IOP reset may remove the filesystem/device stack needed to reopen the image. Initial staging must therefore happen before reset, and a later explicit restage is only possible when that source is accessible again.
 
 ## EXAMPLE
 

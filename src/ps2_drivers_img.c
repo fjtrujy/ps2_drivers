@@ -33,6 +33,7 @@ static struct ps2_irx_staged_module *g_staged_modules;
 static size_t g_staged_capacity;
 static size_t g_staged_count;
 static size_t g_staged_bytes;
+static char *g_image_path;
 
 static uint32_t read_u32_le(const unsigned char *src)
 {
@@ -321,7 +322,7 @@ static void free_staged_array(
     free(modules);
 }
 
-int ps2_drivers_img_stage(const char *image_path, uint32_t driver_requirements)
+static int stage_from_path(const char *image_path, uint32_t driver_requirements)
 {
     unsigned char requested[IRXIMG_MAX_ENTRIES + 1u] = {0};
     struct ps2_irx_image_entry *entries = NULL;
@@ -439,6 +440,50 @@ fail:
     return result;
 }
 
+int ps2_drivers_img_stage(const char *image_path, uint32_t driver_requirements)
+{
+    char *image_path_copy;
+    size_t image_path_size;
+    int result;
+
+    if (image_path == NULL ||
+        driver_requirements == 0u ||
+        (driver_requirements & ~PS2_DRIVER_REQ_KNOWN_MASK) != 0u)
+        return PS2_DRIVERS_IMG_ERR_ARGUMENT;
+
+    if (g_staged_modules != NULL || g_staged_count != 0u)
+        return PS2_DRIVERS_IMG_ERR_ALREADY_STAGED;
+
+    image_path_size = strlen(image_path) + 1u;
+    image_path_copy = (char *)malloc(image_path_size);
+    if (image_path_copy == NULL)
+        return PS2_DRIVERS_IMG_ERR_MEMORY;
+
+    memcpy(image_path_copy, image_path, image_path_size);
+
+    result = stage_from_path(image_path, driver_requirements);
+    if (result != PS2_DRIVERS_IMG_OK) {
+        free(image_path_copy);
+        return result;
+    }
+
+    free(g_image_path);
+    g_image_path = image_path_copy;
+    return PS2_DRIVERS_IMG_OK;
+}
+
+int ps2_drivers_img_restage(uint32_t driver_requirements)
+{
+    if (driver_requirements == 0u ||
+        (driver_requirements & ~PS2_DRIVER_REQ_KNOWN_MASK) != 0u)
+        return PS2_DRIVERS_IMG_ERR_ARGUMENT;
+
+    if (g_image_path == NULL)
+        return PS2_DRIVERS_IMG_ERR_NO_SOURCE;
+
+    return stage_from_path(g_image_path, driver_requirements);
+}
+
 void ps2_drivers_img_discard_staged(void)
 {
     free_staged_array(g_staged_modules, g_staged_capacity);
@@ -446,6 +491,12 @@ void ps2_drivers_img_discard_staged(void)
     g_staged_capacity = 0u;
     g_staged_count = 0u;
     g_staged_bytes = 0u;
+}
+
+void ps2_drivers_img_forget_source(void)
+{
+    free(g_image_path);
+    g_image_path = NULL;
 }
 
 size_t ps2_drivers_img_staged_bytes(void)

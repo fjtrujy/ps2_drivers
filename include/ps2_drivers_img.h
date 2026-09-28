@@ -46,10 +46,13 @@ enum ps2_drivers_img_error {
     PS2_DRIVERS_IMG_ERR_MISSING_MODULE = -6,
     PS2_DRIVERS_IMG_ERR_CRC = -7,
     PS2_DRIVERS_IMG_ERR_MEMORY = -8,
+    PS2_DRIVERS_IMG_ERR_NO_SOURCE = -9,
 };
 
 int ps2_drivers_img_stage(const char *image_path, uint32_t driver_requirements);
+int ps2_drivers_img_restage(uint32_t driver_requirements);
 void ps2_drivers_img_discard_staged(void);
+void ps2_drivers_img_forget_source(void);
 size_t ps2_drivers_img_staged_bytes(void);
 size_t ps2_drivers_img_staged_modules(void);
 

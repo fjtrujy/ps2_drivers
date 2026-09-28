@@ -17,8 +17,9 @@ This is intended to reduce steady-state EE memory consumption without changing t
 - E2 - Module descriptor abstraction: complete. Driver code now uses per-module descriptors plus a shared executor while preserving embedded IRX archive granularity.
 - E3 - External provider and staging API: complete at build/test level. Required driver sets expand to deduplicated IRX IDs, selected payloads are bounds/CRC checked and staged before reset, and each staged payload is released immediately after its module execution attempt.
 - E4 - Second archive flavor: complete at build/test level. `libps2_drivers_img.a`, `ps2_drivers-img.pc`, image installation, an external-flavor sample, and archive/ELF assertions that reject embedded IRX payload symbols are in place.
-- E5 - Filesystem and dependency coverage: build-time dependency-closure coverage is in place; PCSX2 and real-hardware boot-medium validation remains.
-- E6-E7: pending.
+- E5 - Filesystem and dependency coverage: every public driver requirement and the combined filesystem closure are covered by host staging tests. PCSX2 has validated the full stage -> reset -> execute -> release path for the joystick dependency set. Real-hardware boot-medium validation remains; see `docs/EXTERNAL_IRX_IMAGE_RUNTIME.md`.
+- E6 - Reinit semantics: complete at host/PCSX2 level. The provider retains only the successful image path, supports explicit `ps2_drivers_img_restage()`, and PCSX2 has validated unload -> restage -> reinitialize for sio2man/mtapman/padman without retaining IRX payloads.
+- E7: pending/optional.
 
 ## Why the idea is viable
 

@@ -28,6 +28,9 @@ add_dependencies(irximg_embedded_reference.elf ps2_drivers)
 add_custom_command(
     TARGET irximg_sample.elf
     POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${IRX_IMAGE}
+        $<TARGET_FILE_DIR:irximg_sample.elf>/ps2_drivers.irximg
     COMMAND ${CMAKE_COMMAND}
         -DNM=${CMAKE_NM}
         -DARTIFACT=$<TARGET_FILE:irximg_sample.elf>

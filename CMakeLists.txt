@@ -301,6 +301,7 @@ add_custom_command(
         -Wextra
         -Werror
         -I${CMAKE_SOURCE_DIR}/include
+        -I${CMAKE_SOURCE_DIR}/src
         -I${GENERATED_INCLUDE_DIR}
         "${CMAKE_SOURCE_DIR}/src/ps2_drivers_img.c"
         "${CMAKE_SOURCE_DIR}/tools/ps2_irximg_stage_test.c"
