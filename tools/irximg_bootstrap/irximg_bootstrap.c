@@ -103,10 +103,28 @@ static int read_default_target(char *path, size_t size)
     return path[0] != '\0' ? 0 : -1;
 }
 
+static int resolve_target_path(
+    const char *cwd, const char *target, char *resolved, size_t size)
+{
+    int length;
+
+    if (strchr(target, ':') != NULL) {
+        length = snprintf(resolved, size, "%s", target);
+    } else {
+        size_t cwd_length = strlen(cwd);
+        const char *separator =
+            cwd_length > 0 && cwd[cwd_length - 1] == '/' ? "" : "/";
+        length = snprintf(resolved, size, "%s%s%s", cwd, separator, target);
+    }
+
+    return length >= 0 && (size_t)length < size ? 0 : -1;
+}
+
 int main(int argc, char **argv)
 {
     char cwd[FILENAME_MAX];
     char configured_target[PATH_MAX];
+    char resolved_target[PATH_MAX];
     const char *target;
     int target_argc;
     char **target_argv;
@@ -136,7 +154,12 @@ int main(int argc, char **argv)
         target_argv = NULL;
     }
 
-    printf("[irximg-bootstrap] loading %s without IOP reset\n", target);
+    if (resolve_target_path(cwd, target, resolved_target, sizeof(resolved_target)) < 0) {
+        printf("[irximg-bootstrap] target path is too long: %s\n", target);
+        return -ENAMETOOLONG;
+    }
+
+    printf("[irximg-bootstrap] loading %s without IOP reset\n", resolved_target);
     return LoadELFFromFileWithPartitionNoReset(
-        target, NULL, target_argc, target_argv);
+        resolved_target, NULL, target_argc, target_argv);
 }

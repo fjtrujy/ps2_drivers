@@ -12,4 +12,7 @@ stage `ps2_drivers.irximg` before performing its own clean IOP reset.
 
 Pass the target ELF as the first argument. If no argument is supplied, the
 bootstrap reads the first line of `elf_path.ini` from its current directory.
+Relative targets are resolved against that current directory before loading, so
+`MVS.elf` becomes a device-qualified path such as `mass:/NJEMU-MVS/MVS.elf` or
+`host:/MVS.elf`.
 Additional arguments after the target path are forwarded to the target ELF.

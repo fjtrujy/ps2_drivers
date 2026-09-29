@@ -167,7 +167,7 @@ Place an `elf_path.ini` beside the bootstrap containing the real ELF path, for e
 MVS.elf
 ```
 
-The bootstrap embeds only `iomanX`, `fileXio`, `bdm`, `bdmfs_fatfs`, `usbd`, and `usbmass_bd`. It restores `mass:`, then starts the configured ELF with PS2SDK's `LoadELFFromFileWithPartitionNoReset()`. The real application can therefore stage `ps2_drivers.irximg` before performing its own definitive IOP reset, while remaining free of embedded IRX payloads itself. The target may alternatively be supplied as the bootstrap's first argument; remaining arguments are forwarded to the target ELF.
+The bootstrap embeds only `iomanX`, `fileXio`, `bdm`, `bdmfs_fatfs`, `usbd`, and `usbmass_bd`. It restores `mass:`, resolves a relative target against its current launch directory, then starts the resulting device-qualified ELF path with PS2SDK's `LoadELFFromFileWithPartitionNoReset()`. The real application can therefore stage `ps2_drivers.irximg` before performing its own definitive IOP reset, while remaining free of embedded IRX payloads itself. The target may alternatively be supplied as the bootstrap's first argument; remaining arguments are forwarded to the target ELF.
 
 The convenience API also provides:
 
