@@ -488,6 +488,8 @@ Then test the all-filesystem profile.
 
 The main risk is not `SifExecModuleBuffer()`; it is whether the companion image can be read successfully before reset from each boot environment.
 
+There are two distinct resets to account for. The application-controlled reset is safe because staging deliberately precedes it. A launcher-controlled reset can happen before the application receives control; when launching from `mass:` that can remove the very filesystem needed for initial staging. `ps2_drivers_irximg_bootstrap.elf` handles this case outside the real application: it embeds only the minimum USB filesystem stack, restores `mass:`, and starts the real ELF with PS2SDK's no-reset ELF-loader entry point. The real external-image application therefore remains payload-free.
+
 Test the same relative `ps2_drivers.irximg` path while booting the ELF from each practical filesystem environment supported by ps2_drivers.
 
 For each environment, place the image beside the ELF, make the ELF directory the working directory, and prove that the image is completely staged before reset and that no post-reset access to the image is needed for the initial driver startup.

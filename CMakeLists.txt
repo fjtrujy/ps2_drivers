@@ -203,6 +203,8 @@ set(IRX_SOURCES "")
 set(IRX_INPUTS "")
 set(IRX_DESCRIPTOR_OBJECTS "")
 set(IRX_EXTERNAL_DESCRIPTOR_OBJECTS "")
+set(IRX_IMG_USB_BOOTSTRAP_MODULES iomanX fileXio bdm bdmfs_fatfs usbd usbmass_bd)
+set(IRX_IMG_USB_BOOTSTRAP_SOURCES "")
 set(IRX_IDS_HEADER_CONTENT "#ifndef PS2_IRX_IDS_H\n#define PS2_IRX_IDS_H\n\n")
 
 foreach(irx_manifest_line IN LISTS IRX_MANIFEST_LINES)
@@ -235,6 +237,9 @@ foreach(irx_manifest_line IN LISTS IRX_MANIFEST_LINES)
         generated_external_irx_descriptor_object
     )
     list(APPEND IRX_SOURCES "${generated_irx_source}")
+    if(irx_name IN_LIST IRX_IMG_USB_BOOTSTRAP_MODULES)
+        list(APPEND IRX_IMG_USB_BOOTSTRAP_SOURCES "${generated_irx_source}")
+    endif()
     list(APPEND IRX_DESCRIPTOR_OBJECTS "${generated_irx_descriptor_object}")
     list(APPEND IRX_EXTERNAL_DESCRIPTOR_OBJECTS "${generated_external_irx_descriptor_object}")
     if(irx_filename STREQUAL "cacheio.irx")
@@ -588,6 +593,23 @@ add_custom_target(ps2_drivers_img ALL
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_IMG_COMBINED}
 )
 
+# Standalone bootstrap for applications launched from USB by an ELF loader
+# which resets the IOP before transferring control. It restores only the USB
+# filesystem stack, then starts the real ELF without another IOP reset.
+add_executable(ps2_drivers_irximg_bootstrap.elf
+    ${IRX_IMG_USB_BOOTSTRAP_SOURCES}
+    tools/irximg_bootstrap/irximg_bootstrap.c
+)
+target_include_directories(ps2_drivers_irximg_bootstrap.elf PRIVATE
+    "${CMAKE_SOURCE_DIR}/include"
+)
+target_link_libraries(ps2_drivers_irximg_bootstrap.elf PRIVATE
+    -lelf-loader
+    -lpatches
+    -lfileXio
+    -lkernel
+)
+
 add_custom_target(ps2_drivers_img_payload_check ALL
     COMMAND ${CMAKE_COMMAND}
         -DNM=${CMAKE_NM}
@@ -642,6 +664,10 @@ if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
     install(
         FILES ${PS2_DRIVERS_PC} ${PS2_DRIVERS_IMG_PC}
         DESTINATION "${INSTALL_PKGCONFIG_DIR}"
+    )
+    install(
+        FILES $<TARGET_FILE:ps2_drivers_irximg_bootstrap.elf>
+        DESTINATION "${INSTALL_SHARE_DIR}"
     )
     install(
         FILES "${IRX_IMAGE}"
