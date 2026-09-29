@@ -276,6 +276,23 @@ set(IRXIMG_TOOL_SOURCE "${CMAKE_SOURCE_DIR}/tools/ps2_irximg.c")
 set(IRXIMG_STAGE_TEST "${IRXIMG_TOOL_DIR}/ps2_irximg_stage_test")
 set(IRX_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/ps2_drivers.irximg")
 set(IRX_IMAGE_DETERMINISM "${CMAKE_CURRENT_BINARY_DIR}/ps2_drivers.determinism.irximg")
+set(IRXIMG_INPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/irximg-inputs")
+
+add_custom_command(
+    OUTPUT "${IRXIMG_INPUT_DIR}/.ready"
+    COMMAND ${CMAKE_COMMAND} -E rm -rf "${IRXIMG_INPUT_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${IRXIMG_INPUT_DIR}"
+    COMMAND ${CMAKE_COMMAND}
+        -DMANIFEST=${IRX_MANIFEST}
+        -DPS2SDK_IRX_DIR=${PS2SDK}/iop/irx
+        -DCACHEIO_IRX=${CACHEIO_IRX}
+        -DOUTPUT_DIR=${IRXIMG_INPUT_DIR}
+        -P ${CMAKE_SOURCE_DIR}/cmake/StageIrximgInputs.cmake
+    COMMAND ${CMAKE_COMMAND} -E touch "${IRXIMG_INPUT_DIR}/.ready"
+    DEPENDS "${IRX_MANIFEST}" ${IRX_INPUTS}
+    COMMENT "Staging ps2_drivers IRX image inputs"
+    VERBATIM
+)
 
 add_custom_command(
     OUTPUT "${IRXIMG_TOOL}"
@@ -296,9 +313,9 @@ add_custom_command(
 
 add_custom_command(
     OUTPUT "${IRX_IMAGE}"
-    COMMAND "${IRXIMG_TOOL}" pack "${IRX_MANIFEST}" "${PS2SDK}/iop/irx" "${IRX_IMAGE}"
+    COMMAND "${IRXIMG_TOOL}" pack "${IRX_MANIFEST}" "${IRXIMG_INPUT_DIR}" "${IRX_IMAGE}"
     COMMAND "${IRXIMG_TOOL}" validate "${IRX_MANIFEST}" "${IRX_IMAGE}"
-    DEPENDS "${IRXIMG_TOOL}" "${IRX_MANIFEST}" ${IRX_INPUTS}
+    DEPENDS "${IRXIMG_TOOL}" "${IRX_MANIFEST}" "${IRXIMG_INPUT_DIR}/.ready"
     COMMENT "Packing ps2_drivers.irximg"
     VERBATIM
 )
@@ -308,11 +325,11 @@ add_custom_target(ps2_drivers_irximg ALL
 )
 
 add_custom_target(ps2_drivers_irximg_check
-    COMMAND "${IRXIMG_TOOL}" pack "${IRX_MANIFEST}" "${PS2SDK}/iop/irx" "${IRX_IMAGE_DETERMINISM}"
+    COMMAND "${IRXIMG_TOOL}" pack "${IRX_MANIFEST}" "${IRXIMG_INPUT_DIR}" "${IRX_IMAGE_DETERMINISM}"
     COMMAND "${IRXIMG_TOOL}" validate "${IRX_MANIFEST}" "${IRX_IMAGE_DETERMINISM}"
     COMMAND ${CMAKE_COMMAND} -E compare_files "${IRX_IMAGE}" "${IRX_IMAGE_DETERMINISM}"
     COMMAND ${CMAKE_COMMAND} -E remove -f "${IRX_IMAGE_DETERMINISM}"
-    DEPENDS "${IRX_IMAGE}" "${IRXIMG_TOOL}" "${IRX_MANIFEST}" ${IRX_INPUTS}
+    DEPENDS "${IRX_IMAGE}" "${IRXIMG_TOOL}" "${IRX_MANIFEST}" "${IRXIMG_INPUT_DIR}/.ready"
     COMMENT "Checking deterministic IRX image generation"
     VERBATIM
 )
