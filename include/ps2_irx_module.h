@@ -19,6 +19,8 @@ int ps2_irx_exec(
     const char *args,
     int *module_result);
 
+void ps2_irx_release(const struct ps2_irx_module *module);
+
 #define EXTERN_PS2_IRX_MODULE(name) \
     extern const struct ps2_irx_module ps2_irx_##name
 

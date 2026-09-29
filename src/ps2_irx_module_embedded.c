@@ -18,3 +18,8 @@ int ps2_irx_exec(
         args,
         module_result);
 }
+
+void ps2_irx_release(const struct ps2_irx_module *module)
+{
+    (void)module;
+}

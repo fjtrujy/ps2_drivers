@@ -24,3 +24,9 @@ int ps2_irx_exec(
     ps2_drivers_img_release_staged(module->id);
     return module_id;
 }
+
+void ps2_irx_release(const struct ps2_irx_module *module)
+{
+    if (module != NULL)
+        ps2_drivers_img_release_staged(module->id);
+}

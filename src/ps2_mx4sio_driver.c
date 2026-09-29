@@ -53,8 +53,10 @@ static bool isCOP2Pipelined()
 
 static enum MX4SIO_INIT_STATUS loadIRXs(void) {
     /* MX4SIO_BD.IRX */
-    if (!isCOP2Pipelined())
+    if (!isCOP2Pipelined()) {
+        ps2_irx_release(&ps2_irx_mx4sio_bd);
         return MX4SIO_INIT_STATUS_IRX_NOT_SUPPORTED;
+    }
 
     if (CHECK_IRX_LOAD(mx4sio_bd)) {
         __mx4sio_bd_id = ps2_irx_exec(&ps2_irx_mx4sio_bd, 0, NULL, &__mx4sio_bd_ret);
