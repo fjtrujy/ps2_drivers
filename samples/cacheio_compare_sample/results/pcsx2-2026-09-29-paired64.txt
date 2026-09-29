@@ -1,0 +1,29 @@
+cacheio compare: path=mass:/NJEMU-58704ed5-MVS/cache/mslug3_cache/crom iterations=64
+fileXio initialized
+USB stack initialized; waiting for mass:
+mass: ready
+cacheio initialized
+opening POSIX file
+POSIX file opened
+seeking POSIX file end
+POSIX file size resolved
+opening cacheio handle
+cacheio handle opened
+file_size=67108864 blocks=1024
+diagnosing known failing block 70 before full comparison
+POSIX 512-byte diagnostic passed for entire failed block
+starting full sequential byte-for-byte comparison
+byte-verified 128/1024 blocks
+byte-verified 256/1024 blocks
+byte-verified 384/1024 blocks
+byte-verified 512/1024 blocks
+byte-verified 640/1024 blocks
+byte-verified 768/1024 blocks
+byte-verified 896/1024 blocks
+byte-verified 1024/1024 blocks
+PASS: all 1024 blocks matched byte-for-byte
+starting 64 random cacheio offset checks
+PASS: 64 random cacheio reads matched sequential reference CRCs
+PASS: 64 random reads also matched POSIX byte-for-byte
+random I/O ticks: posix_seek_read=2983336448 cacheio_read_at=171380736 ticks_per_second=147456000
+RESULT: PASS code=0
