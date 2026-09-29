@@ -88,12 +88,38 @@ set(EE_LIB_IMG_COMBINED "libps2_drivers_img.a")
 add_compile_options(-Werror)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
+# cacheio is owned and built by ps2_drivers rather than the PS2SDK installation.
+set(CACHEIO_DIR "${CMAKE_SOURCE_DIR}/cacheio")
+set(CACHEIO_EE_LIB "${CACHEIO_DIR}/ee/lib/libcacheio.a")
+set(CACHEIO_IRX "${CACHEIO_DIR}/iop/irx/cacheio.irx")
+add_custom_command(
+    OUTPUT "${CACHEIO_EE_LIB}" "${CACHEIO_IRX}"
+    COMMAND ${CMAKE_MAKE_PROGRAM} -C "${CACHEIO_DIR}"
+    DEPENDS
+        "${CACHEIO_DIR}/Makefile"
+        "${CACHEIO_DIR}/common/cacheio-common.h"
+        "${CACHEIO_DIR}/ee/Makefile"
+        "${CMAKE_SOURCE_DIR}/include/cacheio.h"
+        "${CACHEIO_DIR}/ee/src/cacheio_rpc.c"
+        "${CACHEIO_DIR}/iop/Makefile"
+        "${CACHEIO_DIR}/iop/src/cacheio.c"
+        "${CACHEIO_DIR}/iop/src/imports.lst"
+        "${CACHEIO_DIR}/iop/src/irx_imports.h"
+    COMMENT "Building ps2_drivers cacheio client and IRX"
+    VERBATIM
+)
+add_custom_target(cacheio_artifacts DEPENDS "${CACHEIO_EE_LIB}" "${CACHEIO_IRX}")
+
 # ============================================================================
 # Function: add_irx_source
 # Converts an IRX file to a C source file using bin2c
 # ============================================================================
 function(add_irx_source irx_filename irx_symbol output_var)
-    set(irx_path "${PS2SDK}/iop/irx/${irx_filename}")
+    if(irx_filename STREQUAL "cacheio.irx")
+        set(irx_path "${CACHEIO_IRX}")
+    else()
+        set(irx_path "${PS2SDK}/iop/irx/${irx_filename}")
+    endif()
     set(output_c "${CMAKE_CURRENT_BINARY_DIR}/${irx_symbol}.c")
 
     add_custom_command(
@@ -211,7 +237,11 @@ foreach(irx_manifest_line IN LISTS IRX_MANIFEST_LINES)
     list(APPEND IRX_SOURCES "${generated_irx_source}")
     list(APPEND IRX_DESCRIPTOR_OBJECTS "${generated_irx_descriptor_object}")
     list(APPEND IRX_EXTERNAL_DESCRIPTOR_OBJECTS "${generated_external_irx_descriptor_object}")
-    list(APPEND IRX_INPUTS "${PS2SDK}/iop/irx/${irx_filename}")
+    if(irx_filename STREQUAL "cacheio.irx")
+        list(APPEND IRX_INPUTS "${CACHEIO_IRX}")
+    else()
+        list(APPEND IRX_INPUTS "${PS2SDK}/iop/irx/${irx_filename}")
+    endif()
 
     string(TOUPPER "${irx_name}" irx_id_macro)
     string(REPLACE "-" "_" irx_id_macro "${irx_id_macro}")
@@ -462,6 +492,7 @@ add_library(ps2_drivers_impl STATIC
     src/ps2_irx_module_embedded.c
     ${PS2_DRIVER_OBJECTS}
 )
+add_dependencies(ps2_drivers_impl cacheio_artifacts)
 
 set_target_properties(ps2_drivers_impl PROPERTIES
     OUTPUT_NAME "ps2_drivers_impl"
@@ -475,6 +506,7 @@ add_library(ps2_drivers_img_impl STATIC
     src/ps2_drivers_img.c
     ${PS2_DRIVER_OBJECTS}
 )
+add_dependencies(ps2_drivers_img_impl cacheio_artifacts)
 
 target_include_directories(ps2_drivers_img_impl PRIVATE
     "${CMAKE_SOURCE_DIR}/include"
@@ -496,7 +528,7 @@ set(PS2SDK_LIBS
     "${PS2SDK}/ee/lib/libmtap.a"
     "${PS2SDK}/ee/lib/libpadx.a"
     "${PS2SDK}/ee/lib/libaudsrv.a"
-    "${PS2SDK}/ee/lib/libcacheio.a"
+    "${CACHEIO_EE_LIB}"
     "${PS2SDK}/ee/lib/libpoweroff.a"
     "${PS2SDK}/ee/lib/libmouse.a"
     "${PS2SDK}/ee/lib/libkbd.a"
