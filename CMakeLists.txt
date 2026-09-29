@@ -609,6 +609,10 @@ target_link_libraries(ps2_drivers_irximg_bootstrap.elf PRIVATE
     -lfileXio
     -lkernel
 )
+add_custom_command(TARGET ps2_drivers_irximg_bootstrap.elf POST_BUILD
+    COMMAND ${CMAKE_STRIP} --strip-unneeded $<TARGET_FILE:ps2_drivers_irximg_bootstrap.elf>
+    COMMENT "Stripping standalone IRX image bootstrap"
+)
 
 add_custom_target(ps2_drivers_img_payload_check ALL
     COMMAND ${CMAKE_COMMAND}

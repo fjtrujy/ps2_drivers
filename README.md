@@ -87,6 +87,7 @@ cmake .. -DBUILD_SAMPLES=OFF
 The build process will generate:
 - `libps2_drivers.a` - The main library combining all drivers and PS2SDK libraries
 - `libps2_drivers_img.a` - External-image flavor with no embedded IRX payload arrays
+- `ps2_drivers_irximg_bootstrap.elf` - Standalone USB bootstrap for launchers that reset the IOP before starting the real ELF
 - `ps2_drivers.irximg` - A deterministic, validated container with the canonical IRX set
 - Sample executables in `build/samples/*/` directories (if BUILD_SAMPLES=ON)
 
@@ -106,7 +107,7 @@ After installation:
 - both libraries are under `$PS2SDK/ports/lib/`;
 - headers are under `$PS2SDK/ports/include/`;
 - pkg-config metadata is available as `ps2_drivers` and `ps2_drivers-img`;
-- the companion image is installed at `$PS2SDK/ports/share/ps2_drivers/ps2_drivers.irximg`.
+- the companion image and `ps2_drivers_irximg_bootstrap.elf` are installed under `$PS2SDK/ports/share/ps2_drivers/`.
 
 ### External IRX image flavor
 
@@ -157,6 +158,16 @@ init_joystick_driver(true);
 ```
 
 If the application uses `init_ps2_filesystem_driver()` instead, use `ps2_drivers_img_stage_default_for_all_filesystems(additional_requirements)`.
+
+Some ELF loaders reset the IOP before transferring control to the application. When an ELF is launched from `mass:` this removes the USB filesystem before the application can stage `ps2_drivers.irximg`. For that launch mode, deploy `ps2_drivers_irximg_bootstrap.elf` as the entry ELF instead of embedding an emergency copy of the USB drivers in the real application.
+
+Place an `elf_path.ini` beside the bootstrap containing the real ELF path, for example:
+
+```text
+MVS.elf
+```
+
+The bootstrap embeds only `iomanX`, `fileXio`, `bdm`, `bdmfs_fatfs`, `usbd`, and `usbmass_bd`. It restores `mass:`, then starts the configured ELF with PS2SDK's `LoadELFFromFileWithPartitionNoReset()`. The real application can therefore stage `ps2_drivers.irximg` before performing its own definitive IOP reset, while remaining free of embedded IRX payloads itself. The target may alternatively be supplied as the bootstrap's first argument; remaining arguments are forwarded to the target ELF.
 
 The convenience API also provides:
 
