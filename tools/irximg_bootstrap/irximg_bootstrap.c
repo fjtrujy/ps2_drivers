@@ -1,3 +1,5 @@
+#define NEWLIB_PORT_AWARE 1
+
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
@@ -6,6 +8,7 @@
 #include <unistd.h>
 
 #include <elf-loader.h>
+#include <fileio.h>
 #include <kernel.h>
 #include <loadfile.h>
 #include <sifrpc.h>
@@ -61,6 +64,20 @@ static int wait_for_path(const char *path)
 
 static int restore_mass(const char *path)
 {
+    io_stat_t buffer;
+
+    /* Launchers such as wLaunchELF keep their mass: filesystem alive while
+     * handing off to BOOT.ELF. Reuse that stack instead of trying to register
+     * a second iomanX/fileXio instance. The real application will stage its
+     * IRX image and perform the definitive IOP reset shortly afterwards. */
+    fioInit();
+    if (fioGetstat(path, &buffer) == 0) {
+        printf("[irximg-bootstrap] launch filesystem already available\n");
+        return 0;
+    }
+
+    printf("[irximg-bootstrap] launch filesystem unavailable; restoring mass:\n");
+
     sceSifInitRpc(0);
     sbv_patch_enable_lmb();
     sbv_patch_disable_prefix_check();
