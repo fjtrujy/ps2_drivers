@@ -237,8 +237,6 @@ static void expand_requirements(
     if (requirements & PS2_DRIVER_REQ_HDD) {
         mark_module(requested, PS2_IRX_ID_IOMANX);
         mark_module(requested, PS2_IRX_ID_FILEXIO);
-        mark_module(requested, PS2_IRX_ID_BDM);
-        mark_module(requested, PS2_IRX_ID_BDMFS_FATFS);
         mark_module(requested, PS2_IRX_ID_PS2DEV9);
         mark_module(requested, PS2_IRX_ID_PS2ATAD);
         mark_module(requested, PS2_IRX_ID_PS2HDD);

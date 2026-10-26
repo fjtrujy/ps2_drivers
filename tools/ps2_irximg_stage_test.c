@@ -7,6 +7,7 @@
 #include <ps2_irx_image_format.h>
 
 #include "ps2_drivers_img_internal.h"
+#include "ps2_irx_ids.h"
 
 struct stage_case {
     const char *name;
@@ -26,6 +27,39 @@ static void consume_all_staged_modules(void)
 
     for (id = 1u; id <= IRXIMG_MAX_ENTRIES; ++id)
         ps2_drivers_img_release_staged(id);
+}
+
+static int staged_module_present(uint32_t id)
+{
+    void *data = NULL;
+    unsigned int size = 0;
+
+    return ps2_drivers_img_get_staged(id, &data, &size) == 0 &&
+           data != NULL && size != 0u;
+}
+
+static int check_hdd_dependency_isolation(const char *name)
+{
+    int is_hdd = strcmp(name, "hdd") == 0 || strcmp(name, "hdd-app") == 0;
+    int is_all = strcmp(name, "filesystem") == 0;
+
+    if (is_hdd &&
+        (staged_module_present(PS2_IRX_ID_BDM) ||
+         staged_module_present(PS2_IRX_ID_BDMFS_FATFS) ||
+         !staged_module_present(PS2_IRX_ID_PS2ATAD) ||
+         !staged_module_present(PS2_IRX_ID_PS2HDD) ||
+         !staged_module_present(PS2_IRX_ID_PS2FS))) {
+        fprintf(stderr, "%s contains incorrect HDD/BDM IRX dependencies\n", name);
+        return 1;
+    }
+
+    if (is_all &&
+        (!staged_module_present(PS2_IRX_ID_BDM) ||
+         !staged_module_present(PS2_IRX_ID_BDMFS_FATFS))) {
+        fprintf(stderr, "all-filesystem staging lost removable-storage IRXs\n");
+        return 1;
+    }
+    return 0;
 }
 
 static int check_boot_helpers(void)
@@ -201,7 +235,11 @@ int main(int argc, char **argv)
         {"mx4sio", PS2_DRIVER_REQ_MX4SIO, 4u},
         {"cdfs", PS2_DRIVER_REQ_CDFS, 1u},
         {"dev9", PS2_DRIVER_REQ_DEV9, 1u},
-        {"hdd", PS2_DRIVER_REQ_HDD, 8u},
+        {"hdd", PS2_DRIVER_REQ_HDD, 6u},
+        {"hdd+bdm", PS2_DRIVER_REQ_HDD | PS2_DRIVER_REQ_BDM, 8u},
+        {"hdd-app", PS2_DRIVER_REQ_FILEXIO | PS2_DRIVER_REQ_HDD |
+         PS2_DRIVER_REQ_POWEROFF | PS2_DRIVER_REQ_AUDIO |
+         PS2_DRIVER_REQ_JOYSTICK, 12u},
         {"joystick", PS2_DRIVER_REQ_JOYSTICK, 3u},
         {"audio", PS2_DRIVER_REQ_AUDIO, 2u},
         {"poweroff", PS2_DRIVER_REQ_POWEROFF, 1u},
@@ -258,6 +296,9 @@ int main(int argc, char **argv)
                     staged_bytes);
             return 40 + (int)i;
         }
+
+        if (check_hdd_dependency_isolation(cases[i].name) != 0)
+            return 60 + (int)i;
 
         if (ps2_drivers_img_stage(argv[1], cases[i].requirements) !=
                 PS2_DRIVERS_IMG_ERR_ALREADY_STAGED ||
