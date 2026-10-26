@@ -39,3 +39,14 @@ target ELF; it then reads `elf_path.ini` or uses a separate explicit target.
 
 The application is responsible for staging its own external IRX dependencies
 before any further reset. See `docs/HDD_PFS_BOOT.md` for the application API.
+
+## Internal HDD / FAT/exFAT
+
+`ps2_drivers_irximg_ata_bootstrap.elf` is an optional third launcher for an
+ATA-backed BDM `massN:` volume. It reuses the launch filesystem when available
+or loads fileXio, DEV9, BDM, BDMFS_FATFS and `ata_bd` in dependency order.
+It forwards `--ps2-drivers-ata-bdm` to its target so the application can
+distinguish the internal ATA transport from USB or MX4SIO, which also use
+`massN:` device paths. An ordinary USB `BOOT.ELF` never forwards this marker.
+The application must use the explicit ATA/BDM staging and launch-context APIs
+for subsequent resets. See `docs/HDD_ATA_BDM_BOOT.md`.

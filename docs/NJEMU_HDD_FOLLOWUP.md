@@ -4,6 +4,10 @@ This describes the migration of NJEMU PR #25 after the generic code is merged
 into the `njemu` branch of `ps2_drivers`. This repository makes **no changes**
 to NJEMU itself. Do not modify NJEMU `resources/` or its FAST CACHE policy.
 
+This integration concerns **APA/PFS**. The separate ATA/BDM FAT/exFAT mode
+(`BOOT_ATA.ELF`) is opt-in and is not implied by an ordinary `massN:` launch;
+NJEMU must explicitly recognize the ATA launch marker before selecting it.
+
 ## Build and packaging
 
 1. In NJEMU's PS2 CMake external-IRX branch, locate the installed

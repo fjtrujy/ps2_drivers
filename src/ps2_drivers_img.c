@@ -14,7 +14,7 @@
 #include "ps2_drivers_img_internal.h"
 #include "ps2_irx_ids.h"
 
-#define PS2_DRIVER_REQ_KNOWN_MASK ((1u << 21) - 1u)
+#define PS2_DRIVER_REQ_KNOWN_MASK ((1u << 22) - 1u)
 
 struct ps2_irx_image_entry {
     uint32_t id;
@@ -105,6 +105,12 @@ uint32_t ps2_drivers_img_requirements_for_boot_device(enum BootDeviceIDs boot_de
     }
 
     return requirements;
+}
+
+uint32_t ps2_drivers_img_requirements_for_ata_bdm(uint32_t additional_requirements)
+{
+    return PS2_DRIVER_REQ_FILEXIO | PS2_DRIVER_REQ_POWEROFF |
+           PS2_DRIVER_REQ_ATA_BDM | additional_requirements;
 }
 
 int ps2_drivers_img_requirements_for_path(
@@ -241,6 +247,15 @@ static void expand_requirements(
         mark_module(requested, PS2_IRX_ID_PS2ATAD);
         mark_module(requested, PS2_IRX_ID_PS2HDD);
         mark_module(requested, PS2_IRX_ID_PS2FS);
+    }
+
+    if (requirements & PS2_DRIVER_REQ_ATA_BDM) {
+        mark_module(requested, PS2_IRX_ID_IOMANX);
+        mark_module(requested, PS2_IRX_ID_FILEXIO);
+        mark_module(requested, PS2_IRX_ID_PS2DEV9);
+        mark_module(requested, PS2_IRX_ID_BDM);
+        mark_module(requested, PS2_IRX_ID_BDMFS_FATFS);
+        mark_module(requested, PS2_IRX_ID_ATA_BD);
     }
 
     if (requirements & PS2_DRIVER_REQ_JOYSTICK) {
@@ -452,7 +467,9 @@ static int stage_from_path(const char *image_path, uint32_t driver_requirements)
 
     if (image_path == NULL ||
         driver_requirements == 0u ||
-        (driver_requirements & ~PS2_DRIVER_REQ_KNOWN_MASK) != 0u)
+        (driver_requirements & ~PS2_DRIVER_REQ_KNOWN_MASK) != 0u ||
+        (driver_requirements & (PS2_DRIVER_REQ_HDD | PS2_DRIVER_REQ_ATA_BDM)) ==
+            (PS2_DRIVER_REQ_HDD | PS2_DRIVER_REQ_ATA_BDM))
         return PS2_DRIVERS_IMG_ERR_ARGUMENT;
 
     if (g_staged_modules != NULL || g_staged_count != 0u)
@@ -665,6 +682,19 @@ int ps2_drivers_img_stage_default_for_boot_device(
         additional_requirements);
 }
 
+int ps2_drivers_img_stage_default_for_ata_bdm(uint32_t additional_requirements)
+{
+    return ps2_drivers_img_stage_for_ata_bdm(
+        PS2_DRIVERS_IMG_DEFAULT_PATH, additional_requirements);
+}
+
+int ps2_drivers_img_stage_for_ata_bdm(
+    const char *image_path, uint32_t additional_requirements)
+{
+    return ps2_drivers_img_stage(image_path,
+        ps2_drivers_img_requirements_for_ata_bdm(additional_requirements));
+}
+
 int ps2_drivers_img_stage_default_for_path(
     const char *path,
     uint32_t additional_requirements)
@@ -692,7 +722,9 @@ int ps2_drivers_img_stage_default_for_all_filesystems(uint32_t additional_requir
 int ps2_drivers_img_restage(uint32_t driver_requirements)
 {
     if (driver_requirements == 0u ||
-        (driver_requirements & ~PS2_DRIVER_REQ_KNOWN_MASK) != 0u)
+        (driver_requirements & ~PS2_DRIVER_REQ_KNOWN_MASK) != 0u ||
+        (driver_requirements & (PS2_DRIVER_REQ_HDD | PS2_DRIVER_REQ_ATA_BDM)) ==
+            (PS2_DRIVER_REQ_HDD | PS2_DRIVER_REQ_ATA_BDM))
         return PS2_DRIVERS_IMG_ERR_ARGUMENT;
 
     if (g_image_path == NULL)

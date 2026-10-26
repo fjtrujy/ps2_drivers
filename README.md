@@ -28,7 +28,8 @@ With the solution that I propose within this library, the developer just needs t
 | DEV9 | `init_dev9_driver()` | Expansion bay device (HDD/Network) |
 | FileXio | `init_fileXio_driver()` | Extended file I/O |
 | Filesystem | `init_ps2_filesystem_driver()` | Combined filesystem driver (all storage devices) |
-| HDD | `init_hdd_driver(bool, bool)` | Internal HDD APA/PFS support (not exFAT) |
+| HDD | `init_hdd_driver(bool, bool)` | Internal HDD APA/PFS support |
+| ATA/BDM | `init_ata_bdm_driver(bool)` | Internal HDD FAT/exFAT through the ATA BDM transport |
 | Joystick | `init_joystick_driver(bool)` | Controller input with multitap support |
 | Keyboard | `init_keyboard_driver(bool)` | USB keyboard support |
 | Memory Card | `init_memcard_driver(bool)` | Memory card access |
@@ -182,10 +183,16 @@ the IOP again should call `ps2_hdd_launch_capture_current()` before reset and
 `ps2_hdd_launch_restore()` after reset, using the explicit HDD boot-device
 staging helper. See [the HDD/PFS integration guide](docs/HDD_PFS_BOOT.md).
 
-An internal HDD formatted as FAT/exFAT uses BDM with an ATA block-device
-transport, not the APA/PFS driver path. The current HDD bootstrap and helpers
-do not support that configuration; see the HDD/PFS guide for the required
-additional drivers and distinction.
+An internal HDD formatted as FAT/exFAT uses BDM with the ATA block-device
+transport, not the APA/PFS path. Use the separate
+`ps2_drivers_irximg_ata_bootstrap.elf` as `BOOT_ATA.ELF` when launching from
+an ATA-backed `massN:` filesystem. It passes an explicit ATA marker to the
+application. Before a subsequent IOP reset, capture that marker with
+`ps2_ata_bdm_launch_capture_current()`, stage the external image using
+`ps2_drivers_img_stage_default_for_ata_bdm()`, then restore the filesystem
+using `ps2_ata_bdm_launch_restore()`. Do not infer the transport from
+`massN:` alone: USB and ATA volumes share that namespace. See
+[the internal ATA FAT/exFAT guide](docs/HDD_ATA_BDM_BOOT.md).
 
 The convenience API also provides:
 

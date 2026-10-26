@@ -34,6 +34,8 @@ enum ps2_driver_requirement {
     PS2_DRIVER_REQ_EEIP     = 1u << 18,
     PS2_DRIVER_REQ_IOPIP    = 1u << 19,
     PS2_DRIVER_REQ_CACHEIO  = 1u << 20,
+    /* Internal ATA FAT/exFAT through BDM (not APA/PFS). */
+    PS2_DRIVER_REQ_ATA_BDM  = 1u << 21,
 };
 
 #define PS2_DRIVER_REQ_FILESYSTEM_ALL \
@@ -58,6 +60,9 @@ enum ps2_drivers_img_error {
 const char *ps2_drivers_img_error_string(int error);
 
 uint32_t ps2_drivers_img_requirements_for_boot_device(enum BootDeviceIDs boot_device);
+/* Explicitly select ATA-backed massN:, including poweroff for launch restore;
+ * massN: alone cannot identify USB vs ATA. */
+uint32_t ps2_drivers_img_requirements_for_ata_bdm(uint32_t additional_requirements);
 int ps2_drivers_img_requirements_for_path(
     const char *path,
     uint32_t additional_requirements,
@@ -101,6 +106,9 @@ int ps2_drivers_img_stage_for_all_filesystems(
 int ps2_drivers_img_stage_default_for_boot_device(
     enum BootDeviceIDs boot_device,
     uint32_t additional_requirements);
+int ps2_drivers_img_stage_default_for_ata_bdm(uint32_t additional_requirements);
+int ps2_drivers_img_stage_for_ata_bdm(
+    const char *image_path, uint32_t additional_requirements);
 int ps2_drivers_img_stage_default_for_path(
     const char *path,
     uint32_t additional_requirements);

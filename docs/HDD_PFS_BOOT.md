@@ -2,13 +2,14 @@
 
 ## Ownership and installation
 
-`ps2_drivers` supplies two independent entry ELFs from one shared bootstrap
+`ps2_drivers` supplies three independent entry ELFs from one shared bootstrap
 implementation:
 
 | Installed artifact | Recommended package name | Purpose |
 | --- | --- | --- |
 | `ps2_drivers_irximg_bootstrap.elf` | `BOOT.ELF` | Existing USB/MX4SIO bootstrap |
 | `ps2_drivers_irximg_hdd_bootstrap.elf` | `BOOT_HDD.ELF` | Internal HDD/PFS bootstrap |
+| `ps2_drivers_irximg_ata_bootstrap.elf` | `BOOT_ATA.ELF` | Internal ATA-backed FAT/exFAT bootstrap (optional) |
 | `ps2_drivers.irximg` | Same filename | External driver payload container |
 
 An application also installs its extensionless executable and `elf_path.ini`,
@@ -94,16 +95,15 @@ deinitializes BDM because this helper initializes APA/PFS only. The standalone
 BDM, USB, MX4SIO, and cacheio requirement masks still request their own BDM
 dependencies. All-filesystem staging retains BDM through USB/MX4SIO.
 
-**Internal HDD exFAT is not yet supported by this library's HDD helpers.**
-It requires BDM, `bdmfs_fatfs`, DEV9, and an ATA-to-BDM transport such as
-`ata_bd.irx` (an ATAD build with `ATA_ENABLE_BDM`). The current IRX manifest
-includes `ps2atad.irx` for APA/PFS, but does not include `ata_bd.irx`. Simply
-restoring `bdm` and `bdmfs_fatfs` to `PS2_DRIVER_REQ_HDD` would not connect
-the internal ATA device to BDM or make exFAT accessible. Applications needing
-both formats should have distinct APA/PFS and ATA/BDM initialization paths,
-including the correct IRX load order and an explicit way to identify an ATA
-BDM volume. BDM volumes use `massN:` paths, which do not by themselves
-identify the physical transport as USB or internal ATA.
+**Internal HDD FAT/exFAT uses a distinct, explicit ATA/BDM mode.** The image
+contains `ata_bd.irx` (ATAD with `ATA_ENABLE_BDM`) and applications can select
+`PS2_DRIVER_REQ_ATA_BDM`, load `init_ata_bdm_driver()`, and use the dedicated
+ATA bootstrap and launch-context helpers. Simply restoring `bdm` and
+`bdmfs_fatfs` to `PS2_DRIVER_REQ_HDD` would not connect the internal ATA
+device to BDM. Do not combine `PS2_DRIVER_REQ_HDD` with
+`PS2_DRIVER_REQ_ATA_BDM`: `ps2atad` and `ata_bd` both export ATAD and cannot
+be loaded together. Switch formats by performing a clean IOP reset. See
+[the ATA/BDM boot guide](HDD_ATA_BDM_BOOT.md).
 
 With the current NJEMU integration-branch IRX set, the host tests measured:
 

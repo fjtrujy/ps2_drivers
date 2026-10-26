@@ -27,6 +27,8 @@ int LoadELFFromFileWithPartitionNoReset(
 #include <fileXio_rpc.h>
 #include <iox_stat.h>
 #include <ps2_hdd_launch.h>
+#elif defined(PS2_IRXIMG_BOOTSTRAP_ATA_BDM)
+#include <ps2_ata_bdm_launch.h>
 #else
 
 extern unsigned char iomanX_irx[] __attribute__((aligned(16)));
@@ -105,6 +107,30 @@ static int restore_mass(const char *path)
         return -1;
 
     return wait_for_path(path);
+}
+#endif
+
+#ifdef PS2_IRXIMG_BOOTSTRAP_ATA_BDM
+static int restore_ata_mass(const char *path)
+{
+    ps2_ata_bdm_launch_context_t context;
+    io_stat_t buffer;
+
+    if (ps2_ata_bdm_launch_capture_explicit(&context, path) !=
+            PS2_ATA_BDM_LAUNCH_OK)
+        return -1;
+
+    fioInit();
+    if (fioGetstat(path, &buffer) == 0) {
+        printf("[irximg-bootstrap] ATA launch filesystem already available\n");
+        return 0;
+    }
+
+    sceSifInitRpc(0);
+    sbv_patch_enable_lmb();
+    sbv_patch_disable_prefix_check();
+    printf("[irximg-bootstrap] restoring internal ATA/BDM at %s\n", path);
+    return ps2_ata_bdm_launch_restore(&context);
 }
 #endif
 
@@ -209,6 +235,9 @@ int main(int argc, char **argv)
     char **hdd_argv;
     int i;
     int target_index = 1;
+#elif defined(PS2_IRXIMG_BOOTSTRAP_ATA_BDM)
+    char **ata_argv;
+    int i;
 #endif
 
     if (getcwd(cwd, sizeof(cwd)) == NULL) {
@@ -226,6 +255,11 @@ int main(int argc, char **argv)
     }
     if (restore_hdd(&hdd_context) != PS2_HDD_LAUNCH_OK)
         return -EIO;
+#elif defined(PS2_IRXIMG_BOOTSTRAP_ATA_BDM)
+    if (restore_ata_mass(cwd) < 0) {
+        printf("[irximg-bootstrap] ATA/BDM filesystem restore failed\n");
+        return -EIO;
+    }
 #else
     if (restore_mass(cwd) < 0) {
         printf("[irximg-bootstrap] failed to restore mass filesystem\n");
@@ -278,6 +312,15 @@ int main(int argc, char **argv)
         hdd_argv[i + 1] = target_argv[i];
     return LoadELFFromFileWithPartitionNoReset(
         resolved_target, NULL, target_argc + 1, hdd_argv);
+#elif defined(PS2_IRXIMG_BOOTSTRAP_ATA_BDM)
+    ata_argv = (char **)calloc((size_t)target_argc + 1, sizeof(*ata_argv));
+    if (ata_argv == NULL)
+        return -ENOMEM;
+    ata_argv[0] = (char *)PS2_ATA_BDM_LAUNCH_MARKER;
+    for (i = 0; i < target_argc; ++i)
+        ata_argv[i + 1] = target_argv[i];
+    return LoadELFFromFileWithPartitionNoReset(
+        resolved_target, NULL, target_argc + 1, ata_argv);
 #else
     return LoadELFFromFileWithPartitionNoReset(
         resolved_target, NULL, target_argc, target_argv);
