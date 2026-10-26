@@ -7,6 +7,7 @@
 #include <ps2_irx_image_format.h>
 
 #include "ps2_drivers_img_internal.h"
+#include "ps2_irx_ids.h"
 
 struct stage_case {
     const char *name;
@@ -26,6 +27,50 @@ static void consume_all_staged_modules(void)
 
     for (id = 1u; id <= IRXIMG_MAX_ENTRIES; ++id)
         ps2_drivers_img_release_staged(id);
+}
+
+static int staged_module_present(uint32_t id)
+{
+    void *data = NULL;
+    unsigned int size = 0;
+
+    return ps2_drivers_img_get_staged(id, &data, &size) == 0 &&
+           data != NULL && size != 0u;
+}
+
+static int check_hdd_dependency_isolation(const char *name)
+{
+    int is_hdd = strcmp(name, "hdd") == 0 || strcmp(name, "hdd-app") == 0;
+    int is_all = strcmp(name, "filesystem") == 0;
+    int is_ata = strcmp(name, "ata-bdm") == 0 || strcmp(name, "ata-bdm-app") == 0;
+
+    if (is_hdd &&
+        (staged_module_present(PS2_IRX_ID_BDM) ||
+         staged_module_present(PS2_IRX_ID_BDMFS_FATFS) ||
+         !staged_module_present(PS2_IRX_ID_PS2ATAD) ||
+         !staged_module_present(PS2_IRX_ID_PS2HDD) ||
+         !staged_module_present(PS2_IRX_ID_PS2FS))) {
+        fprintf(stderr, "%s contains incorrect HDD/BDM IRX dependencies\n", name);
+        return 1;
+    }
+
+    if (is_all &&
+        (!staged_module_present(PS2_IRX_ID_BDM) ||
+         !staged_module_present(PS2_IRX_ID_BDMFS_FATFS))) {
+        fprintf(stderr, "all-filesystem staging lost removable-storage IRXs\n");
+        return 1;
+    }
+    if (is_ata &&
+        (!staged_module_present(PS2_IRX_ID_ATA_BD) ||
+         !staged_module_present(PS2_IRX_ID_BDM) ||
+         !staged_module_present(PS2_IRX_ID_BDMFS_FATFS) ||
+         !staged_module_present(PS2_IRX_ID_PS2DEV9) ||
+         staged_module_present(PS2_IRX_ID_PS2ATAD) ||
+         staged_module_present(PS2_IRX_ID_PS2HDD))) {
+        fprintf(stderr, "%s contains incorrect ATA/BDM dependencies\n", name);
+        return 1;
+    }
+    return 0;
 }
 
 static int check_boot_helpers(void)
@@ -143,6 +188,25 @@ static int check_convenience_staging(void)
     }
     ps2_drivers_img_discard_staged();
 
+    result = ps2_drivers_img_stage_default_for_ata_bdm(PS2_DRIVER_REQ_AUDIO);
+    if (result != PS2_DRIVERS_IMG_OK ||
+        ps2_drivers_img_staged_modules() != 9u ||
+        !staged_module_present(PS2_IRX_ID_ATA_BD)) {
+        fprintf(stderr, "explicit ATA/BDM convenience staging failed\n");
+        return 8;
+    }
+    ps2_drivers_img_discard_staged();
+
+    result = ps2_drivers_img_stage_for_ata_bdm(
+        PS2_DRIVERS_IMG_DEFAULT_PATH, PS2_DRIVER_REQ_AUDIO);
+    if (result != PS2_DRIVERS_IMG_OK ||
+        ps2_drivers_img_staged_modules() != 9u ||
+        !staged_module_present(PS2_IRX_ID_ATA_BD)) {
+        fprintf(stderr, "custom-path ATA/BDM staging failed\n");
+        return 9;
+    }
+    ps2_drivers_img_discard_staged();
+
     result = ps2_drivers_img_stage_default_for_path(
         "mc0:/apps/test.elf",
         PS2_DRIVER_REQ_JOYSTICK);
@@ -201,7 +265,13 @@ int main(int argc, char **argv)
         {"mx4sio", PS2_DRIVER_REQ_MX4SIO, 4u},
         {"cdfs", PS2_DRIVER_REQ_CDFS, 1u},
         {"dev9", PS2_DRIVER_REQ_DEV9, 1u},
-        {"hdd", PS2_DRIVER_REQ_HDD, 8u},
+        {"hdd", PS2_DRIVER_REQ_HDD, 6u},
+        {"hdd+bdm", PS2_DRIVER_REQ_HDD | PS2_DRIVER_REQ_BDM, 8u},
+        {"ata-bdm", PS2_DRIVER_REQ_ATA_BDM, 6u},
+        {"ata-bdm-app", PS2_DRIVER_REQ_ATA_BDM | PS2_DRIVER_REQ_AUDIO | PS2_DRIVER_REQ_JOYSTICK, 11u},
+        {"hdd-app", PS2_DRIVER_REQ_FILEXIO | PS2_DRIVER_REQ_HDD |
+         PS2_DRIVER_REQ_POWEROFF | PS2_DRIVER_REQ_AUDIO |
+         PS2_DRIVER_REQ_JOYSTICK, 12u},
         {"joystick", PS2_DRIVER_REQ_JOYSTICK, 3u},
         {"audio", PS2_DRIVER_REQ_AUDIO, 2u},
         {"poweroff", PS2_DRIVER_REQ_POWEROFF, 1u},
@@ -232,6 +302,15 @@ int main(int argc, char **argv)
     if (check_boot_helpers() != 0)
         return 4;
 
+    if (ps2_drivers_img_requirements_for_ata_bdm(PS2_DRIVER_REQ_AUDIO) !=
+            (PS2_DRIVER_REQ_FILEXIO | PS2_DRIVER_REQ_POWEROFF |
+             PS2_DRIVER_REQ_ATA_BDM | PS2_DRIVER_REQ_AUDIO) ||
+        ps2_drivers_img_stage(argv[1], PS2_DRIVER_REQ_HDD | PS2_DRIVER_REQ_ATA_BDM) !=
+            PS2_DRIVERS_IMG_ERR_ARGUMENT) {
+        fprintf(stderr, "ATA/BDM and APA/PFS driver modes were not distinguished\n");
+        return 6;
+    }
+
     if (ps2_drivers_img_restage(PS2_DRIVER_REQ_JOYSTICK) !=
             PS2_DRIVERS_IMG_ERR_NO_SOURCE ||
         ps2_drivers_img_restage_last() != PS2_DRIVERS_IMG_ERR_NO_SOURCE) {
@@ -258,6 +337,9 @@ int main(int argc, char **argv)
                     staged_bytes);
             return 40 + (int)i;
         }
+
+        if (check_hdd_dependency_isolation(cases[i].name) != 0)
+            return 60 + (int)i;
 
         if (ps2_drivers_img_stage(argv[1], cases[i].requirements) !=
                 PS2_DRIVERS_IMG_ERR_ALREADY_STAGED ||

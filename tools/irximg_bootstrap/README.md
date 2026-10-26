@@ -18,3 +18,35 @@ Relative targets are resolved against that current directory before loading, so
 `MVS` becomes a device-qualified path such as `mass:/NJEMU-MVS/MVS` or
 `host:/MVS`.
 Additional arguments after the target path are forwarded to the target ELF.
+
+## Internal HDD / APA/PFS
+
+`ps2_drivers_irximg_hdd_bootstrap.elf` is a separate launcher for an internal
+HDD. Unlike the USB bootstrap, it requires the original APA partition name in
+the launch arguments, e.g. `hdd0:__common:pfs:/NJEMU/MVS/BOOT_HDD.ELF`, while
+the working directory is a mounted `pfs:/NJEMU/MVS/`. It fails with a clear
+error if either piece of information is missing.
+
+The HDD variant resets the IOP, installs the fileXio/DEV9/ATAD/HDD/PFS stack,
+remounts the original partition, restores the directory, and launches the
+configured target without another reset. A partition-qualified argument is
+passed to the target so it can preserve that information for a later reset.
+The USB variant's module set and its target-argument convention are unchanged.
+
+Some HDD launchers place the original partition-qualified bootstrap path in
+`argv[1]`. The HDD variant treats those arguments as launch context, not as a
+target ELF; it then reads `elf_path.ini` or uses a separate explicit target.
+
+The application is responsible for staging its own external IRX dependencies
+before any further reset. See `docs/HDD_PFS_BOOT.md` for the application API.
+
+## Internal HDD / FAT/exFAT
+
+`ps2_drivers_irximg_ata_bootstrap.elf` is an optional third launcher for an
+ATA-backed BDM `massN:` volume. It reuses the launch filesystem when available
+or loads fileXio, DEV9, BDM, BDMFS_FATFS and `ata_bd` in dependency order.
+It forwards `--ps2-drivers-ata-bdm` to its target so the application can
+distinguish the internal ATA transport from USB or MX4SIO, which also use
+`massN:` device paths. An ordinary USB `BOOT.ELF` never forwards this marker.
+The application must use the explicit ATA/BDM staging and launch-context APIs
+for subsequent resets. See `docs/HDD_ATA_BDM_BOOT.md`.

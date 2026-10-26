@@ -20,7 +20,6 @@
 #include <ps2_hdd_driver.h>
 #include <ps2_fileXio_driver.h>
 #include <ps2_dev9_driver.h>
-#include <ps2_bdm_driver.h>
 #include <irx_common_macros.h>
 
 #include <sifrpc.h>
@@ -57,7 +56,7 @@ extern enum HDD_INIT_STATUS __hdd_init_status;
 EXTERN_IRX_VARS(ps2atad);
 EXTERN_IRX_VARS(ps2hdd);
 EXTERN_IRX_VARS(ps2fs);
-extern char __mountString[];
+extern char __mountString[10];
 extern enum HDD_MOUNT_STATUS __mount_status;
 bool __cwd_is_hdd();
 #endif
@@ -131,11 +130,6 @@ enum HDD_INIT_STATUS init_hdd_driver(bool init_dependencies, bool only_if_booted
             return __hdd_init_status;
         }
 
-        ret = init_bdm_driver();
-        if (ret != BDM_INIT_STATUS_OK) {
-            __hdd_init_status = HDD_INIT_STATUS_DEPENDENCY_IRX_ERROR;
-            return __hdd_init_status;
-        }
     }
 
     __hdd_init_status = loadIRXs();
@@ -169,7 +163,6 @@ void deinit_hdd_driver(bool deinit_dependencies) {
 
     // Requires to have FILEXIO and DEV9 drivers loaded
     if (deinit_dependencies) {
-        deinit_bdm_driver();
         deinit_dev9_driver();
         deinit_fileXio_driver();
     }
@@ -181,9 +174,16 @@ enum HDD_MOUNT_STATUS mount_hdd_partition(const char *mountpoint, const char *bl
     if (__hdd_init_status != HDD_INIT_STATUS_IRX_OK)
         return HDD_MOUNT_INIT_STATUS_NOT_READY;
 
+    if (mountpoint == NULL || blockdev == NULL ||
+        strlen(mountpoint) >= sizeof(__mountString))
+        return HDD_MOUNT_STATUS_INFO_ERROR;
+
     if (fileXioMount(mountpoint, blockdev, FIO_MT_RDWR) < 0) {
         return HDD_MOUNT_STATUS_ERROR;
     }
+
+    strcpy(__mountString, mountpoint);
+    __mount_status = HDD_MOUNT_STATUS_OK;
 
     return HDD_MOUNT_STATUS_OK;
 }

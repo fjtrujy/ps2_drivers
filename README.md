@@ -28,7 +28,8 @@ With the solution that I propose within this library, the developer just needs t
 | DEV9 | `init_dev9_driver()` | Expansion bay device (HDD/Network) |
 | FileXio | `init_fileXio_driver()` | Extended file I/O |
 | Filesystem | `init_ps2_filesystem_driver()` | Combined filesystem driver (all storage devices) |
-| HDD | `init_hdd_driver(bool, bool)` | Hard disk drive support |
+| HDD | `init_hdd_driver(bool, bool)` | Internal HDD APA/PFS support |
+| ATA/BDM | `init_ata_bdm_driver(bool)` | Internal HDD FAT/exFAT through the ATA BDM transport |
 | Joystick | `init_joystick_driver(bool)` | Controller input with multitap support |
 | Keyboard | `init_keyboard_driver(bool)` | USB keyboard support |
 | Memory Card | `init_memcard_driver(bool)` | Memory card access |
@@ -100,6 +101,7 @@ cmake --build . --target ps2_drivers_irximg_check
 cmake --build . --target ps2_drivers_irximg_stage_check
 cmake --build . --target ps2_drivers_irximg_inspect
 cmake --build . --target ps2_drivers_img_payload_check
+cmake --build . --target ps2_drivers_hdd_launch_check
 ```
 
 After installation:
@@ -107,7 +109,9 @@ After installation:
 - both libraries are under `$PS2SDK/ports/lib/`;
 - headers are under `$PS2SDK/ports/include/`;
 - pkg-config metadata is available as `ps2_drivers` and `ps2_drivers-img`;
-- the companion image and `ps2_drivers_irximg_bootstrap.elf` are installed under `$PS2SDK/ports/share/ps2_drivers/`.
+- the companion image, USB `ps2_drivers_irximg_bootstrap.elf`, and HDD
+  `ps2_drivers_irximg_hdd_bootstrap.elf` are installed under
+  `$PS2SDK/ports/share/ps2_drivers/`.
 
 ### External IRX image flavor
 
@@ -168,6 +172,27 @@ MVS
 ```
 
 The bootstrap embeds only `iomanX`, `fileXio`, `bdm`, `bdmfs_fatfs`, `usbd`, and `usbmass_bd`. It first reuses the launch filesystem when it is still accessible (for example after a wLaunchELF handoff); otherwise it restores `mass:` from the embedded modules. It resolves a relative target against its current launch directory, then starts the resulting device-qualified ELF path with PS2SDK's `LoadELFFromFileWithPartitionNoReset()`. The real application can therefore stage `ps2_drivers.irximg` before performing its own definitive IOP reset, while remaining free of embedded IRX payloads itself. The target may alternatively be supplied as the bootstrap's first argument; remaining arguments are forwarded to the target ELF.
+
+For internal APA/PFS HDD installations, use the separate
+`ps2_drivers_irximg_hdd_bootstrap.elf` instead. It uses the same target
+resolution and no-reset handoff, but restores the HDD/PFS stack and forwards
+the original partition path to the application. The launcher must supply a
+partition-qualified argument such as `hdd0:__common:pfs:/apps/BOOT_HDD.ELF`;
+`pfs:/apps/` alone cannot identify an APA partition. Applications that reset
+the IOP again should call `ps2_hdd_launch_capture_current()` before reset and
+`ps2_hdd_launch_restore()` after reset, using the explicit HDD boot-device
+staging helper. See [the HDD/PFS integration guide](docs/HDD_PFS_BOOT.md).
+
+An internal HDD formatted as FAT/exFAT uses BDM with the ATA block-device
+transport, not the APA/PFS path. Use the separate
+`ps2_drivers_irximg_ata_bootstrap.elf` as `BOOT_ATA.ELF` when launching from
+an ATA-backed `massN:` filesystem. It passes an explicit ATA marker to the
+application. Before a subsequent IOP reset, capture that marker with
+`ps2_ata_bdm_launch_capture_current()`, stage the external image using
+`ps2_drivers_img_stage_default_for_ata_bdm()`, then restore the filesystem
+using `ps2_ata_bdm_launch_restore()`. Do not infer the transport from
+`massN:` alone: USB and ATA volumes share that namespace. See
+[the internal ATA FAT/exFAT guide](docs/HDD_ATA_BDM_BOOT.md).
 
 The convenience API also provides:
 
