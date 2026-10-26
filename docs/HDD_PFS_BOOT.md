@@ -86,12 +86,24 @@ them. The caller remains responsible for the usual lifecycle and IOP reset.
 
 - `iomanX`, `fileXio`, `ps2dev9`, `ps2atad`, `ps2hdd`, `ps2fs`.
 
-It no longer requests `bdm` or `bdmfs_fatfs`. These belong to removable
-storage, not the APA/PFS HDD driver chain. Likewise,
-`init_hdd_driver(true, ...)` no longer initializes or deinitializes BDM.
-The standalone BDM, USB, MX4SIO, and cacheio requirement masks still request
-their own BDM dependencies. All-filesystem staging retains BDM because it
-includes USB/MX4SIO.
+It no longer requests `bdm` or `bdmfs_fatfs`: these are not dependencies of
+the **APA/PFS** HDD driver chain. BDM is a general block-device filesystem
+stack, however, and is also used for **internal ATA HDDs formatted as FAT or
+exFAT**. Likewise, `init_hdd_driver(true, ...)` no longer initializes or
+deinitializes BDM because this helper initializes APA/PFS only. The standalone
+BDM, USB, MX4SIO, and cacheio requirement masks still request their own BDM
+dependencies. All-filesystem staging retains BDM through USB/MX4SIO.
+
+**Internal HDD exFAT is not yet supported by this library's HDD helpers.**
+It requires BDM, `bdmfs_fatfs`, DEV9, and an ATA-to-BDM transport such as
+`ata_bd.irx` (an ATAD build with `ATA_ENABLE_BDM`). The current IRX manifest
+includes `ps2atad.irx` for APA/PFS, but does not include `ata_bd.irx`. Simply
+restoring `bdm` and `bdmfs_fatfs` to `PS2_DRIVER_REQ_HDD` would not connect
+the internal ATA device to BDM or make exFAT accessible. Applications needing
+both formats should have distinct APA/PFS and ATA/BDM initialization paths,
+including the correct IRX load order and an explicit way to identify an ATA
+BDM volume. BDM volumes use `massN:` paths, which do not by themselves
+identify the physical transport as USB or internal ATA.
 
 With the current NJEMU integration-branch IRX set, the host tests measured:
 

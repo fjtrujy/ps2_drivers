@@ -28,7 +28,7 @@ With the solution that I propose within this library, the developer just needs t
 | DEV9 | `init_dev9_driver()` | Expansion bay device (HDD/Network) |
 | FileXio | `init_fileXio_driver()` | Extended file I/O |
 | Filesystem | `init_ps2_filesystem_driver()` | Combined filesystem driver (all storage devices) |
-| HDD | `init_hdd_driver(bool, bool)` | Hard disk drive support |
+| HDD | `init_hdd_driver(bool, bool)` | Internal HDD APA/PFS support (not exFAT) |
 | Joystick | `init_joystick_driver(bool)` | Controller input with multitap support |
 | Keyboard | `init_keyboard_driver(bool)` | USB keyboard support |
 | Memory Card | `init_memcard_driver(bool)` | Memory card access |
@@ -181,6 +181,11 @@ partition-qualified argument such as `hdd0:__common:pfs:/apps/BOOT_HDD.ELF`;
 the IOP again should call `ps2_hdd_launch_capture_current()` before reset and
 `ps2_hdd_launch_restore()` after reset, using the explicit HDD boot-device
 staging helper. See [the HDD/PFS integration guide](docs/HDD_PFS_BOOT.md).
+
+An internal HDD formatted as FAT/exFAT uses BDM with an ATA block-device
+transport, not the APA/PFS driver path. The current HDD bootstrap and helpers
+do not support that configuration; see the HDD/PFS guide for the required
+additional drivers and distinction.
 
 The convenience API also provides:
 
