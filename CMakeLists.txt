@@ -380,6 +380,28 @@ add_custom_target(ps2_drivers_irximg_stage_check
     VERBATIM
 )
 
+set(HDD_LAUNCH_TEST "${IRXIMG_TOOL_DIR}/ps2_hdd_launch_test")
+add_custom_command(
+    OUTPUT "${HDD_LAUNCH_TEST}"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${IRXIMG_TOOL_DIR}"
+    COMMAND ${PS2_DRIVERS_HOST_C_COMPILER}
+        -std=c99 -O2 -Wall -Wextra -Werror
+        -I${CMAKE_SOURCE_DIR}/include
+        "${CMAKE_SOURCE_DIR}/src/ps2_hdd_launch.c"
+        "${CMAKE_SOURCE_DIR}/tools/ps2_hdd_launch_test.c"
+        -o "${HDD_LAUNCH_TEST}"
+    DEPENDS
+        "${CMAKE_SOURCE_DIR}/src/ps2_hdd_launch.c"
+        "${CMAKE_SOURCE_DIR}/include/ps2_hdd_launch.h"
+        "${CMAKE_SOURCE_DIR}/tools/ps2_hdd_launch_test.c"
+    VERBATIM
+)
+add_custom_target(ps2_drivers_hdd_launch_check
+    COMMAND "${HDD_LAUNCH_TEST}"
+    DEPENDS "${HDD_LAUNCH_TEST}"
+    VERBATIM
+)
+
 # ============================================================================
 # Generate driver objects
 # ============================================================================
@@ -511,6 +533,7 @@ add_library(ps2_drivers_impl STATIC
     ${IRX_SOURCES}
     ${IRX_DESCRIPTOR_OBJECTS}
     src/ps2_boot_device.c
+    src/ps2_hdd_launch.c
     src/ps2_irx_module_embedded.c
     ${PS2_DRIVER_OBJECTS}
 )
@@ -524,6 +547,7 @@ set_target_properties(ps2_drivers_impl PROPERTIES
 add_library(ps2_drivers_img_impl STATIC
     ${IRX_EXTERNAL_DESCRIPTOR_OBJECTS}
     src/ps2_boot_device.c
+    src/ps2_hdd_launch.c
     src/ps2_irx_module_image.c
     src/ps2_drivers_img.c
     ${PS2_DRIVER_OBJECTS}
@@ -631,6 +655,27 @@ add_custom_command(TARGET ps2_drivers_irximg_bootstrap.elf POST_BUILD
     COMMENT "Stripping standalone IRX image bootstrap"
 )
 
+# A separate APA/PFS launcher reuses the target/ELF handoff implementation
+# while embedding only the filesystem IRXs needed to recover internal HDD.
+add_executable(ps2_drivers_irximg_hdd_bootstrap.elf
+    tools/irximg_bootstrap/irximg_bootstrap.c
+)
+target_compile_definitions(ps2_drivers_irximg_hdd_bootstrap.elf PRIVATE
+    PS2_IRXIMG_BOOTSTRAP_HDD=1
+)
+target_link_libraries(ps2_drivers_irximg_hdd_bootstrap.elf PRIVATE
+    "${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_COMBINED}"
+    -lelf-loader
+    -lpatches
+    -ldebug
+)
+target_link_options(ps2_drivers_irximg_hdd_bootstrap.elf PRIVATE -Wl,--wrap=stat)
+add_dependencies(ps2_drivers_irximg_hdd_bootstrap.elf ps2_drivers)
+add_custom_command(TARGET ps2_drivers_irximg_hdd_bootstrap.elf POST_BUILD
+    COMMAND ${CMAKE_STRIP} --strip-unneeded $<TARGET_FILE:ps2_drivers_irximg_hdd_bootstrap.elf>
+    COMMENT "Stripping APA/PFS IRX image bootstrap"
+)
+
 add_custom_target(ps2_drivers_img_payload_check ALL
     COMMAND ${CMAKE_COMMAND}
         -DNM=${CMAKE_NM}
@@ -687,7 +732,9 @@ if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
         DESTINATION "${INSTALL_PKGCONFIG_DIR}"
     )
     install(
-        FILES $<TARGET_FILE:ps2_drivers_irximg_bootstrap.elf>
+        FILES
+            $<TARGET_FILE:ps2_drivers_irximg_bootstrap.elf>
+            $<TARGET_FILE:ps2_drivers_irximg_hdd_bootstrap.elf>
         DESTINATION "${INSTALL_SHARE_DIR}"
     )
     install(

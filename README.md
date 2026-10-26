@@ -100,6 +100,7 @@ cmake --build . --target ps2_drivers_irximg_check
 cmake --build . --target ps2_drivers_irximg_stage_check
 cmake --build . --target ps2_drivers_irximg_inspect
 cmake --build . --target ps2_drivers_img_payload_check
+cmake --build . --target ps2_drivers_hdd_launch_check
 ```
 
 After installation:
@@ -107,7 +108,9 @@ After installation:
 - both libraries are under `$PS2SDK/ports/lib/`;
 - headers are under `$PS2SDK/ports/include/`;
 - pkg-config metadata is available as `ps2_drivers` and `ps2_drivers-img`;
-- the companion image and `ps2_drivers_irximg_bootstrap.elf` are installed under `$PS2SDK/ports/share/ps2_drivers/`.
+- the companion image, USB `ps2_drivers_irximg_bootstrap.elf`, and HDD
+  `ps2_drivers_irximg_hdd_bootstrap.elf` are installed under
+  `$PS2SDK/ports/share/ps2_drivers/`.
 
 ### External IRX image flavor
 
@@ -168,6 +171,16 @@ MVS
 ```
 
 The bootstrap embeds only `iomanX`, `fileXio`, `bdm`, `bdmfs_fatfs`, `usbd`, and `usbmass_bd`. It first reuses the launch filesystem when it is still accessible (for example after a wLaunchELF handoff); otherwise it restores `mass:` from the embedded modules. It resolves a relative target against its current launch directory, then starts the resulting device-qualified ELF path with PS2SDK's `LoadELFFromFileWithPartitionNoReset()`. The real application can therefore stage `ps2_drivers.irximg` before performing its own definitive IOP reset, while remaining free of embedded IRX payloads itself. The target may alternatively be supplied as the bootstrap's first argument; remaining arguments are forwarded to the target ELF.
+
+For internal APA/PFS HDD installations, use the separate
+`ps2_drivers_irximg_hdd_bootstrap.elf` instead. It uses the same target
+resolution and no-reset handoff, but restores the HDD/PFS stack and forwards
+the original partition path to the application. The launcher must supply a
+partition-qualified argument such as `hdd0:__common:pfs:/apps/BOOT_HDD.ELF`;
+`pfs:/apps/` alone cannot identify an APA partition. Applications that reset
+the IOP again should call `ps2_hdd_launch_capture_current()` before reset and
+`ps2_hdd_launch_restore()` after reset, using the explicit HDD boot-device
+staging helper. See [the HDD/PFS integration guide](docs/HDD_PFS_BOOT.md).
 
 The convenience API also provides:
 
