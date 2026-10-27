@@ -158,7 +158,7 @@ Restaging after an unload is only available while the remembered image source is
 
 Some ELF launchers reset the IOP before transferring control. When an application is launched from `mass:`, that reset removes the USB/BDM filesystem stack before the application can open `ps2_drivers.irximg`.
 
-`ps2_drivers_irximg_bootstrap.elf` handles that boundary outside the real application. It embeds only `iomanX`, `fileXio`, `bdm`, `bdmfs_fatfs`, `usbd`, and `usbmass_bd`, restores `mass:`, and launches the real ELF through PS2SDK's `LoadELFFromFileWithPartitionNoReset()`. The real application therefore starts with its launch filesystem alive, stages `ps2_drivers.irximg`, and then performs its own normal clean IOP reset.
+`ps2_drivers_irximg_bootstrap.elf` handles that boundary outside the real application. It now supports USB, MX4SIO, APA/PFS HDD and ATA-backed FAT/exFAT recovery with one executable. Only the selected storage stack stays resident after its reset/probe sequence, and the target is launched via PS2SDK's `LoadELFFromFileWithPartitionNoReset()`. The real application therefore starts with its launch filesystem alive, stages `ps2_drivers.irximg`, and then performs its own normal clean IOP reset.
 
 The target ELF can be supplied as the bootstrap's first argument. If no argument is supplied, the bootstrap reads the first line of `elf_path.ini` from its current directory. Arguments after the target path are forwarded to the real ELF.
 

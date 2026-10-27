@@ -88,7 +88,7 @@ cmake .. -DBUILD_SAMPLES=OFF
 The build process will generate:
 - `libps2_drivers.a` - The main library combining all drivers and PS2SDK libraries
 - `libps2_drivers_img.a` - External-image flavor with no embedded IRX payload arrays
-- `ps2_drivers_irximg_bootstrap.elf` - Standalone USB bootstrap for launchers that reset the IOP before starting the real ELF
+- `ps2_drivers_irximg_bootstrap.elf` - Universal bootstrap for USB/MX4SIO and internal HDD filesystems
 - `ps2_drivers.irximg` - A deterministic, validated container with the canonical IRX set
 - Sample executables in `build/samples/*/` directories (if BUILD_SAMPLES=ON)
 
@@ -109,9 +109,8 @@ After installation:
 - both libraries are under `$PS2SDK/ports/lib/`;
 - headers are under `$PS2SDK/ports/include/`;
 - pkg-config metadata is available as `ps2_drivers` and `ps2_drivers-img`;
-- the companion image, USB `ps2_drivers_irximg_bootstrap.elf`, and HDD
-  `ps2_drivers_irximg_hdd_bootstrap.elf` are installed under
-  `$PS2SDK/ports/share/ps2_drivers/`.
+- the companion image and universal `ps2_drivers_irximg_bootstrap.elf` are
+  installed under `$PS2SDK/ports/share/ps2_drivers/`.
 
 ### External IRX image flavor
 
@@ -163,48 +162,34 @@ init_joystick_driver(true);
 
 If the application uses `init_ps2_filesystem_driver()` instead, use `ps2_drivers_img_stage_default_for_all_filesystems(additional_requirements)`.
 
-Some ELF loaders reset the IOP before transferring control to the application. When an ELF is launched from `mass:` this removes the USB filesystem before the application can stage `ps2_drivers.irximg`. For that launch mode, deploy `ps2_drivers_irximg_bootstrap.elf` as the entry ELF instead of embedding an emergency copy of the USB drivers in the real application.
+## Universal storage bootstrap
 
-Place an `elf_path.ini` beside the bootstrap containing the real ELF path, for example:
+One `ps2_drivers_irximg_bootstrap.elf` is now used as `BOOT.ELF` on **USB,
+MX4SIO, APA/PFS HDD, and ATA/BDM FAT/exFAT HDD**. Copy it next to the real
+application and `elf_path.ini` (first line = target ELF), for example:
 
 ```text
+BOOT.ELF
 MVS
+elf_path.ini
+ps2_drivers.irximg
 ```
 
-The bootstrap embeds only `iomanX`, `fileXio`, `bdm`, `bdmfs_fatfs`, `usbd`, and `usbmass_bd`. It first reuses the launch filesystem when it is still accessible (for example after a wLaunchELF handoff); otherwise it restores `mass:` from the embedded modules. It resolves a relative target against its current launch directory, then starts the resulting device-qualified ELF path with PS2SDK's `LoadELFFromFileWithPartitionNoReset()`. The real application can therefore stage `ps2_drivers.irximg` before performing its own definitive IOP reset, while remaining free of embedded IRX payloads itself. The target may alternatively be supplied as the bootstrap's first argument; remaining arguments are forwarded to the target ELF.
+For an APA/PFS launch, wLaunchELF must forward the partition-qualified path
+(e.g. `hdd0:__common:pfs:/MVS/BOOT.ELF`). The bootstrap recovers malformed
+HDD startup directories and forwards the partition context to the app.
 
-For internal APA/PFS HDD installations, use the separate
-`ps2_drivers_irximg_hdd_bootstrap.elf` instead. It uses the same target
-resolution and no-reset handoff, but restores the HDD/PFS stack and forwards
-the original partition path to the application. The launcher must supply a
-partition-qualified argument such as `hdd0:__common:pfs:/apps/BOOT_HDD.ELF`;
-`pfs:/apps/` alone cannot identify an APA partition. Applications that reset
-the IOP again should call `ps2_hdd_launch_capture_current()` before reset and
-`ps2_hdd_launch_restore()` after reset, using the explicit HDD boot-device
-staging helper. See [the HDD/PFS integration guide](docs/HDD_PFS_BOOT.md).
+`massN:` does not identify USB, MX4SIO or ATA. The universal bootstrap probes
+one storage provider at a time across clean IOP resets, preserving the
+original mass path; the successful transport is retained alone. ATA/BDM
+gets the `--ps2-drivers-ata-bdm` argument for subsequent app resets. The
+application must still use the documented HDD/ATA staging and restore APIs.
 
-When launching from an APA/PFS partition via wLaunchELF, use
-`BOOT_HDD.ELF`, **not the USB/MX4SIO `BOOT.ELF`**. If a HDD installation
-requires the conventional `BOOT.ELF` name, copy the installed HDD bootstrap
-under that filename on the HDD. The generic HDD launcher supports
-wLaunchELF's `-r`/`-nr` arguments and recovers its launch directory from the
-partition-qualified argument if newlib's initial cwd is malformed.
-
-To verify HDD boot without NJEMU or ROMs, build the standalone
-`hdd_smoke_package` sample target. It produces a ready-to-copy `HDD_SMOKE.zip`
-containing its own HDD-specific `BOOT.ELF`, test ELF, IRX image, marker file,
-and instructions. See [standalone HDD smoke test](docs/HDD_SMOKE_TEST.md).
-
-An internal HDD formatted as FAT/exFAT uses BDM with the ATA block-device
-transport, not the APA/PFS path. Use the separate
-`ps2_drivers_irximg_ata_bootstrap.elf` as `BOOT_ATA.ELF` when launching from
-an ATA-backed `massN:` filesystem. It passes an explicit ATA marker to the
-application. Before a subsequent IOP reset, capture that marker with
-`ps2_ata_bdm_launch_capture_current()`, stage the external image using
-`ps2_drivers_img_stage_default_for_ata_bdm()`, then restore the filesystem
-using `ps2_ata_bdm_launch_restore()`. Do not infer the transport from
-`massN:` alone: USB and ATA volumes share that namespace. See
-[the internal ATA FAT/exFAT guide](docs/HDD_ATA_BDM_BOOT.md).
+See [bootstrap integration](tools/irximg_bootstrap/README.md),
+[APA/PFS integration](docs/HDD_PFS_BOOT.md), and
+[ATA FAT/exFAT integration](docs/HDD_ATA_BDM_BOOT.md). The standalone
+[HDD smoke test](docs/HDD_SMOKE_TEST.md) packages this exact universal
+`BOOT.ELF` and a tiny diagnostics app.
 
 The convenience API also provides:
 

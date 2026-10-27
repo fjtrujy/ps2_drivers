@@ -20,7 +20,7 @@ The complete, ready-to-copy package is at
 
 | File | Function |
 | --- | --- |
-| `BOOT.ELF` | **APA/PFS HDD bootstrap**, built from `ps2_drivers_irximg_hdd_bootstrap.elf` |
+| `BOOT.ELF` | **Universal bootstrap**, built from `ps2_drivers_irximg_bootstrap.elf` |
 | `HDD_SMOKE.ELF` | Standalone test application, linked with the external-IRX flavor |
 | `elf_path.ini` | Names `HDD_SMOKE.ELF` as the target |
 | `probe.txt` | Known contents verified both before and after IOP reset |
@@ -33,9 +33,8 @@ internal HDD partition, for example `hdd0:__common/PS2DRIVERS/`. Launch
 launch `HDD_SMOKE.ELF` directly: it expects the original APA partition
 context forwarded by the generic HDD bootstrap.
 
-`BOOT.ELF` in this ZIP is the **HDD-specific** executable. It is intentionally
-not the removable-storage `BOOT.ELF` used for USB/MX4SIO. Do not replace the
-USB bootloader with it. The smoke test only reads files and does not format,
+`BOOT.ELF` is the **same universal executable** used for USB, MX4SIO
+and both internal HDD modes. There are no longer separate bootloader binaries. The smoke test only reads files and does not format,
 modify or overwrite partitions.
 
 ## Expected output
@@ -71,12 +70,13 @@ log confirmed that both marker-file reads succeeded, seven required IRXs
 were staged and consumed, and the original partition was remounted after the
 IOP reset. NJEMU content was not present on the test disk.
 
-**Real-hardware validation:** the standalone ZIP was also run from an internal
-HDD on a physical PS2 using wLaunchELF. The tester reported that it worked
-and reached the final message, `Test complete. Power off or reset the PS2.`
-That message is printed only after both marker-file reads and the full IOP
-reset/remount sequence have passed. This confirms the standalone APA/PFS HDD
-bootstrap path on actual hardware, independently of NJEMU.
+**Real-hardware validation:** both the earlier HDD-specific bootstrap and
+the new **universal `BOOT.ELF`** package have now been tested on a physical
+PS2 with an internal APA/PFS HDD through wLaunchELF. The tester confirmed
+the universal package worked. The test reaches its final success message,
+`Test complete. Power off or reset the PS2.`, only after both marker-file
+reads and the complete IOP reset and remount sequence have passed. This
+validates the universal APA/PFS handoff independently of NJEMU.
 
 This does **not** validate NJEMU's own integration, ROM loading, or the
-separate ATA/BDM FAT/exFAT mode on physical hardware.
+USB, MX4SIO, or ATA/BDM FAT/exFAT modes on physical hardware.

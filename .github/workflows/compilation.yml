@@ -34,7 +34,7 @@ jobs:
         cmake --build build --target ps2_drivers_irximg_check
         cmake --build build --target ps2_drivers_irximg_stage_check
         cmake --build build --target ps2_drivers_hdd_launch_check
-        cmake --build build --target ps2_drivers_hdd_bootstrap_args_check
+        cmake --build build --target ps2_drivers_bootstrap_args_check
         cmake --build build --target ps2_drivers_ata_bdm_launch_check
         cmake --build build --target ps2_drivers_irximg_inspect
         cmake --build build --target ps2_drivers_img_payload_check
@@ -57,5 +57,6 @@ jobs:
         path: |
           build/*.a
           build/*.irximg
+          build/ps2_drivers_irximg_bootstrap.elf
           build/samples/**/*.elf
           build/samples/hdd_boot_smoke/HDD_SMOKE.zip

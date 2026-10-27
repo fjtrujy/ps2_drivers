@@ -11,7 +11,7 @@
 int main(void)
 {
     static const char *valid[] = {
-        "-f", "hdd0:__common:pfs:/NJEMU/MVS/BOOT_HDD.ELF"
+        "-f", "hdd0:__common:pfs:/NJEMU/MVS/BOOT.ELF"
     };
     static const char *alias[] = {
         "hdd:my_partition:pfs:/apps/boot.elf"
@@ -37,7 +37,7 @@ int main(void)
           "pfs:/apps/") == PS2_HDD_LAUNCH_OK);
     CHECK(strcmp(context.partition, "hdd:my_partition") == 0);
     CHECK(ps2_hdd_launch_capture(&context, 1,
-          (const char *const[]){"hdd0:__common:pfs0:/apps/BOOT_HDD.ELF"},
+          (const char *const[]){"hdd0:__common:pfs0:/apps/BOOT.ELF"},
           "pfs0:/apps/") == PS2_HDD_LAUNCH_OK);
     CHECK(ps2_hdd_launch_format_argument(&context, "pfs0:/apps/MVS",
           argument, sizeof(argument)) == PS2_HDD_LAUNCH_OK);
@@ -53,7 +53,7 @@ int main(void)
     CHECK(strcmp(context.partition, "hdd0:__common") == 0);
     CHECK(strcmp(context.directory, "pfs:/NJEMU/MVS/") == 0);
     CHECK(ps2_hdd_launch_capture(&context, 1,
-          (const char *const[]){"hdd0:__common:pfs0:/apps/BOOT_HDD.ELF"},
+          (const char *const[]){"hdd0:__common:pfs0:/apps/BOOT.ELF"},
           "") == PS2_HDD_LAUNCH_OK);
     CHECK(strcmp(context.directory, "pfs0:/apps/") == 0);
     CHECK(ps2_hdd_launch_capture(&context, 4, invalid,

@@ -13,7 +13,7 @@
 int main(void)
 {
     ps2_ata_bdm_launch_context_t context;
-    const char *args[] = { "mass0:/apps/BOOT_ATA.ELF",
+    const char *args[] = { "mass0:/apps/BOOT.ELF",
                            PS2_ATA_BDM_LAUNCH_MARKER, "--game" };
     const char *unmarked[] = { "mass0:/apps/BOOT.ELF", "--game" };
     char oversized[FILENAME_MAX + 20];

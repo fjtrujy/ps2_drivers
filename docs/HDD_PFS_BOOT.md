@@ -4,65 +4,29 @@ For an entirely independent end-to-end test without NJEMU files, use the
 [standalone HDD smoke test](HDD_SMOKE_TEST.md). It produces a ready-to-copy
 ZIP with an HDD-specific `BOOT.ELF`, test ELF and the external IRX image.
 
-## Ownership and installation
+## Universal BOOT.ELF packaging
 
-`ps2_drivers` supplies three independent entry ELFs from one shared bootstrap
-implementation:
+`ps2_drivers` now installs a **single**
+`ps2_drivers_irximg_bootstrap.elf`. Copy it to the application's HDD
+installation as `BOOT.ELF`, alongside `elf_path.ini`, the application and
+`ps2_drivers.irximg`. The same bootstrap binary is also used on USB,
+MX4SIO and ATA/BDM FAT/exFAT; separate `BOOT_HDD.ELF` and `BOOT_ATA.ELF`
+files are no longer built.
 
-| Installed artifact | Recommended package name | Purpose |
-| --- | --- | --- |
-| `ps2_drivers_irximg_bootstrap.elf` | `BOOT.ELF` | Existing USB/MX4SIO bootstrap |
-| `ps2_drivers_irximg_hdd_bootstrap.elf` | `BOOT_HDD.ELF` | Internal HDD/PFS bootstrap |
-| `ps2_drivers_irximg_ata_bootstrap.elf` | `BOOT_ATA.ELF` | Internal ATA-backed FAT/exFAT bootstrap (optional) |
-| `ps2_drivers.irximg` | Same filename | External driver payload container |
+The original APA/PFS path (e.g.
+`hdd0:__common:pfs:/NJEMU/MVS/BOOT.ELF`) must be forwarded by wLaunchELF.
+The universal bootstrap distinguishes APA/PFS from the `massN:` transports
+using that path, recovers malformed initial newlib working directories,
+ignores wLaunchELF's `-r`/`-nr` flags and mounts the correct partition after
+its clean IOP reset. It then launches the real application without a second
+reset and forwards the partition-qualified target path for any later resets.
 
-### Launching through wLaunchELF from the HDD
-
-The existing `BOOT.ELF` is **the USB/MX4SIO bootstrap**, not a universal
-launcher. It must not be executed from an APA/PFS partition: it only restores
-`mass:` and cannot restore the partition required to load the application.
-
-For an APA/PFS installation, select `BOOT_HDD.ELF` in wLaunchELF's HDD file
-browser. Alternatively, if the installation expects the name `BOOT.ELF`,
-**copy `ps2_drivers_irximg_hdd_bootstrap.elf` onto the HDD as `BOOT.ELF`**
-instead of copying the USB bootstrap. This is a deployment-time choice, not
-runtime device detection. Keep the USB bootstrap unchanged on USB/MX4SIO.
-
-wLaunchELF can pass the original partition-qualified ELF path followed by
-`-r` or `-nr` (its IOP-reset preference). These are launcher metadata, not
-application targets. The HDD bootstrap now skips those flags when deciding
-whether to read `elf_path.ini`. PS2SDK/newlib can also present an invalid
-working directory after this handoff, for example
-`hdd0:__common:pfs:NJEMUMVS`. If that happens, the public HDD launch helper
-recovers `pfs:/NJEMU/MVS/` from the partition-qualified ELF argument. This
-also provides a correct base directory for resolving the target after the
-bootstrap resets and remounts the IOP filesystem.
-
-In PCSX2, the complete wLaunchELF → internal HDD → generic HDD bootstrap →
-NJEMU MVS handoff was validated using a cloned isolated 8 GiB APA/PFS image.
-The USB `BOOT.ELF` on the same HDD failed while attempting to restore
-`mass:`; the HDD bootstrap succeeded both as `BOOT_HDD.ELF` and when copied
-to the HDD under the name `BOOT.ELF`. The new and old wLaunchELF builds did
-not behave identically: the older build used for comparison failed inside
-its own ELF loader with an IOP heap-allocation error before the bootstrap
-started. The separate standalone HDD smoke-test package has since passed
-on real PS2 hardware via wLaunchELF, validating the generic APA/PFS
-bootstrap, image staging, IOP reset, and HDD remount without NJEMU.
-Full NJEMU integration on real hardware still needs separate verification.
-
-An application also installs its extensionless executable and `elf_path.ini`,
-whose first line names that executable (e.g. `MVS`). The HDD bootstrap must be
-launched from a mounted PFS directory by an ELF browser that provides the
-original APA partition in an argument such as
-`hdd0:__common:pfs:/NJEMU/MVS/BOOT_HDD.ELF`. The working directory alone,
-`pfs:/NJEMU/MVS/`, is **not sufficient** to identify `__common`.
-
-The HDD bootstrap is deliberately independent of any emulator-specific cache,
-ROM or UI logic. It requires only the HDD storage stack; the removable-storage
-bootstrap remains separate and does not grow HDD dependencies. Both variants
-reuse the same target-resolution and `LoadELFFromFileWithPartitionNoReset()`
-code. The HDD ELF also includes a PFS-only `stat()` adapter for PS2SDK
-`elf-loader`; non-PFS paths still use the SDK's normal implementation.
+**Validation:** Both the previously dedicated HDD bootstrap and the new
+**universal `BOOT.ELF`** have now passed the standalone HDD smoke test on a
+physical PS2 through wLaunchELF. The universal executable also passed the
+identical end-to-end handoff in PCSX2 on an isolated APA/PFS HDD image.
+NJEMU's own HDD launch and game-loading behavior still needs its separate
+integration verification.
 
 ## Application API for subsequent IOP resets
 

@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-/* Explicit transport marker passed by BOOT_ATA.ELF to the application.
+/* Transport marker passed by the universal BOOT.ELF when ATA/BDM is selected.
  * massN: is shared by USB, MX4SIO and ATA; it cannot identify ATA alone. */
 #define PS2_ATA_BDM_LAUNCH_MARKER "--ps2-drivers-ata-bdm"
 
