@@ -40,6 +40,13 @@ target ELF; it then reads `elf_path.ini` or uses a separate explicit target.
 The application is responsible for staging its own external IRX dependencies
 before any further reset. See `docs/HDD_PFS_BOOT.md` for the application API.
 
+For an HDD-only deployment that must expose `BOOT.ELF`, rename/copy the **HDD**
+bootstrap as `BOOT.ELF` on the APA/PFS volume. The regular USB bootstrap under
+that filename cannot restore the PFS mount and will fail. The HDD bootstrap
+accepts wLaunchELF's partition-qualified argument plus its `-r`/`-nr`
+launcher flag, and reconstructs the PFS working directory when the initial
+newlib cwd is malformed.
+
 ## Internal HDD / FAT/exFAT
 
 `ps2_drivers_irximg_ata_bootstrap.elf` is an optional third launcher for an

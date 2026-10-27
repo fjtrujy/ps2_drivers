@@ -23,6 +23,13 @@ NJEMU must explicitly recognize the ATA launch marker before selecting it.
    the HDD launcher has passed PCSX2 validation. Do not rename or change the
    existing removable-storage `BOOT.ELF`.
 
+   **wLaunchELF HDD deployment:** the package's default `BOOT.ELF` is USB-only.
+   Launch `BOOT_HDD.ELF` from the APA/PFS HDD browser, or copy the generic
+   HDD bootstrap onto the HDD *as* `BOOT.ELF` when an existing shortcut
+   expects that filename. Do not reuse the removable-storage binary on PFS.
+   The generic HDD bootstrap now accepts wLaunchELF's `-r`/`-nr` flags and
+   reconstructs PFS cwd from the partition-qualified launch argument.
+
 ## Runtime handoff
 
 4. In `src/ps2/ps2_platform.c`, replace its local
