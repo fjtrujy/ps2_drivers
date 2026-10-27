@@ -7,8 +7,7 @@ target_link_libraries(hdd_boot_smoke.elf PRIVATE
 )
 add_dependencies(hdd_boot_smoke.elf ps2_drivers_img ps2_drivers_irximg)
 
-# A ready-to-copy directory and ZIP whose BOOT.ELF is intentionally the
-# APA/PFS HDD bootstrap, never the USB/MX4SIO bootstrap.
+# The same universal BOOT.ELF is distributed for every storage transport.
 set(HDD_SMOKE_DIR "${CMAKE_CURRENT_BINARY_DIR}/HDD_SMOKE")
 set(HDD_SMOKE_ARCHIVE "${CMAKE_CURRENT_BINARY_DIR}/HDD_SMOKE.zip")
 file(MAKE_DIRECTORY "${HDD_SMOKE_DIR}")
@@ -16,7 +15,7 @@ add_custom_command(
     OUTPUT "${HDD_SMOKE_ARCHIVE}"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${HDD_SMOKE_DIR}"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_FILE:ps2_drivers_irximg_hdd_bootstrap.elf>
+        $<TARGET_FILE:ps2_drivers_irximg_bootstrap.elf>
         "${HDD_SMOKE_DIR}/BOOT.ELF"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         $<TARGET_FILE:hdd_boot_smoke.elf> "${HDD_SMOKE_DIR}/HDD_SMOKE.ELF"
@@ -31,7 +30,7 @@ add_custom_command(
         BOOT.ELF HDD_SMOKE.ELF elf_path.ini probe.txt ps2_drivers.irximg README.txt
     WORKING_DIRECTORY "${HDD_SMOKE_DIR}"
     DEPENDS hdd_boot_smoke.elf
-        ps2_drivers_irximg_hdd_bootstrap.elf
+        ps2_drivers_irximg_bootstrap.elf
         ps2_drivers_irximg
         "${IRX_IMAGE}"
         "${CMAKE_CURRENT_SOURCE_DIR}/elf_path.ini"

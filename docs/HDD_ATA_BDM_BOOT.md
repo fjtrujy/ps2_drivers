@@ -9,8 +9,8 @@ carry this driver separately from `ps2atad.irx`.
 
 | Storage | Requirements | Filesystem path | Bootstrap |
 | --- | --- | --- | --- |
-| Internal HDD APA/PFS | `PS2_DRIVER_REQ_HDD` | `pfs:/` (APA partition from `hdd0:`) | `BOOT_HDD.ELF` |
-| Internal HDD FAT/exFAT | `PS2_DRIVER_REQ_ATA_BDM` | `massN:/` | `BOOT_ATA.ELF` |
+| Internal HDD APA/PFS | `PS2_DRIVER_REQ_HDD` | `pfs:/` (APA partition from `hdd0:`) | `BOOT.ELF` |
+| Internal HDD FAT/exFAT | `PS2_DRIVER_REQ_ATA_BDM` | `massN:/` | `BOOT.ELF` |
 | USB and MX4SIO | Existing USB/MX4SIO requirements | `massN:/` | `BOOT.ELF` |
 
 ATA/BDM stages `iomanX`, `fileXio`, `ps2dev9`, `bdm`, `bdmfs_fatfs`, and
@@ -30,9 +30,10 @@ not attempt simultaneous APA/PFS and exFAT mounts on the same ATA bus.
 
 BDM exposes ATA-backed partitions as `mass:`, `mass0:`, and other `massN:`
 paths, just like USB and MX4SIO. **Do not use `getBootDeviceID(massN:)` to
-select internal ATA**: its legacy USB/removable meaning is unchanged. Choose
-ATA explicitly via a launcher, application setting, or another trusted source.
-For this reason, the dedicated bootstrap forwards the marker
+select internal ATA**: its legacy USB/removable meaning is unchanged. The universal bootstrap probes each storage provider after a clean IOP
+reset and forwards an ATA marker only when ATA/BDM supplied the requested
+volume. This is active driver probing, not inference from the path.
+It forwards the marker
 `--ps2-drivers-ata-bdm` to the launched application.
 
 For an application launched by that bootstrap:
@@ -67,29 +68,26 @@ already-known `massN:` directory without requiring the launcher marker. This
 is **not** transport autodetection. Both capture variants reject non-`massN:`
 directories; an unmarked ordinary USB launch does not opt into ATA.
 
-## Bootstrap packaging
+## Universal bootstrap packaging
 
-Install the generic `ps2_drivers_irximg_ata_bootstrap.elf` as `BOOT_ATA.ELF`
-alongside the usual external `ps2_drivers.irximg`, `elf_path.ini`, and real
-application ELF. The same target-resolution and no-reset ELF handoff are used
-by the existing USB and APA/PFS launchers. If the launch filesystem survives
-the ELF browser handoff, the ATA launcher reuses it. Otherwise it starts the
-ATA/BDM stack and waits for the captured `massN:` directory to reappear.
-It passes the transport marker before the application's forwarded arguments.
+Install `ps2_drivers_irximg_bootstrap.elf` as `BOOT.ELF` for **all**
+storage types alongside `ps2_drivers.irximg`, `elf_path.ini`, and the real
+application ELF. The bootstrap resets the IOP and probes USB, MX4SIO and
+ATA-backed BDM one at a time for the captured `massN:` directory. Each
+failed probe is followed by a clean reset before trying the next provider.
+When ATA/BDM is selected, it forwards the transport marker to the target.
+The ATA mount index must remain stable across the application's resets.
 
-The bootstrap intentionally does not bundle USB drivers and does not guess
-whether a missing mass volume belongs to USB or ATA. Ensure an ATA-formatted
-HDD is physically present and the chosen `massN:` slot is stable across a
-reset. The bootstrap and restore helper report failure if it is not.
+The prior standalone `BOOT_ATA.ELF` is no longer built. Keep the older
+exFAT PCSX2 results below as baseline evidence for the dedicated variant;
+the universal ATA recovery mode requires its own verification.
 
 ## Validation
 
 Run `ps2_drivers_ata_bdm_launch_check`, `ps2_drivers_irximg_stage_check` and
 `ps2_drivers_irximg_check`. The tests assert correct IRX identities, reject
 conflicting ATAD modes, verify the transport marker and malformed directories,
-and preserve the existing APA/PFS and USB closure tests. Also build the
-three bootstrap ELFs, inspect artifact sizes, and confirm the original USB and
-APA/PFS ELF bytes are unchanged.
+and preserve the existing APA/PFS and USB closure tests. Build the single universal bootstrap and inspect its size and staging tests.
 
 Compilation and host staging tests are **not** proof of a mounted exFAT
 volume. Real ATA/BDM filesystem access and game/application boot require an
@@ -98,7 +96,7 @@ exFAT runtime pass until that test has actually completed.
 
 An isolated PCSX2 test with an MBR-formatted 1 GiB exFAT HDD image exercised
 both `ata_bdm_sample.elf` and the complete external-IRX handoff. The test
-launcher initialized ATA/BDM and entered `mass0:/BOOT_ATA.ELF`; that bootstrap
+launcher initialized ATA/BDM and entered the original ATA-only bootstrap; it
 loaded `mass0:/ATA_TEST.ELF` with no IOP reset. The target recognized the
 transport marker, staged seven external IRX modules (including poweroff),
 reset the IOP, restored the filesystem, consumed all staged modules and

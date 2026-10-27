@@ -203,8 +203,6 @@ set(IRX_SOURCES "")
 set(IRX_INPUTS "")
 set(IRX_DESCRIPTOR_OBJECTS "")
 set(IRX_EXTERNAL_DESCRIPTOR_OBJECTS "")
-set(IRX_IMG_USB_BOOTSTRAP_MODULES iomanX fileXio bdm bdmfs_fatfs usbd usbmass_bd)
-set(IRX_IMG_USB_BOOTSTRAP_SOURCES "")
 set(IRX_IDS_HEADER_CONTENT "#ifndef PS2_IRX_IDS_H\n#define PS2_IRX_IDS_H\n\n")
 
 foreach(irx_manifest_line IN LISTS IRX_MANIFEST_LINES)
@@ -237,9 +235,6 @@ foreach(irx_manifest_line IN LISTS IRX_MANIFEST_LINES)
         generated_external_irx_descriptor_object
     )
     list(APPEND IRX_SOURCES "${generated_irx_source}")
-    if(irx_name IN_LIST IRX_IMG_USB_BOOTSTRAP_MODULES)
-        list(APPEND IRX_IMG_USB_BOOTSTRAP_SOURCES "${generated_irx_source}")
-    endif()
     list(APPEND IRX_DESCRIPTOR_OBJECTS "${generated_irx_descriptor_object}")
     list(APPEND IRX_EXTERNAL_DESCRIPTOR_OBJECTS "${generated_external_irx_descriptor_object}")
     if(irx_filename STREQUAL "cacheio.irx")
@@ -402,24 +397,24 @@ add_custom_target(ps2_drivers_hdd_launch_check
     VERBATIM
 )
 
-set(HDD_BOOTSTRAP_ARGS_TEST "${IRXIMG_TOOL_DIR}/ps2_hdd_bootstrap_args_test")
+set(BOOTSTRAP_ARGS_TEST "${IRXIMG_TOOL_DIR}/ps2_bootstrap_args_test")
 add_custom_command(
-    OUTPUT "${HDD_BOOTSTRAP_ARGS_TEST}"
+    OUTPUT "${BOOTSTRAP_ARGS_TEST}"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${IRXIMG_TOOL_DIR}"
     COMMAND ${PS2_DRIVERS_HOST_C_COMPILER}
         -std=c99 -O2 -Wall -Wextra -Werror
-        "${CMAKE_SOURCE_DIR}/tools/irximg_bootstrap/hdd_args.c"
-        "${CMAKE_SOURCE_DIR}/tools/irximg_bootstrap/hdd_args_test.c"
-        -o "${HDD_BOOTSTRAP_ARGS_TEST}"
+        "${CMAKE_SOURCE_DIR}/tools/irximg_bootstrap/boot_args.c"
+        "${CMAKE_SOURCE_DIR}/tools/irximg_bootstrap/boot_args_test.c"
+        -o "${BOOTSTRAP_ARGS_TEST}"
     DEPENDS
-        "${CMAKE_SOURCE_DIR}/tools/irximg_bootstrap/hdd_args.c"
-        "${CMAKE_SOURCE_DIR}/tools/irximg_bootstrap/hdd_args.h"
-        "${CMAKE_SOURCE_DIR}/tools/irximg_bootstrap/hdd_args_test.c"
+        "${CMAKE_SOURCE_DIR}/tools/irximg_bootstrap/boot_args.c"
+        "${CMAKE_SOURCE_DIR}/tools/irximg_bootstrap/boot_args.h"
+        "${CMAKE_SOURCE_DIR}/tools/irximg_bootstrap/boot_args_test.c"
     VERBATIM
 )
-add_custom_target(ps2_drivers_hdd_bootstrap_args_check
-    COMMAND "${HDD_BOOTSTRAP_ARGS_TEST}"
-    DEPENDS "${HDD_BOOTSTRAP_ARGS_TEST}"
+add_custom_target(ps2_drivers_bootstrap_args_check
+    COMMAND "${BOOTSTRAP_ARGS_TEST}"
+    DEPENDS "${BOOTSTRAP_ARGS_TEST}"
     VERBATIM
 )
 
@@ -683,66 +678,27 @@ add_custom_target(ps2_drivers_img ALL
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_IMG_COMBINED}
 )
 
-# Standalone bootstrap for applications launched from USB by an ELF loader
-# which resets the IOP before transferring control. It restores only the USB
-# filesystem stack, then starts the real ELF without another IOP reset.
+# One bootstrap for USB, MX4SIO and both internal HDD filesystem modes.
+# Failed mass: transport probes use isolated clean IOP resets so conflicting
+# ATAD implementations and unneeded drivers never remain loaded together.
 add_executable(ps2_drivers_irximg_bootstrap.elf
-    ${IRX_IMG_USB_BOOTSTRAP_SOURCES}
     tools/irximg_bootstrap/irximg_bootstrap.c
+    tools/irximg_bootstrap/boot_args.c
 )
 target_include_directories(ps2_drivers_irximg_bootstrap.elf PRIVATE
     "${CMAKE_SOURCE_DIR}/include"
 )
 target_link_libraries(ps2_drivers_irximg_bootstrap.elf PRIVATE
-    -lelf-loader
-    -lpatches
-    -lfileXio
-    -lkernel
-)
-add_custom_command(TARGET ps2_drivers_irximg_bootstrap.elf POST_BUILD
-    COMMAND ${CMAKE_STRIP} --strip-unneeded $<TARGET_FILE:ps2_drivers_irximg_bootstrap.elf>
-    COMMENT "Stripping standalone IRX image bootstrap"
-)
-
-# A separate APA/PFS launcher reuses the target/ELF handoff implementation
-# while embedding only the filesystem IRXs needed to recover internal HDD.
-add_executable(ps2_drivers_irximg_hdd_bootstrap.elf
-    tools/irximg_bootstrap/irximg_bootstrap.c
-    tools/irximg_bootstrap/hdd_args.c
-)
-target_compile_definitions(ps2_drivers_irximg_hdd_bootstrap.elf PRIVATE
-    PS2_IRXIMG_BOOTSTRAP_HDD=1
-)
-target_link_libraries(ps2_drivers_irximg_hdd_bootstrap.elf PRIVATE
     "${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_COMBINED}"
     -lelf-loader
     -lpatches
     -ldebug
 )
-target_link_options(ps2_drivers_irximg_hdd_bootstrap.elf PRIVATE -Wl,--wrap=stat)
-add_dependencies(ps2_drivers_irximg_hdd_bootstrap.elf ps2_drivers)
-add_custom_command(TARGET ps2_drivers_irximg_hdd_bootstrap.elf POST_BUILD
-    COMMAND ${CMAKE_STRIP} --strip-unneeded $<TARGET_FILE:ps2_drivers_irximg_hdd_bootstrap.elf>
-    COMMENT "Stripping APA/PFS IRX image bootstrap"
-)
-
-# An explicit ATA-backed BDM launcher for FAT/exFAT internal HDDs. The
-# transport marker is forwarded to the app because massN: also names USB.
-add_executable(ps2_drivers_irximg_ata_bootstrap.elf
-    tools/irximg_bootstrap/irximg_bootstrap.c
-)
-target_compile_definitions(ps2_drivers_irximg_ata_bootstrap.elf PRIVATE
-    PS2_IRXIMG_BOOTSTRAP_ATA_BDM=1
-)
-target_link_libraries(ps2_drivers_irximg_ata_bootstrap.elf PRIVATE
-    "${CMAKE_CURRENT_BINARY_DIR}/${EE_LIB_COMBINED}"
-    -lelf-loader
-    -lpatches
-)
-add_dependencies(ps2_drivers_irximg_ata_bootstrap.elf ps2_drivers)
-add_custom_command(TARGET ps2_drivers_irximg_ata_bootstrap.elf POST_BUILD
-    COMMAND ${CMAKE_STRIP} --strip-unneeded $<TARGET_FILE:ps2_drivers_irximg_ata_bootstrap.elf>
-    COMMENT "Stripping ATA/BDM FAT/exFAT bootstrap"
+target_link_options(ps2_drivers_irximg_bootstrap.elf PRIVATE -Wl,--wrap=stat)
+add_dependencies(ps2_drivers_irximg_bootstrap.elf ps2_drivers)
+add_custom_command(TARGET ps2_drivers_irximg_bootstrap.elf POST_BUILD
+    COMMAND ${CMAKE_STRIP} --strip-unneeded $<TARGET_FILE:ps2_drivers_irximg_bootstrap.elf>
+    COMMENT "Stripping universal IRX image bootstrap"
 )
 
 add_custom_target(ps2_drivers_img_payload_check ALL
@@ -803,8 +759,6 @@ if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
     install(
         FILES
             $<TARGET_FILE:ps2_drivers_irximg_bootstrap.elf>
-            $<TARGET_FILE:ps2_drivers_irximg_hdd_bootstrap.elf>
-            $<TARGET_FILE:ps2_drivers_irximg_ata_bootstrap.elf>
         DESTINATION "${INSTALL_SHARE_DIR}"
     )
     install(

@@ -3,7 +3,7 @@ PS2_DRIVERS STANDALONE HDD/PFS SMOKE TEST
 Copy the five test files (and optionally this README) to ONE directory on your
 APA/PFS-formatted internal PS2 HDD (e.g. hdd0:__common/PS2DRIVERS/):
 
-  BOOT.ELF          <-- HDD bootstrap, NOT the USB bootstrap
+  BOOT.ELF          <-- universal bootstrap for USB / MX4SIO / HDD
   HDD_SMOKE.ELF     <-- standalone test, no NJEMU assets
   elf_path.ini      <-- contains HDD_SMOKE.ELF
   probe.txt         <-- file access check

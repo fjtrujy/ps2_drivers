@@ -32,7 +32,7 @@ int main(void)
         usleep(5000);
     }
 
-    printf("[ata-launcher-test] entering BOOT_ATA.ELF\n");
+    printf("[ata-launcher-test] entering universal BOOT.ELF\n");
     return LoadELFFromFileWithPartitionNoReset(
-        "mass0:/BOOT_ATA.ELF", NULL, 0, NULL);
+        "mass0:/BOOT.ELF", NULL, 0, NULL);
 }

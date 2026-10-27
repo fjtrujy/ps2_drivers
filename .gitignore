@@ -58,3 +58,8 @@ dkms.conf
 *_irx.c
 # CMake build directory
 build/
+build*/
+
+# PS2SDK's generated IOP cacheio artifacts (not source files)
+cacheio/iop/irx/
+cacheio/iop/obj/
