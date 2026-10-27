@@ -38,6 +38,7 @@ jobs:
         cmake --build build --target ps2_drivers_ata_bdm_launch_check
         cmake --build build --target ps2_drivers_irximg_inspect
         cmake --build build --target ps2_drivers_img_payload_check
+        cmake --build build --target hdd_smoke_package
 
     - name: Install library
       run: |
@@ -57,3 +58,4 @@ jobs:
           build/*.a
           build/*.irximg
           build/samples/**/*.elf
+          build/samples/hdd_boot_smoke/HDD_SMOKE.zip

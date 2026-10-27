@@ -190,6 +190,11 @@ under that filename on the HDD. The generic HDD launcher supports
 wLaunchELF's `-r`/`-nr` arguments and recovers its launch directory from the
 partition-qualified argument if newlib's initial cwd is malformed.
 
+To verify HDD boot without NJEMU or ROMs, build the standalone
+`hdd_smoke_package` sample target. It produces a ready-to-copy `HDD_SMOKE.zip`
+containing its own HDD-specific `BOOT.ELF`, test ELF, IRX image, marker file,
+and instructions. See [standalone HDD smoke test](docs/HDD_SMOKE_TEST.md).
+
 An internal HDD formatted as FAT/exFAT uses BDM with the ATA block-device
 transport, not the APA/PFS path. Use the separate
 `ps2_drivers_irximg_ata_bootstrap.elf` as `BOOT_ATA.ELF` when launching from

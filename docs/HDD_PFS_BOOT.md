@@ -1,5 +1,9 @@
 # Internal HDD / APA/PFS boot with external IRX images
 
+For an entirely independent end-to-end test without NJEMU files, use the
+[standalone HDD smoke test](HDD_SMOKE_TEST.md). It produces a ready-to-copy
+ZIP with an HDD-specific `BOOT.ELF`, test ELF and the external IRX image.
+
 ## Ownership and installation
 
 `ps2_drivers` supplies three independent entry ELFs from one shared bootstrap
