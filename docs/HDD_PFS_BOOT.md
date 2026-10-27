@@ -45,8 +45,10 @@ The USB `BOOT.ELF` on the same HDD failed while attempting to restore
 to the HDD under the name `BOOT.ELF`. The new and old wLaunchELF builds did
 not behave identically: the older build used for comparison failed inside
 its own ELF loader with an IOP heap-allocation error before the bootstrap
-started. Real PS2 hardware still requires retesting with the corrected
-bootstrap and a compatible wLaunchELF version.
+started. The separate standalone HDD smoke-test package has since passed
+on real PS2 hardware via wLaunchELF, validating the generic APA/PFS
+bootstrap, image staging, IOP reset, and HDD remount without NJEMU.
+Full NJEMU integration on real hardware still needs separate verification.
 
 An application also installs its extensionless executable and `elf_path.ini`,
 whose first line names that executable (e.g. `MVS`). The HDD bootstrap must be

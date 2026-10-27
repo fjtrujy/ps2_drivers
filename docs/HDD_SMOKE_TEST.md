@@ -71,6 +71,12 @@ log confirmed that both marker-file reads succeeded, seven required IRXs
 were staged and consumed, and the original partition was remounted after the
 IOP reset. NJEMU content was not present on the test disk.
 
-This validates the PCSX2 path. **Physical PS2 HDD validation is still
-required**, and the result should be compared with the identical package on
-real hardware. This sample does not exercise the separate ATA/BDM exFAT mode.
+**Real-hardware validation:** the standalone ZIP was also run from an internal
+HDD on a physical PS2 using wLaunchELF. The tester reported that it worked
+and reached the final message, `Test complete. Power off or reset the PS2.`
+That message is printed only after both marker-file reads and the full IOP
+reset/remount sequence have passed. This confirms the standalone APA/PFS HDD
+bootstrap path on actual hardware, independently of NJEMU.
+
+This does **not** validate NJEMU's own integration, ROM loading, or the
+separate ATA/BDM FAT/exFAT mode on physical hardware.
