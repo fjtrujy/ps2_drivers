@@ -31,10 +31,8 @@ int ps2_hdd_launch_capture(ps2_hdd_launch_context_t *context,
         return PS2_HDD_LAUNCH_ERR_ARGUMENT;
 
     memset(context, 0, sizeof(*context));
-    if (!is_pfs_directory(directory))
-        return PS2_HDD_LAUNCH_ERR_DIRECTORY;
-    length = strlen(directory);
-    if (length >= sizeof(context->directory))
+    if (is_pfs_directory(directory) &&
+        strlen(directory) >= sizeof(context->directory))
         return PS2_HDD_LAUNCH_ERR_DIRECTORY;
 
     for (i = 0; i < argc; ++i) {
@@ -67,13 +65,31 @@ int ps2_hdd_launch_capture(ps2_hdd_launch_context_t *context,
         if (partition_length >= sizeof(context->partition))
             continue;
 
+        if (is_pfs_directory(directory)) {
+            length = strlen(directory);
+            memcpy(context->directory, directory, length + 1);
+        } else {
+            /* wLaunchELF can pass an hdd0:<APA>:pfs:/... argv path while
+             * newlib's initial cwd is an unusable hdd0:... string. Recover
+             * the mounted directory from the qualified launch path itself. */
+            const char *pfs_path = separator + 1;
+            const char *last_slash = strrchr(pfs_path, '/');
+
+            if (last_slash == NULL)
+                continue;
+            length = (size_t)(last_slash - pfs_path) + 1;
+            if (length >= sizeof(context->directory))
+                continue;
+            memcpy(context->directory, pfs_path, length);
+            context->directory[length] = '\0';
+        }
         memcpy(context->partition, arg, partition_length);
         context->partition[partition_length] = '\0';
-        memcpy(context->directory, directory, length + 1);
         return PS2_HDD_LAUNCH_OK;
     }
 
-    return PS2_HDD_LAUNCH_ERR_PARTITION;
+    return is_pfs_directory(directory) ?
+        PS2_HDD_LAUNCH_ERR_PARTITION : PS2_HDD_LAUNCH_ERR_DIRECTORY;
 }
 
 int ps2_hdd_launch_capture_current(ps2_hdd_launch_context_t *context,
@@ -82,7 +98,7 @@ int ps2_hdd_launch_capture_current(ps2_hdd_launch_context_t *context,
     char cwd[FILENAME_MAX];
 
     if (getcwd(cwd, sizeof(cwd)) == NULL)
-        return PS2_HDD_LAUNCH_ERR_DIRECTORY;
+        cwd[0] = '\0';
     return ps2_hdd_launch_capture(context, argc,
                                   (const char *const *)argv, cwd);
 }

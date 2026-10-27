@@ -402,6 +402,27 @@ add_custom_target(ps2_drivers_hdd_launch_check
     VERBATIM
 )
 
+set(HDD_BOOTSTRAP_ARGS_TEST "${IRXIMG_TOOL_DIR}/ps2_hdd_bootstrap_args_test")
+add_custom_command(
+    OUTPUT "${HDD_BOOTSTRAP_ARGS_TEST}"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${IRXIMG_TOOL_DIR}"
+    COMMAND ${PS2_DRIVERS_HOST_C_COMPILER}
+        -std=c99 -O2 -Wall -Wextra -Werror
+        "${CMAKE_SOURCE_DIR}/tools/irximg_bootstrap/hdd_args.c"
+        "${CMAKE_SOURCE_DIR}/tools/irximg_bootstrap/hdd_args_test.c"
+        -o "${HDD_BOOTSTRAP_ARGS_TEST}"
+    DEPENDS
+        "${CMAKE_SOURCE_DIR}/tools/irximg_bootstrap/hdd_args.c"
+        "${CMAKE_SOURCE_DIR}/tools/irximg_bootstrap/hdd_args.h"
+        "${CMAKE_SOURCE_DIR}/tools/irximg_bootstrap/hdd_args_test.c"
+    VERBATIM
+)
+add_custom_target(ps2_drivers_hdd_bootstrap_args_check
+    COMMAND "${HDD_BOOTSTRAP_ARGS_TEST}"
+    DEPENDS "${HDD_BOOTSTRAP_ARGS_TEST}"
+    VERBATIM
+)
+
 set(ATA_BDM_LAUNCH_TEST "${IRXIMG_TOOL_DIR}/ps2_ata_bdm_launch_test")
 add_custom_command(
     OUTPUT "${ATA_BDM_LAUNCH_TEST}"
@@ -687,6 +708,7 @@ add_custom_command(TARGET ps2_drivers_irximg_bootstrap.elf POST_BUILD
 # while embedding only the filesystem IRXs needed to recover internal HDD.
 add_executable(ps2_drivers_irximg_hdd_bootstrap.elf
     tools/irximg_bootstrap/irximg_bootstrap.c
+    tools/irximg_bootstrap/hdd_args.c
 )
 target_compile_definitions(ps2_drivers_irximg_hdd_bootstrap.elf PRIVATE
     PS2_IRXIMG_BOOTSTRAP_HDD=1

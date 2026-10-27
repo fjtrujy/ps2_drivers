@@ -27,6 +27,7 @@ int LoadELFFromFileWithPartitionNoReset(
 #include <fileXio_rpc.h>
 #include <iox_stat.h>
 #include <ps2_hdd_launch.h>
+#include "hdd_args.h"
 #elif defined(PS2_IRXIMG_BOOTSTRAP_ATA_BDM)
 #include <ps2_ata_bdm_launch.h>
 #else
@@ -212,15 +213,6 @@ static int resolve_target_path(
     return length >= 0 && (size_t)length < size ? 0 : -1;
 }
 
-#ifdef PS2_IRXIMG_BOOTSTRAP_HDD
-static int is_hdd_launch_argument(const char *arg)
-{
-    return arg != NULL &&
-           (strncmp(arg, "hdd0:", 5) == 0 || strncmp(arg, "hdd:", 4) == 0) &&
-           (strstr(arg, ":pfs:") != NULL || strstr(arg, ":pfs0:") != NULL);
-}
-#endif
-
 int main(int argc, char **argv)
 {
     char cwd[FILENAME_MAX];
@@ -234,15 +226,19 @@ int main(int argc, char **argv)
     char launch_arg[PATH_MAX + PS2_HDD_LAUNCH_PARTITION_MAX + 2];
     char **hdd_argv;
     int i;
-    int target_index = 1;
+    int target_index;
 #elif defined(PS2_IRXIMG_BOOTSTRAP_ATA_BDM)
     char **ata_argv;
     int i;
 #endif
 
     if (getcwd(cwd, sizeof(cwd)) == NULL) {
+#ifdef PS2_IRXIMG_BOOTSTRAP_HDD
+        cwd[0] = '\0';
+#else
         printf("[irximg-bootstrap] getcwd failed\n");
         return -EIO;
+#endif
     }
 
     printf("[irximg-bootstrap] restoring launch filesystem at %s\n", cwd);
@@ -253,8 +249,13 @@ int main(int argc, char **argv)
         scr_printf("[irximg-bootstrap] missing/invalid HDD partition launch argument\n");
         return -EINVAL;
     }
+    printf("[irximg-bootstrap] recovered %s from partition %s\n",
+        hdd_context.directory, hdd_context.partition);
     if (restore_hdd(&hdd_context) != PS2_HDD_LAUNCH_OK)
         return -EIO;
+    /* Resolve the target against the recovered PFS path, not newlib's
+     * potentially malformed pre-reset cwd from an HDD ELF browser. */
+    snprintf(cwd, sizeof(cwd), "%s", hdd_context.directory);
 #elif defined(PS2_IRXIMG_BOOTSTRAP_ATA_BDM)
     if (restore_ata_mass(cwd) < 0) {
         printf("[irximg-bootstrap] ATA/BDM filesystem restore failed\n");
@@ -268,10 +269,8 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef PS2_IRXIMG_BOOTSTRAP_HDD
-    /* Some HDD ELF browsers pass the original hdd0:<APA>:pfs:/... path in
-     * argv[1]. It is launch context, not an explicit application target. */
-    if (target_index < argc && is_hdd_launch_argument(argv[target_index]))
-        ++target_index;
+    target_index = ps2_irximg_hdd_target_index(
+        argc, (const char *const *)argv);
     if (target_index < argc && argv[target_index] != NULL &&
         argv[target_index][0] != '\0') {
         target = argv[target_index];

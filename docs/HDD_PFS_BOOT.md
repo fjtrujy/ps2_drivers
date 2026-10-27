@@ -12,6 +12,38 @@ implementation:
 | `ps2_drivers_irximg_ata_bootstrap.elf` | `BOOT_ATA.ELF` | Internal ATA-backed FAT/exFAT bootstrap (optional) |
 | `ps2_drivers.irximg` | Same filename | External driver payload container |
 
+### Launching through wLaunchELF from the HDD
+
+The existing `BOOT.ELF` is **the USB/MX4SIO bootstrap**, not a universal
+launcher. It must not be executed from an APA/PFS partition: it only restores
+`mass:` and cannot restore the partition required to load the application.
+
+For an APA/PFS installation, select `BOOT_HDD.ELF` in wLaunchELF's HDD file
+browser. Alternatively, if the installation expects the name `BOOT.ELF`,
+**copy `ps2_drivers_irximg_hdd_bootstrap.elf` onto the HDD as `BOOT.ELF`**
+instead of copying the USB bootstrap. This is a deployment-time choice, not
+runtime device detection. Keep the USB bootstrap unchanged on USB/MX4SIO.
+
+wLaunchELF can pass the original partition-qualified ELF path followed by
+`-r` or `-nr` (its IOP-reset preference). These are launcher metadata, not
+application targets. The HDD bootstrap now skips those flags when deciding
+whether to read `elf_path.ini`. PS2SDK/newlib can also present an invalid
+working directory after this handoff, for example
+`hdd0:__common:pfs:NJEMUMVS`. If that happens, the public HDD launch helper
+recovers `pfs:/NJEMU/MVS/` from the partition-qualified ELF argument. This
+also provides a correct base directory for resolving the target after the
+bootstrap resets and remounts the IOP filesystem.
+
+In PCSX2, the complete wLaunchELF → internal HDD → generic HDD bootstrap →
+NJEMU MVS handoff was validated using a cloned isolated 8 GiB APA/PFS image.
+The USB `BOOT.ELF` on the same HDD failed while attempting to restore
+`mass:`; the HDD bootstrap succeeded both as `BOOT_HDD.ELF` and when copied
+to the HDD under the name `BOOT.ELF`. The new and old wLaunchELF builds did
+not behave identically: the older build used for comparison failed inside
+its own ELF loader with an IOP heap-allocation error before the bootstrap
+started. Real PS2 hardware still requires retesting with the corrected
+bootstrap and a compatible wLaunchELF version.
+
 An application also installs its extensionless executable and `elf_path.ini`,
 whose first line names that executable (e.g. `MVS`). The HDD bootstrap must be
 launched from a mounted PFS directory by an ELF browser that provides the

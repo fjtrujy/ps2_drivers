@@ -46,7 +46,18 @@ int main(void)
           "pfs:/apps/") == PS2_HDD_LAUNCH_ERR_PARTITION);
     CHECK(context.partition[0] == '\0');
     CHECK(ps2_hdd_launch_capture(&context, 2, valid,
-          "mass:/NJEMU/MVS/") == PS2_HDD_LAUNCH_ERR_DIRECTORY);
+          "mass:/NJEMU/MVS/") == PS2_HDD_LAUNCH_OK);
+    CHECK(strcmp(context.directory, "pfs:/NJEMU/MVS/") == 0);
+    CHECK(ps2_hdd_launch_capture(&context, 2, valid,
+          "hdd0:__common:pfs:NJEMUMVS") == PS2_HDD_LAUNCH_OK);
+    CHECK(strcmp(context.partition, "hdd0:__common") == 0);
+    CHECK(strcmp(context.directory, "pfs:/NJEMU/MVS/") == 0);
+    CHECK(ps2_hdd_launch_capture(&context, 1,
+          (const char *const[]){"hdd0:__common:pfs0:/apps/BOOT_HDD.ELF"},
+          "") == PS2_HDD_LAUNCH_OK);
+    CHECK(strcmp(context.directory, "pfs0:/apps/") == 0);
+    CHECK(ps2_hdd_launch_capture(&context, 4, invalid,
+          "mass:/other/") == PS2_HDD_LAUNCH_ERR_DIRECTORY);
     CHECK(ps2_hdd_launch_capture(&context, 0, NULL,
           "pfs:/apps/") == PS2_HDD_LAUNCH_ERR_PARTITION);
     CHECK(ps2_hdd_launch_capture(NULL, 2, valid,

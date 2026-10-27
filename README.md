@@ -183,6 +183,13 @@ the IOP again should call `ps2_hdd_launch_capture_current()` before reset and
 `ps2_hdd_launch_restore()` after reset, using the explicit HDD boot-device
 staging helper. See [the HDD/PFS integration guide](docs/HDD_PFS_BOOT.md).
 
+When launching from an APA/PFS partition via wLaunchELF, use
+`BOOT_HDD.ELF`, **not the USB/MX4SIO `BOOT.ELF`**. If a HDD installation
+requires the conventional `BOOT.ELF` name, copy the installed HDD bootstrap
+under that filename on the HDD. The generic HDD launcher supports
+wLaunchELF's `-r`/`-nr` arguments and recovers its launch directory from the
+partition-qualified argument if newlib's initial cwd is malformed.
+
 An internal HDD formatted as FAT/exFAT uses BDM with the ATA block-device
 transport, not the APA/PFS path. Use the separate
 `ps2_drivers_irximg_ata_bootstrap.elf` as `BOOT_ATA.ELF` when launching from
