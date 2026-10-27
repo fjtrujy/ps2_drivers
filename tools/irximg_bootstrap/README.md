@@ -38,6 +38,7 @@ results, test with one launch device connected and ensure that the selected
 filesystem contains the intended `elf_path.ini`. An unreachable or remapped
 mass volume is reported as an error, not silently substituted.
 
-The older specialized HDD bootstrap passed real PS2 hardware, and the new
-universal HDD path passed PCSX2. The universal mass transport cases and
-physical real-hardware run require independent verification.
+The universal APA/PFS HDD path passed in both PCSX2 and on a physical PS2
+through the standalone wLaunchELF HDD smoke-test package. USB FAT32 and
+ATA/BDM exFAT end-to-end paths passed in PCSX2. MX4SIO, physical USB/ATA
+and mixed-device scenarios still need independent hardware verification.

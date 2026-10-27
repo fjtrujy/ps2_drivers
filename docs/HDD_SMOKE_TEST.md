@@ -70,13 +70,13 @@ log confirmed that both marker-file reads succeeded, seven required IRXs
 were staged and consumed, and the original partition was remounted after the
 IOP reset. NJEMU content was not present on the test disk.
 
-**Real-hardware baseline:** the previous, HDD-specific version of this
-package was run from an internal HDD on a physical PS2 using wLaunchELF. The tester reported that it worked
-and reached the final message, `Test complete. Power off or reset the PS2.`
-That message is printed only after both marker-file reads and the full IOP
-reset/remount sequence have passed. This confirms the original APA/PFS HDD
-bootstrap path on actual hardware, independently of NJEMU. The new universal
-BOOT.ELF has passed the equivalent PCSX2 test but awaits physical validation.
+**Real-hardware validation:** both the earlier HDD-specific bootstrap and
+the new **universal `BOOT.ELF`** package have now been tested on a physical
+PS2 with an internal APA/PFS HDD through wLaunchELF. The tester confirmed
+the universal package worked. The test reaches its final success message,
+`Test complete. Power off or reset the PS2.`, only after both marker-file
+reads and the complete IOP reset and remount sequence have passed. This
+validates the universal APA/PFS handoff independently of NJEMU.
 
 This does **not** validate NJEMU's own integration, ROM loading, or the
-separate ATA/BDM FAT/exFAT mode on physical hardware.
+USB, MX4SIO, or ATA/BDM FAT/exFAT modes on physical hardware.

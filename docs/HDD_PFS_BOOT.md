@@ -21,11 +21,12 @@ ignores wLaunchELF's `-r`/`-nr` flags and mounts the correct partition after
 its clean IOP reset. It then launches the real application without a second
 reset and forwards the partition-qualified target path for any later resets.
 
-**Validation:** The standalone HDD smoke test using the dedicated HDD-only
-binary passed on physical PS2 hardware. The new universal executable passed
-the identical standalone end-to-end handoff in PCSX2 on a fresh APA/PFS HDD
-image. Physical verification of the *universal* executable is still pending;
-this distinction matters for release readiness.
+**Validation:** Both the previously dedicated HDD bootstrap and the new
+**universal `BOOT.ELF`** have now passed the standalone HDD smoke test on a
+physical PS2 through wLaunchELF. The universal executable also passed the
+identical end-to-end handoff in PCSX2 on an isolated APA/PFS HDD image.
+NJEMU's own HDD launch and game-loading behavior still needs its separate
+integration verification.
 
 ## Application API for subsequent IOP resets
 
