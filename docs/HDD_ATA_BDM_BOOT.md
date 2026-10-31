@@ -13,6 +13,23 @@ carry this driver separately from `ps2atad.irx`.
 | Internal HDD FAT/exFAT | `PS2_DRIVER_REQ_ATA_BDM` | `massN:/` | `BOOT.ELF` |
 | USB and MX4SIO | Existing USB/MX4SIO requirements | `massN:/` | `BOOT.ELF` |
 
+### wLaunchELF-R3Z `ataN:` launch paths
+
+wLaunchELF-R3Z presents internal exFAT volumes as `ata0:/` or `ata1:/`.
+These are launcher-specific names: the `ps2_drivers` ATA/BDM stack exposes
+the same filesystem through `massN:/`. The universal `BOOT.ELF` now detects
+an R3Z `ataN:` launch argument even when the startup cwd is unavailable or
+malformed. It resets the IOP, starts only the ATA/BDM stack, and searches for
+the application's `elf_path.ini` in the same relative directory on ATA-backed
+`massN:` mounts. The canonical mount and ATA transport marker are passed
+to the application.
+
+`ataN:` and `massN:` unit numbers are **not assumed to be identical**.
+If multiple ATA volumes contain matching manifests, boot fails instead of
+choosing an arbitrary volume. Install `BOOT.ELF`, the application ELF,
+`elf_path.ini`, and `ps2_drivers.irximg` together. This mechanism does not
+support bypassing the universal bootstrap.
+
 ATA/BDM stages `iomanX`, `fileXio`, `ps2dev9`, `bdm`, `bdmfs_fatfs`, and
 `ata_bd`. Its IOP initialization order is fileXio, DEV9, BDM, BDMFS_FATFS,
 and lastly ATA/BDM. An external IRX application consumes the modules with
@@ -78,6 +95,11 @@ failed probe is followed by a clean reset before trying the next provider.
 When ATA/BDM is selected, it forwards the transport marker to the target.
 The ATA mount index must remain stable across the application's resets.
 
+The R3Z `ataN:` case performs ATA-only recovery and discovers a canonical
+`massN:` mount. The `ata_bdm_r3z_probe_launcher.elf` sample simulates its
+launch argument independently of NJEMU, while `ata_bdm_img_sample.elf`
+verifies the subsequent IOP reset and ATA filesystem restoration.
+
 The prior standalone `BOOT_ATA.ELF` is no longer built. Keep the older
 exFAT PCSX2 results below as baseline evidence for the dedicated variant;
 the universal ATA recovery mode requires its own verification.
@@ -109,3 +131,17 @@ access. Physical hardware shutdown behavior and actual NJEMU/game loading from
 exFAT remain untested. The ATA bootstrap has only been tested in the
 filesystem-already-live handoff path; its missing-filesystem restoration path
 also requires validation with a launcher which resets the IOP.
+
+The universal bootstrap's R3Z-style `ata0:/BOOT.ELF` handoff passed in
+PCSX2 both with a simulated R3Z launcher argument and with the **actual
+wLaunchELF-R3Z 4.80 executable** and its automatic file-browser launch.
+R3Z loaded the bootstrap from the exFAT disk, reset the IOP, and entered
+the bootstrap with `cwd=ata0:/`. After an ATA-only reset and driver restore,
+the bootstrap remounted the volume as `mass0:/`, loaded `ATA_TEST.ELF`, and
+forwarded the ATA marker. The test staged seven modules, reset the IOP,
+remounted exFAT, and confirmed directory access. We specifically found and
+eliminated a hang caused by trying to access R3Z's old `ataN:` filesystem
+after its IOP reset.
+
+This does **not** yet confirm a physical PS2 run with R3Z/HOSDMenu or that
+NJEMU has implemented its own ATA/BDM staging/restore path.

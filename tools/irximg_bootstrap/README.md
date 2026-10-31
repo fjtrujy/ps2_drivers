@@ -25,6 +25,12 @@ all the transports into IOP simultaneously.
   `--ps2-drivers-ata-bdm` so the application can restore ATA/BDM after its
   own reset. USB/MX4SIO receive no ATA marker.
 - **Host:** The existing host filesystem is used without a reset.
+- **wLaunchELF-R3Z ATA:** The browser uses `ataN:/...`, not `massN:`.
+  The bootstrap recognizes that launch alias, resets the IOP, loads only
+  ATA/BDM and discovers the corresponding canonical `massN:` volume by
+  its `elf_path.ini` in the same relative directory. It does not assume
+  matching ATA/mass unit numbers and rejects ambiguous matches. It passes
+  the ATA transport marker to the target for later resets.
 
 Launcher `-r`/`-nr` arguments are launch metadata, not target filenames.
 The resolved target is entered with `LoadELFFromFileWithPartitionNoReset()`.
@@ -42,3 +48,8 @@ The universal APA/PFS HDD path passed in both PCSX2 and on a physical PS2
 through the standalone wLaunchELF HDD smoke-test package. USB FAT32 and
 ATA/BDM exFAT end-to-end paths passed in PCSX2. MX4SIO, physical USB/ATA
 and mixed-device scenarios still need independent hardware verification.
+An isolated PCSX2 test with the **actual wLaunchELF-R3Z 4.80 executable**
+passed the `ata0:` bootstrap handoff and subsequent ATA reset/remount. R3Z
+resets the IOP before the bootstrap starts; the bootstrap must not access
+its stale `ata0:` filesystem before installing its own ATA/BDM stack.
+Physical PS2 validation of R3Z/HOSDMenu remains pending.
