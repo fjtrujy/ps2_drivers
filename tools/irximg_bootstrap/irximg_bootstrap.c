@@ -74,9 +74,9 @@ static void trim_target(char *target)
         target[--length] = '\0';
 }
 
-/* Verify a real file, not merely a massN: cwd (chdir alone can succeed
+/* Verify a real file, not merely a device cwd (chdir alone can succeed
  * before a BDM filesystem has actually been mounted). */
-static int read_mass_target(const char *directory, char *target, size_t size)
+static int read_storage_target(const char *directory, char *target, size_t size)
 {
     char path[FILENAME_MAX + 32];
     char contents[PATH_MAX] __attribute__((aligned(64)));
@@ -109,7 +109,7 @@ static int wait_for_mass(const char *directory, const char *expected_target,
     int tries;
 
     for (tries = 0; tries < 600; ++tries) {
-        if (read_mass_target(directory, selected_target, selected_size) == 0) {
+        if (read_storage_target(directory, selected_target, selected_size) == 0) {
             if (!expected_target[0] ||
                 strcmp(expected_target, selected_target) == 0)
                 return chdir(directory);
@@ -122,6 +122,70 @@ static int wait_for_mass(const char *directory, const char *expected_target,
         usleep(5000);
     }
     return -1;
+}
+
+/* R3Z exposes the internal exFAT volume as ataN:, while our ATA/BDM
+ * provider publishes massN:. There is no reliable numeric correspondence
+ * between these namespaces: discover the volume by its application manifest.
+ * Reject ambiguous matches instead of silently loading a different disk. */
+static int restore_r3z_ata(const char *ata_directory,
+                           const char *expected_target,
+                           char *directory, size_t directory_size,
+                           char *target, size_t target_size)
+{
+    char candidate[FILENAME_MAX];
+    char manifest[PATH_MAX];
+    char found_directory[FILENAME_MAX] = {0};
+    char found_target[PATH_MAX] = {0};
+    unsigned int unit;
+    int tries;
+    int matches = 0;
+
+    reset_iop();
+    if (init_fileXio_driver() < 0 || init_dev9_driver() < 0 ||
+        init_bdm_driver() < 0 || init_ata_bdm_driver(false) < 0)
+        return -EIO;
+
+    /* Wait for ATA block discovery/BDM mount events to settle. Only ATA
+     * is loaded, so no USB/MX4SIO volume can claim a massN: slot here. */
+    for (tries = 0; tries < 600; ++tries) {
+        matches = 0;
+        for (unit = 0; unit < 10; ++unit) {
+            if (ps2_irximg_ata_mass_directory(ata_directory, unit,
+                    candidate, sizeof(candidate)) < 0)
+                return -ENAMETOOLONG;
+            if (read_storage_target(candidate, manifest,
+                                    sizeof(manifest)) < 0 ||
+                (expected_target[0] &&
+                 strcmp(expected_target, manifest) != 0))
+                continue;
+            if (++matches == 1) {
+                snprintf(found_directory, sizeof(found_directory),
+                         "%s", candidate);
+                snprintf(found_target, sizeof(found_target), "%s", manifest);
+            } else {
+                printf("[irximg-bootstrap] ambiguous ATA manifests at %s and %s\n",
+                       found_directory, candidate);
+                return -EEXIST;
+            }
+        }
+        /* Allow asynchronous partitions an extra interval to appear. */
+        if (matches == 1 && tries >= 100)
+            break;
+        usleep(5000);
+    }
+    if (matches != 1)
+        return -ENOENT;
+    if (strlen(found_directory) >= directory_size ||
+        strlen(found_target) >= target_size)
+        return -ENAMETOOLONG;
+    if (chdir(found_directory) < 0)
+        return -ENOENT;
+    strcpy(directory, found_directory);
+    strcpy(target, found_target);
+    printf("[irximg-bootstrap] R3Z ATA %s restored as %s\n",
+           ata_directory, directory);
+    return 0;
 }
 
 /* Probe one transport per clean IOP. This never leaves USB, MX4SIO and
@@ -227,6 +291,7 @@ static int resolve_target(const char *cwd, const char *target,
 int main(int argc, char **argv)
 {
     char cwd[FILENAME_MAX];
+    char ata_directory[FILENAME_MAX];
     char target_path[PATH_MAX];
     char expected_target[PATH_MAX] = {0};
     char resolved[PATH_MAX];
@@ -238,6 +303,7 @@ int main(int argc, char **argv)
     const char *target;
     int target_index;
     int forwarded;
+    int status;
     int i;
 
     SifInitRpc(0);
@@ -257,12 +323,33 @@ int main(int argc, char **argv)
         if (ps2_hdd_launch_restore(&hdd) != PS2_HDD_LAUNCH_OK)
             return -EIO;
         snprintf(cwd, sizeof(cwd), "%s", hdd.directory);
+    } else if (kind == PS2_IRXIMG_BOOT_ATA) {
+        init_scr();
+        if (ps2_irximg_ata_launch_directory(
+                argc, (const char *const *)argv, cwd,
+                ata_directory, sizeof(ata_directory)) < 0) {
+            scr_printf("[irximg-bootstrap] invalid R3Z ATA launch path\n");
+            return -EINVAL;
+        }
+        /* R3Z may reset the IOP before entering us. The stale ataN:
+         * fileXio RPC client can block indefinitely on even a failed open.
+         * Do not touch the old filesystem until our ATA driver is restored. */
+        status = restore_r3z_ata(ata_directory, expected_target,
+                cwd, sizeof(cwd), target_path, sizeof(target_path));
+        if (status < 0) {
+            printf("[irximg-bootstrap] R3Z ATA restore failed (%d)\n",
+                   status);
+            scr_printf("[irximg-bootstrap] R3Z ATA restore failed (%d)\n",
+                       status);
+            return status;
+        }
+        mass_transport = PS2_IRXIMG_MASS_ATA;
     } else if (kind == PS2_IRXIMG_BOOT_MASS) {
         /* A surviving original filesystem lets us recognize the *same*
          * application volume after reset, even if USB/ATA both claim mass0.
          * If the launcher's reset destroyed the source, a valid target
          * manifest on the recovered candidate is the minimum requirement. */
-        if (read_mass_target(cwd, expected_target,
+        if (read_storage_target(cwd, expected_target,
                              sizeof(expected_target)) == 0) {
             printf("[irximg-bootstrap] expected target: %s\n", expected_target);
             mass_transport = live_mass_transport();
@@ -288,7 +375,8 @@ int main(int argc, char **argv)
         target = argv[target_index];
         forwarded = argc - target_index - 1;
     } else {
-        if (kind == PS2_IRXIMG_BOOT_MASS) {
+        if (kind == PS2_IRXIMG_BOOT_MASS ||
+            kind == PS2_IRXIMG_BOOT_ATA) {
             /* Already verified against the original manifest if available. */
             target = target_path;
         } else if (read_default_target(target_path, sizeof(target_path)) < 0) {

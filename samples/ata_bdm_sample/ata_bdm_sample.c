@@ -4,6 +4,9 @@
 #include <unistd.h>
 
 #include <fileXio_rpc.h>
+#ifdef PS2_DRIVERS_R3Z_SMOKE
+#include <debug.h>
+#endif
 #include <iopcontrol.h>
 #include <kernel.h>
 #include <sifrpc.h>
@@ -24,6 +27,14 @@ int main(int argc, char **argv)
     int from_ata_bootstrap =
         ps2_ata_bdm_launch_capture_current(&launch, argc, argv) ==
         PS2_ATA_BDM_LAUNCH_OK;
+    const char *probe_path = from_ata_bootstrap ? launch.directory : "mass0:/";
+
+#ifdef PS2_DRIVERS_R3Z_SMOKE
+    init_scr();
+    scr_printf("PS2_DRIVERS R3Z ATA/exFAT smoke test\n");
+    scr_printf("ATA marker received: %s\n",
+               from_ata_bootstrap ? "yes" : "NO");
+#endif
 
 #ifdef PS2_DRIVERS_IMG_FLAVOR
     if (from_ata_bootstrap) {
@@ -62,17 +73,23 @@ int main(int argc, char **argv)
 #endif
 
     while (retries-- > 0) {
-        directory = fileXioDopen("mass0:/");
+        directory = fileXioDopen(probe_path);
         if (directory >= 0)
             break;
         usleep(5000);
     }
-    printf("[ata-bdm-test] mass0 directory fd=%d\n", directory);
+    printf("[ata-bdm-test] %s directory fd=%d\n", probe_path, directory);
     if (directory < 0)
         return 3;
 
     fileXioDclose(directory);
     deinit_ata_bdm_driver(true);
     printf("[ata-bdm-test] success\n");
+#ifdef PS2_DRIVERS_R3Z_SMOKE
+    scr_printf("PASS: ATA/BDM driver restore and file access.\n");
+    scr_printf("Test completed. Power off or reset the PS2.\n");
+    for (;;)
+        sleep(1);
+#endif
     return 0;
 }

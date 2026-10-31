@@ -13,6 +13,11 @@ int LoadELFFromFileWithPartitionNoReset(
 int main(void)
 {
     int status;
+#ifdef PS2_DRIVERS_TEST_R3Z_ATA_HANDOFF
+    /* Simulate the arguments R3Z passes when loading BOOT.ELF from ata0:.
+     * The bootstrap must translate this alias after its own IOP reset. */
+    char *args[] = { "ata0:/BOOT.ELF" };
+#endif
 
     SifInitRpc(0);
     while (!SifIopReset(NULL, 0)) {}
@@ -34,5 +39,11 @@ int main(void)
 
     printf("[ata-launcher-test] entering universal BOOT.ELF\n");
     return LoadELFFromFileWithPartitionNoReset(
-        "mass0:/BOOT.ELF", NULL, 0, NULL);
+        "mass0:/BOOT.ELF", NULL,
+#ifdef PS2_DRIVERS_TEST_R3Z_ATA_HANDOFF
+        1, args
+#else
+        0, NULL
+#endif
+    );
 }
